@@ -1,3 +1,4 @@
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 const $ = require('jquery');
 
 
@@ -31,7 +32,7 @@ const doSearch = () => {
       contentType: 'application/json',
     })
     .done((data) => {
-      $('#status').text('Result!');
+      $('#status').text(`Result! (n=${data.length})`);
       $('#output').val(data.map(v => `${v._id}\t${v.t.split('|')[v.t.split('|').length - 1]}`).join('\n'));
     })
     .fail((jqXHR, textStatus, errorThrown) => {
