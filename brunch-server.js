@@ -50,6 +50,9 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   app.use(passport.session());
   app.use(flash());
 
+  // So that on heroku it recognises requests as https rather than http
+  app.enable('trust proxy');
+
   app.use('/', routes);
 
   app.use(express.static(path.join(__dirname, PATH)));
