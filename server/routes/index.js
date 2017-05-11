@@ -1,4 +1,5 @@
 const express = require('express');
+const url = require('url');
 const passportConfig = require('../passport/index');
 const homeController = require('../controllers/home');
 const userController = require('../controllers/user');
@@ -35,7 +36,35 @@ module.exports = function routeIndex(passport) {
   router.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login' }), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
-  router.get('/auth/github', passport.authenticate('github'));
+
+  const originalURL = function (req, options) {
+    options = options || {};
+    const app = req.app;
+    if (app && app.get && app.get('trust proxy')) {
+      options.proxy = true;
+    }
+    const trustProxy = options.proxy;
+
+    const proto = (req.headers['x-forwarded-proto'] || '').toLowerCase();
+    console.log(`A: ${proto}`);
+    const tls = req.connection.encrypted || (trustProxy && proto.split(/\s*,\s*/)[0] == 'https');
+    console.log(`B: ${tls}`);
+    const host = (trustProxy && req.headers['x-forwarded-host']) || req.headers.host;
+    console.log(`C: ${host}`);
+    const protocol = tls ? 'https' : 'http';
+    console.log(`D: ${protocol}`);
+    const path = req.url || '';
+    console.log(`E: ${path}`);
+    return `${protocol}://${host}${path}`;
+  };
+  router.get('/auth/github', (req, res, next) => {
+    const parsed = url.parse('/auth/github/callback');
+    console.log(parsed);
+    console.log(`PROTOCOL: ${parsed.protocol}`);
+    const urll = url.resolve(originalURL(req, { proxy: this._trustProxy }), '/auth/github/callback');
+    console.log(urll);
+    next();
+  }, passport.authenticate('github'));
   router.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
