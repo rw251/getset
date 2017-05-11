@@ -8,6 +8,22 @@ block content
       img(src='/images/icon.svg', style='width:100%')
 
   hr
+  if user
+    p#status
+    form
+      .form-group
+        label.radio-inline
+          input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
+          | Read v2
+        label.radio-inline
+          input(type="radio", name="terminology", id="terminology2", value="SNOMED")
+          | SNOMED CT
+      .form-group
+        label(for='synonym') Search term
+        input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
+      .form-group
+        label(for='output')
+        textarea#output.form-control
   .row
     .col-sm-6
       h2 Heading

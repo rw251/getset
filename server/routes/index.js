@@ -3,6 +3,7 @@ const passportConfig = require('../passport/index');
 const homeController = require('../controllers/home');
 const userController = require('../controllers/user');
 const apiController = require('../controllers/api');
+const codeController = require('../controllers/code');
 
 const router = express.Router();
 
@@ -48,5 +49,7 @@ module.exports = function routeIndex(passport) {
   router.get('/auth/twitter/callback', passport.authenticate('twitter', { failureRedirect: '/login' }), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
+
+  router.get('/code/search/:terminology/:searchterm', codeController.search);
   return router;
 };
