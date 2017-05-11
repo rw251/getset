@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const logger = require('express-pino-logger');
+const pino = require('pino')();
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const expressSession = require('express-session');
@@ -23,8 +24,8 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   mongoose.Promise = global.Promise;
   mongoose.connect(config.db.url);
   mongoose.connection.on('error', (err) => {
-    console.error(err);
-    console.log('MongoDB connection error. Please make sure MongoDB is running.');
+    pino.error(err);
+    pino.info('MongoDB connection error. Please make sure MongoDB is running.');
     process.exit();
   });
 
@@ -55,7 +56,7 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
 
   // catch 404 and forward to error handler
   app.use((req, res, next) => {
-    console.log(req.headers);
+    pino.info(req.headers);
     const err = new Error('Not Found');
     err.status = 404;
     next(err);
@@ -110,11 +111,11 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
     // handle specific listen errors with friendly messages
     switch (error.code) {
       case 'EACCES':
-        console.error(`${bind} requires elevated privileges`);
+        pino.error(`${bind} requires elevated privileges`);
         process.exit(1);
         break;
       case 'EADDRINUSE':
-        console.error(`${bind} is already in use`);
+        pino.error(`${bind} is already in use`);
         process.exit(1);
         break;
       default:
