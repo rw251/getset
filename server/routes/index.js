@@ -48,6 +48,9 @@ module.exports = function routeIndex(passport) {
     const proto = (req.headers['x-forwarded-proto'] || '').toLowerCase();
     console.log(`A: ${proto}`);
     const tls = req.connection.encrypted || (trustProxy && proto.split(/\s*,\s*/)[0] == 'https');
+    console.log(`B: ${req.connection.encrypted}`);
+    console.log(`B: ${trustProxy}`);
+    console.log(`B: ${proto.split(/\s*,\s*/)[0]}`);
     console.log(`B: ${tls}`);
     const host = (trustProxy && req.headers['x-forwarded-host']) || req.headers.host;
     console.log(`C: ${host}`);
