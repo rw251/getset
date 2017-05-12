@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const forceSsl = require('express-force-ssl');
 const logger = require('express-pino-logger');
 const pino = require('pino')();
 const bodyParser = require('body-parser');
@@ -36,6 +37,11 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   app.set('view engine', 'pug');
   // app.use(expressStatusMonitor());
   // app.use(compression());
+
+  if (process.env.NODE_ENV === 'production') {
+    console.log('ATTEMPTING FORCESSL');
+    app.use(forceSsl);
+  }
 
   // uncomment after placing your favicon in /public
   // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
