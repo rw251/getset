@@ -22,4 +22,10 @@ module.exports = {
       joinTo: 'app.js',
     },
   },
+
+  plugins: {
+    babel: {
+      pattern: /sw\.js$/,
+    },
+  },
 };
