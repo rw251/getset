@@ -1,47 +1,13 @@
 extends layout
 
 block content
-  h1(style='margin-left: 120px;') GetSet
-  p.lead(style='margin-left: 120px;') Managing clinical code sets.
-  div
-    div(style='position: absolute;width: 100px;top: 0;')
-      img(src='/images/icon.svg', role='presentation', style='width:100%')
-
-  hr
-  if user
-    p#status
-    form
-      .form-group
-        label.radio-inline
-          input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
-          | Read v2
-        label.radio-inline
-          input(type="radio", name="terminology", id="terminology2", value="SNOMED")
-          | SNOMED CT
-      .form-group
-        label(for='synonym') Search term
-        input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
-      .form-group
-        label(for='output')
-        textarea#output.form-control
-  .row
-    .col-sm-6
-      h2 Heading
-      p Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-      p
-        a.btn.btn-default(href='#', role='button') View details »
-    .col-sm-6
-      h2 Heading
-      p Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-      p
-        a.btn.btn-default(href='#', role='button') View details »
-    .col-sm-6
-      h2 Heading
-      p Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-      p
-        a.btn.btn-default(href='#', role='button') View details »
-    .col-sm-6
-      h2 Heading
-      p Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-      p
-        a.btn.btn-default(href='#', role='button') View details »
+  if title === 'Create'
+    include ../../shared/templates/create.jade
+  else if title === 'Validate'
+    include ../../shared/templates/validate.jade
+  else if title === 'Enhance'
+    include ../../shared/templates/enhance.jade
+  else if title === 'Search'
+    include ../../shared/templates/search.jade
+  else
+    include ../../shared/templates/home.jade

@@ -1,0 +1,26 @@
+include ./partials/title.jade
+
+h1 Search
+if !user
+  p 
+    | A bit about searching - why not 
+    a.btn.btn-github.btn-social(href='/auth/github?returnTo=/search')
+      i.fa.fa-github
+      | sign in with GitHub 
+    | to see more.
+else
+  p#status
+  form
+    .form-group
+      label.radio-inline
+        input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
+        | Read v2
+      label.radio-inline
+        input(type="radio", name="terminology", id="terminology2", value="SNOMED")
+        | SNOMED CT
+    .form-group
+      label(for='synonym') Search term
+      input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
+    .form-group
+      label(for='output')
+      textarea#output.form-control

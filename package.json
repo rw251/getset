@@ -56,6 +56,7 @@
     "mongoose": "^4.9.8",
     "nodemailer": "^4.0.1",
     "nosleep.js": "^0.5.1",
+    "page": "^1.7.1",
     "passport": "^0.3.2",
     "passport-github": "^1.1.0",
     "passport-local": "^1.0.0",

@@ -12,9 +12,23 @@ const router = express.Router();
 //   res.redirect('/login');
 // };
 
+// The middleware to set up the parameters for the authenticate middleware.
+const checkReturnTo = function checkReturnTo(req, res, next) {
+  // Maybe unnecessary, but just to be sure.
+  req.session = req.session || {};
+
+  req.session.returnTo = req.query.returnTo;
+
+  next();
+};
+
 module.exports = function routeIndex(passport) {
   /* GET login page. */
   router.get('/', homeController.index);
+  router.get('/create', homeController.create);
+  router.get('/search', homeController.search);
+  router.get('/validate', homeController.validate);
+  router.get('/enhance', homeController.enhance);
   router.get('/login', userController.getLogin);
   router.post('/login', userController.postLogin);
   router.get('/logout', userController.logout);
@@ -37,7 +51,7 @@ module.exports = function routeIndex(passport) {
     res.redirect(req.session.returnTo || '/');
   });
 
-  router.get('/auth/github', passport.authenticate('github'));
+  router.get('/auth/github', checkReturnTo, passport.authenticate('github'));
   router.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });

@@ -32,3 +32,5 @@
               li.divider
               li
                 a(href='/logout') Logout
+          input#userLoggedIn(type='hidden')
+          input#userName(type='hidden', value=user.profile.name || user.email || user.id)
