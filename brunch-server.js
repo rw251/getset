@@ -1,3 +1,4 @@
+const compression = require('compression');
 const express = require('express');
 const path = require('path');
 const forceSsl = require('express-force-ssl');
@@ -20,6 +21,7 @@ const routes = require('./server/routes/index')(passport);
 
 module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   const app = express();
+  app.use(compression()); // enable gzip compression
 
   mongoose.set('debug', DEBUG);
   mongoose.Promise = global.Promise;

@@ -1,5 +1,6 @@
 {
-    "name": "Get Set",
+    "short_name": "Get Set",
+    "name": "Get Set - Code Set Management",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -14,5 +15,6 @@
     ],
     "theme_color": "#006df0",
     "background_color": "#006df0",
-    "display": "standalone"
+    "display": "standalone",
+    "start_url": "/?utm_source=homescreen"
 }
