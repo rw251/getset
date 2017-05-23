@@ -10,7 +10,7 @@ if !user
     | to see more.
 else
   p#status
-  form
+  form#createForm
     .form-group
       label.radio-inline
         input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
@@ -21,6 +21,4 @@ else
     .form-group
       label(for='synonym') Search term
       input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
-    .form-group
-      label(for='output')
-      textarea#output.form-control
+  #output.code-list

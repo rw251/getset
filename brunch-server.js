@@ -50,6 +50,8 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   app.use(bodyParser.urlencoded({ extended: false }));
   // app.use(expressValidator());
   app.use(expressSession({
+    resave: false,
+    saveUninitialized: false,
     secret: config.passport.secret,
   }));
   app.use(passport.initialize());

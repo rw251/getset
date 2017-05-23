@@ -8,7 +8,7 @@ const login = require('../controllers/login');
 
 page('/', home);
 page('/login', login);
-page('/create', create);
+page('/create', create.show);
 page('/validate', validate);
 page('/search', search);
 page('/enhance', enhance);
