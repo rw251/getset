@@ -30,26 +30,64 @@ const displayResults = (codes) => {
   $('#output').html(html);
 };
 
+let lastTextValue = '';
+let mostRecent = 0;
+
+const parseDescription = (description, searchTerm) => {
+  const descriptionBits = [];
+  const descArr = description.split('|');
+  let n = descArr.length - 1;
+  let left = '';
+
+  if (description.toLowerCase().indexOf(searchTerm) < 0) {
+    descriptionBits.push({ text: descArr[n] });
+  } else {
+    while (descArr[n].toLowerCase().indexOf(searchTerm) < 0) {
+      n -= 1;
+    }
+    let idx = descArr[n].toLowerCase().indexOf(searchTerm);
+    while (idx >= 0) {
+      if (idx === 0) {
+        descriptionBits.push({ text: descArr[n].substr(0, searchTerm.length), isSyn: true });
+      } else {
+        descriptionBits.push({ text: descArr[n].substr(0, idx) });
+        descriptionBits.push({ text: descArr[n].substr(idx, searchTerm.length), isSyn: true });
+      }
+      left = descArr[n].substr(idx + searchTerm.length);
+      idx = descArr[n].toLowerCase().indexOf(searchTerm, idx + searchTerm.length - 1);
+    }
+  }
+  if (left.length > 0) {
+    descriptionBits.push({ text: left });
+  }
+  return descriptionBits;
+};
+
 const doSearch = () => {
   $('#status').text('Searching...');
   $
     .ajax({
       type: 'GET',
-      url: `/code/search/${$('input[name=terminology]:checked').val()}/${$('#synonym').val()}`,
+      url: `/code/search/${$('input[name=terminology]:checked').val()}/${lastTextValue}`,
       dataType: 'json',
       contentType: 'application/json',
     })
     .done((data) => {
-      $('#status').text(`Result! (n=${data.length})`);
-      displayResults(data.map(v => ({ code: v._id, description: v.t.split('|')[v.t.split('|').length - 1] })));
+      if (data.timestamp < mostRecent) {
+        console.log('Not updating as a newer query was fired');
+      } else {
+        mostRecent = data.timestamp;
+        $('#status').text(`Result! (n=${data.codes.length})`);
+        displayResults(data.codes.map(v => ({
+          code: v._id,
+          description: parseDescription(v.t, data.searchTerm) })));
+      }
     });
 };
 
 const search = debounce(() => {
   doSearch();
 }, 250);
-
-let lastTextValue = '';
 
 const wireup = () => {
   $('#synonym').on('keyup', () => {

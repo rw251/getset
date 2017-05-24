@@ -7,17 +7,38 @@ exports.search = (req, res) => {
       req.log(errFirst);
       return res.send();
     }
-    return Code.find({ p: { $in: codes.map((v) => {
+    const codesForQuery = codes.map((v) => {
       if (req.params.terminology === 'Readv2') {
         return v._id.substr(0, 5);
       }
       return v._id;
-    }) } }, (errSecond, allCodes) => {
+    });
+    const query = {
+      $and: [
+        {
+          p: {
+            $in: codesForQuery, // matches all descendents of the codes already found
+          },
+        },
+        {
+          _id: {
+            $not: {
+              $in: codesForQuery, // but doesn't match any of the original codes
+            },
+          },
+        },
+      ],
+    };
+    return Code.find(query, (errSecond, allCodes) => {
       if (errSecond) {
         req.log(errSecond);
         return res.send();
       }
-      return res.send(allCodes);
+      return res.send({
+        codes: allCodes.concat(codes),
+        searchTerm: req.params.searchterm,
+        timestamp: Date.now(),
+      });
     });
   });
 };

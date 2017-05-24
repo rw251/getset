@@ -2,7 +2,7 @@ const init = function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
            .register('/sw.js')
-           .then(() => { console.log('Service Worker Registered'); });
+           .then(() => { console.log('main.js -> Service Worker Registered'); });
   }
 };
 

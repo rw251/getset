@@ -9,7 +9,6 @@ if !user
       | sign in with GitHub 
     | to see more.
 else
-  p#status
   form#createForm
     .form-group
       label.radio-inline
@@ -21,4 +20,5 @@ else
     .form-group
       label(for='synonym') Search term
       input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
+  p#status
   #output.code-list

@@ -72,3 +72,43 @@ textarea {
 .container {
   position: relative;
 }
+
+.code-list {
+  background-color: black;
+  max-height: 50vh;
+  min-height:200px;
+  overflow-y: auto;
+}
+
+.code {
+  color: #f5deb3;
+  margin-right: 20px;
+  font-family: 'PT Mono', 'Lucida Console', Monaco, monospace;
+}
+
+.code-description {
+  color: #fff;  
+  font-family: 'PT Sans', sans-serif;
+}
+
+.code-description-synonym {
+  color: #adff2f;
+ /* font-weight: bold;*/
+  font-family: 'PT Sans', sans-serif;
+}
+
+.code-line:hover {
+  background-color: #ddd;
+}
+
+.code-line:hover .code {
+  color: #0A214C
+}
+
+.code-line:hover .code-description {
+  color: #000
+}
+
+.code-line:hover .code-description-synonym {
+  color: #5200D0;
+}

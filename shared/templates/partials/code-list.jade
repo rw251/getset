@@ -2,4 +2,8 @@
   each code in codes
     .code-line
       span.code= code.code
-      span.code-description= code.description
+      each bit in code.description 
+        if bit.isSyn
+          span.code-description-synonym= bit.text
+        else
+          span.code-description= bit.text
