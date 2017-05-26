@@ -1,0 +1,6 @@
+div
+  each synonym in synonyms
+    .alert.alert-success.alert-dismissible.alert-inline(data-value=synonym,role="alert")
+      button.close(type="button",data-dismiss="alert",aria-label="Close")
+        span(aria-hidden="true") &times;
+      = synonym

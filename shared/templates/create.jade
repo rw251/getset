@@ -17,8 +17,35 @@ else
       label.radio-inline
         input(type="radio", name="terminology", id="terminology2", value="SNOMED")
         | SNOMED CT
-    .form-group
-      label(for='synonym') Search term
-      input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
+    .row
+      .col-lg-6
+        #synonymList
+        .form-group
+          label(for='synonym') Search term
+          .input-group
+            input#synonym.form-control(type='text',placeholder='Enter synonyms here...',autocomplete='off')
+            span.input-group-btn
+              button#addSynonym.btn.btn-default(type="button") Add!
+      .col-lg-6
+        #exclusionList
+        .form-group
+          label(for='exclusion') Exclusion term
+          .input-group
+            input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
+            span.input-group-btn
+              button#addExclusion.btn.btn-default(type="button") Add!
   p#status
-  #output.code-list
+  div
+    // Nav tabs 
+    ul.nav.nav-tabs(role="tablist")
+      li.active(role="presentation")
+        a(href="#inc",aria-controls="inc",role="tab",data-toggle="tab") Included codes
+      li(role="presentation")
+        a(href="#exc",aria-controls="exc",role="tab",data-toggle="tab") Excluded codes
+
+    // Tab panes
+    .tab-content
+      #inc.tab-pane.active(role="tabpanel")
+        #outputInclude.code-list
+      #exc.tab-pane(role="tabpanel")
+        #outputExclude.code-list

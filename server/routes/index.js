@@ -64,6 +64,7 @@ module.exports = function routeIndex(passport) {
     res.redirect(req.session.returnTo || '/');
   });
 
-  router.get('/code/search/:terminology/:searchterm', codeController.search);
+  router.get('/code/search/:terminology/for/:searchterm', codeController.search);
+  router.get('/code/search/:terminology/forlist', codeController.searchMultiple);
   return router;
 };

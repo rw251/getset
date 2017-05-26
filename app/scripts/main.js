@@ -1,3 +1,9 @@
+const $ = require('jquery');
+
+window.$ = $;
+window.jQuery = $;
+require('bootstrap');
+
 const init = function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
