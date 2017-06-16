@@ -165,15 +165,17 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
     const localTerms = {};
 
     v.t.split('|').forEach((vv) => {
-      const words = vv.split(/\s+/);
+      const words = vv.split(/\s+/).map(w => w.toLowerCase());
       for (let i = 0; i < words.length; i += 1) {
-        for (let j = Math.max(0, i - n + 1); j <= i; j += 1) {
-          if (j === i) {
-            if (stopWords.indexOf(words[i]) === -1) {
-              localTerms[words[i]] = 1;
+        if (stopWords.indexOf(words[i].replace(/[^a-z0-9]/g, '')) === -1 && words[i].replace(/[^a-z0-9]/g, '').length > 0) {
+          for (let j = Math.max(0, i - n + 1); j <= i; j += 1) {
+            if (stopWords.indexOf(words[j].replace(/[^a-z0-9]/g, '')) === -1 && words[j].replace(/[^a-z0-9]/g, '').length > 0) {
+              if (j === i) {
+                localTerms[words[i].replace(/,$/, '')] = 1;
+              } else {
+                localTerms[words.slice(j, i + 1).join(' ').replace(/,$/, '')] = 1;
+              }
             }
-          } else {
-            localTerms[words.slice(j, i + 1).join(' ').toLowerCase()] = 1;
           }
         }
       }
@@ -191,10 +193,10 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
                           .sort((b, a) => a.freq - b.freq);
   frequencyOfTerms(allTermsArray).then((result) => {
     result.sort((b, a) => {
-      if ((a.freq / a.n) === (b.freq / b.n)) {
+      if (((2 * a.freq) - a.n) === ((2 * b.freq) - b.n)) {
         return a.freq - b.freq;
       }
-      return (a.freq / a.n) - (b.freq / b.n);
+      return ((2 * a.freq) - a.n) - ((2 * b.freq) - b.n);
     });
     resolve(result);
   });
