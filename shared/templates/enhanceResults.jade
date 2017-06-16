@@ -1,0 +1,47 @@
+.panel-group(role="tablist", aria-multiselectable="true")
+  .panel.panel-default
+    #headingOne.panel-heading(role='tab')
+      h4.panel-title
+        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseOne",aria-expanded="true",aria-controls="collapseOne")= 'Unmatched codes (' + unfoundCodes.length + ')'
+    #collapseOne.panel-collapse.collapse(role="tabpanel",aria-labelledby="headingOne")
+      .panel-body= unfoundCodes.join(', ')
+  .panel.panel-default
+    #headingTwo.panel-heading(role='tab')
+      h4.panel-title
+        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseTwo",aria-expanded="true",aria-controls="collapseTwo")= 'Matched codes (' + codes.length + ')'
+    #collapseTwo.panel-collapse.collapse(class=codeFrequency ? '' : 'in', role="tabpanel",aria-labelledby="headingTwo")
+      .panel-body
+        table.table.table-condensed
+          thead
+            tr
+              th Code
+              th Description(s)
+              th Ancestor code(s)
+              th Parent code(s)
+          tbody
+            each code in codes
+              tr(class=!code.t ? 'notfound' : '')
+                td= code._id
+                td= code.t || 'Not found - is this a correct code for this terminology?'
+                td= code.a
+                td= code.p
+  .panel.panel-default
+    #headingThree.panel-heading(role='tab')
+      h4.panel-title
+        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseThree",aria-expanded="true",aria-controls="collapseThree") Term frequency
+    #collapseThree.panel-collapse.collapse(class=codeFrequency ? 'in' : '', role="tabpanel",aria-labelledby="headingThree")
+      .panel-body
+        table.table.table-condensed
+          thead
+            tr
+              th Term
+              th Frequency in code set
+              th Frequency in terminology
+              th Relative frequency (higher better)
+          tbody
+            each code, idx in codeFrequency
+              tr
+                td= code.term
+                td= code.freq
+                td= code.n
+                td= (100*code.freq / code.n).toFixed(1) + '%'

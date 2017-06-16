@@ -9,8 +9,7 @@ if !user
       | sign in with GitHub 
     | to see more.
 else
-  p#status
-  form
+  form#enhanceForm
     .form-group
       label.radio-inline
         input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
@@ -19,8 +18,6 @@ else
         input(type="radio", name="terminology", id="terminology2", value="SNOMED")
         | SNOMED CT
     .form-group
-      label(for='synonym') Search term
-      input#synonym.form-control(type='text',placeholder='Enter synonyms here...')
-    .form-group
-      label(for='output')
-      textarea#output.form-control
+      label Code set
+      textarea#codeSet.form-control(placeholder='Paste your existing code set here...')
+  #results

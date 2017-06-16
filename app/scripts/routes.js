@@ -11,6 +11,6 @@ page('/login', login);
 page('/create', create.show);
 page('/validate', validate);
 page('/search', search);
-page('/enhance', enhance);
+page('/enhance', enhance.show);
 
 module.exports = page;
