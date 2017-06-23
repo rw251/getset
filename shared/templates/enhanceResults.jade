@@ -1,47 +1,45 @@
-.panel-group(role="tablist", aria-multiselectable="true")
-  .panel.panel-default
-    #headingOne.panel-heading(role='tab')
-      h4.panel-title
-        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseOne",aria-expanded="true",aria-controls="collapseOne")= 'Unmatched codes (' + unfoundCodes.length + ')'
-    #collapseOne.panel-collapse.collapse(role="tabpanel",aria-labelledby="headingOne")
-      .panel-body= unfoundCodes.join(', ')
-  .panel.panel-default
-    #headingTwo.panel-heading(role='tab')
-      h4.panel-title
-        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseTwo",aria-expanded="true",aria-controls="collapseTwo")= 'Matched codes (' + codes.length + ')'
-    #collapseTwo.panel-collapse.collapse(class=codeFrequency ? '' : 'in', role="tabpanel",aria-labelledby="headingTwo")
-      .panel-body
-        table.table.table-condensed
-          thead
-            tr
-              th Code
-              th Description(s)
-              th Ancestor code(s)
-              th Parent code(s)
-          tbody
-            each code in codes
-              tr(class=!code.t ? 'notfound' : '')
-                td= code._id
-                td= code.t || 'Not found - is this a correct code for this terminology?'
-                td= code.a
-                td= code.p
-  .panel.panel-default
-    #headingThree.panel-heading(role='tab')
-      h4.panel-title
-        a(role="button",data-toggle="collapse",data-parent="#accordion",href="#collapseThree",aria-expanded="true",aria-controls="collapseThree") Term frequency
-    #collapseThree.panel-collapse.collapse(class=codeFrequency ? 'in' : '', role="tabpanel",aria-labelledby="headingThree")
-      .panel-body
-        table.table.table-condensed
-          thead
-            tr
-              th Term
-              th Frequency in code set
-              th Frequency in terminology
-              th Relative frequency (higher better)
-          tbody
-            each code, idx in codeFrequency
-              tr
-                td= code.term
-                td= code.freq
-                td= code.n
-                td= (100*code.freq / code.n).toFixed(1) + '%'
+include ./mixins/code-table.jade
+include ./mixins/code-freq-table.jade
+
+- if(unfoundCodes && unfoundCodes.length>0)
+  .alert.alert-danger.alert-dismissible(role='alert')
+    button.close(type='button', data-dismiss='alert', aria-label='Close')
+      span(aria-hidden='true') ×
+    strong Warning!
+    = ' We couldn\'t find the following code' + (unfoundCodes.length > 1 ? 's' : '') + ': ' + unfoundCodes.join(', ')
+- else
+  .alert.alert-success.alert-dismissible(role='alert')
+    button.close(type='button', data-dismiss='alert', aria-label='Close')
+      span(aria-hidden='true') ×
+    strong Success!
+    |  We found all the codes in your set.
+div
+  // Nav tabs
+  ul.nav.nav-tabs(role='tablist')
+    li(class=codeFrequency ? '' : 'active', role='presentation')
+      a(href='#existingTabContent', aria-controls='existingTabContent', role='tab', data-toggle='tab')= 'Existing code set (' + codes.length + ')'
+    li(class=codeFrequency ? 'active' : '', role='presentation')
+      a(href='#frequencyTabContent', aria-controls='frequencyTabContent', role='tab', data-toggle='tab') Term frequency
+    li(role='presentation')
+      a(href='#matchedExistingTabContent', aria-controls='matchedExistingTabContent', role='tab', data-toggle='tab') Matched - in existing (0)
+    li(role='presentation')
+      a(href='#matchedNotExistingTabContent', aria-controls='matchedNotExistingTabContent', role='tab', data-toggle='tab') Matched - not in existing (0)
+    li(role='presentation')
+      a(href='#existingNotMatchedTabContent', aria-controls='existingNotMatchedTabContent', role='tab', data-toggle='tab')= 'Existing - not matched (' + codes.length + ')'
+    li(role='presentation')
+      a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab') Matched - excluded (0)
+
+  // Tab panes
+  .tab-content
+    #existingTabContent.tab-pane(class=codeFrequency ? '' : 'active in', role='tabpanel')
+      +codeTable(codes)
+    #frequencyTabContent.tab-pane(class=codeFrequency ? 'active in' : '', role='tabpanel')
+      +codeFrequencyTable(codes)
+    #matchedExistingTabContent.tab-pane(role='tabpanel')
+      +codeTable([])
+    #matchedNotExistingTabContent.tab-pane(role='tabpanel')
+      +codeTable([])
+    #existingNotMatchedTabContent.tab-pane(role='tabpanel')
+      +codeTable(codes)
+    #excludedTabContent.tab-pane(role='tabpanel')
+      +codeTable([])

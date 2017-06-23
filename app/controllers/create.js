@@ -2,7 +2,7 @@
 
 const createTemplate = require('../../shared/templates/create.jade');
 const codeListTemplate = require('../../shared/templates/partials/code-list.jade');
-const synonymTemplate = require('../../shared/templates/partials/synonyms');
+const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const graphUtils = require('../scripts/graph-utils');
 const utils = require('../scripts/utils');
 const defaultController = require('./default');

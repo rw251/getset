@@ -1,16 +1,211 @@
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 const enhanceTemplate = require('../../shared/templates/enhance.jade');
 const enhanceResultsTemplate = require('../../shared/templates/enhanceResults.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
+const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
+const codeTableTemplate = require('../../shared/templates/partials/code-table.jade');
+const codeFrequencyTableTemplate = require('../../shared/templates/partials/code-freq-table.jade');
 const defaultController = require('./default');
 const $ = require('jquery');
 
 let $output;
 let $codeSet;
 let currentTerminology = '';
+let $synonymInput;
+let $exclusionInput;
+let $synonymAdd;
+let $exclusionAdd;
+let $synonymList;
+let $exclusionList;
+
+const s = {};
+const e = {};
+let x = {};
+let m = {};
+
+let existingList;
+let matchedList;
+
+const removeExclusions = list => list.filter((item) => {
+  let isMatch = true;
+
+  Object.keys(e).forEach((v) => {
+    if (item.t.toLowerCase().indexOf(v.toLowerCase()) >= 0) isMatch = false;
+  });
+
+  return isMatch;
+});
+
+const returnExclusions = list => list.filter((item) => {
+  let isMatch = false;
+
+  Object.keys(e).forEach((v) => {
+    if (item.t.toLowerCase().indexOf(v.toLowerCase()) >= 0) isMatch = true;
+  });
+
+  return isMatch;
+});
+
+const existingNotMatched = () => removeExclusions(existingList.filter(item => !m[item._id]));
+
+const matchedNotExisting = () => removeExclusions(matchedList.filter(item => !x[item._id]));
+
+const matchedExisting = () => removeExclusions(matchedList.filter(item => x[item._id]));
+
+const matchedExcluded = () => returnExclusions(matchedList);
+
+const refreshMatchedInExisting = () => {
+  const codes = matchedExisting();
+  const id = '#matchedExistingTabContent';
+  $(id).html(codeTableTemplate({ codes }));
+  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
+};
+
+const refreshMatchedNotInExisting = () => {
+  const codes = matchedNotExisting();
+  const id = '#matchedNotExistingTabContent';
+  $(id).html(codeTableTemplate({ codes }));
+  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
+};
+
+const refreshExistingNotMatched = () => {
+  const codes = existingNotMatched();
+  const id = '#existingNotMatchedTabContent';
+  $(id).html(codeTableTemplate({ codes }));
+  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
+};
+
+const refreshMatchedExcluded = () => {
+  const codes = matchedExcluded();
+  const id = '#excludedTabContent';
+  $(id).html(codeTableTemplate({ codes }));
+  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
+};
+
+const refreshTermFrequency = () => {
+  const codes = existingNotMatched();
+  $('#frequencyTabContent').html(ajaxLoaderTemplate());
+  setTimeout(() => {
+    const codeSet = codes.map(c => c._id);
+    $
+      .ajax({
+        type: 'POST',
+        url: '/code/enhance',
+        data: JSON.stringify({ terminology: currentTerminology, codes: codeSet }),
+        dataType: 'json',
+        contentType: 'application/json',
+      })
+      .done((data) => {
+        $('#frequencyTabContent').html(codeFrequencyTableTemplate(data));
+      });
+  }, 1);
+};
+
+const refresh = () => {
+  $
+    .ajax({
+      type: 'GET',
+      url: `/code/search/${$('input[name=terminology]:checked').val()}/forlist?t=${Object.keys(s).join('&t=')}`,
+      dataType: 'json',
+      contentType: 'application/json',
+    })
+    .done((data) => {
+      matchedList = data.codes;
+      m = {};
+      matchedList.forEach((code) => {
+        m[code._id] = true;
+      });
+      refreshTermFrequency();
+      refreshMatchedInExisting();
+      refreshMatchedNotInExisting();
+      refreshExistingNotMatched();
+      refreshMatchedExcluded();
+    });
+};
+const refreshSynonymUI = () => {
+  const html = synonymTemplate({ synonyms: Object.keys(s) });
+  $synonymList.html(html);
+  $synonymInput.val('');
+};
+const refreshExclusionUI = () => {
+  const html = synonymTemplate({ synonyms: Object.keys(e) });
+  $exclusionList.html(html);
+  $exclusionInput.val('');
+};
+
+const addTerm = (term, isExclusion) => {
+  if (isExclusion) {
+    e[term] = true;
+    refreshTermFrequency();
+    refreshExclusionUI();
+    refreshMatchedInExisting();
+    refreshMatchedNotInExisting();
+    refreshMatchedExcluded();
+  } else {
+    s[term] = true;
+    refreshSynonymUI();
+    refresh();
+  }
+
+  $('.alert').alert().on('closed.bs.alert', (evt) => {
+    const termToRemove = $(evt.target).data('value');
+    if (e[termToRemove]) {
+      delete e[termToRemove];
+      refreshTermFrequency();
+      refreshMatchedInExisting();
+      refreshMatchedNotInExisting();
+      refreshMatchedExcluded();
+    } else {
+      delete s[termToRemove];
+      refresh();
+    }
+  });
+};
+
+const addIfLongEnough = (element) => {
+  const latestSynonym = element.val();
+  if (latestSynonym.length < 2) {
+        // alertBecauseTooShort
+  } else {
+    addTerm(latestSynonym, element === $exclusionInput);
+  }
+};
 
 const wireUp = () => {
   $codeSet = $('#codeSet');
   $output = $('#results');
+  $synonymInput = $('#synonym');
+  $exclusionInput = $('#exclusion');
+  $synonymAdd = $('#addSynonym');
+  $exclusionAdd = $('#addExclusion');
+  $synonymList = $('#synonymList');
+  $exclusionList = $('#exclusionList');
+
+  $synonymInput.on('keypress', (evt) => {
+    // If ENTER key
+    if (evt.which === 13) {
+      addIfLongEnough($synonymInput);
+    }
+    // if ($('#synonym').val().length >= 3 && $('#synonym').val() !== lastTextValue) {
+    //   lastTextValue = $('#synonym').val();
+    //   search();
+    // }
+  });
+
+  $exclusionInput.on('keypress', (evt) => {
+    // If ENTER key
+    if (evt.which === 13) {
+      addIfLongEnough($exclusionInput);
+    }
+  });
+
+
+  $synonymAdd.on('click', () => {
+    addIfLongEnough($synonymInput);
+  });
+  $exclusionAdd.on('click', () => {
+    addIfLongEnough($exclusionInput);
+  });
 
   $codeSet.on('paste', () => {
     $output.html(ajaxLoaderTemplate());
@@ -26,6 +221,11 @@ const wireUp = () => {
           contentType: 'application/json',
         })
         .done((data) => {
+          existingList = data.codes;
+          x = {};
+          existingList.forEach((code) => {
+            x[code._id] = true;
+          });
           $output.fadeOut(500, () => {
             $output.html(enhanceResultsTemplate(data)).fadeIn(300);
           });

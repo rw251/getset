@@ -1,5 +1,3 @@
-include ./partials/title.jade
-
 h1 Enhance
 if !user
   p 
@@ -20,4 +18,21 @@ else
     .form-group
       label Code set
       textarea#codeSet.form-control(placeholder='Paste your existing code set here...')
+    .row
+      .col-lg-6
+        #synonymList
+        .form-group
+          label(for='synonym') Search term
+          .input-group
+            input#synonym.form-control(type='text',placeholder='Enter synonyms here...',autocomplete='off')
+            span.input-group-btn
+              button#addSynonym.btn.btn-default(type="button") Add!
+      .col-lg-6
+        #exclusionList
+        .form-group
+          label(for='exclusion') Exclusion term
+          .input-group
+            input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
+            span.input-group-btn
+              button#addExclusion.btn.btn-default(type="button") Add!
   #results
