@@ -1,10 +1,13 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 const Code = require('../models/Code');
 
+const BIT_LENGTH = 6;
 // This will need optimising at some point
 // but while small scale it is a good optimisation
 const cache = {};
 
+// from https://stackoverflow.com/a/6969486/596639
+const escapeRegExp = str => str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
 /**
  * @description For a given searchterm and terminology this returns all
  * codes that match the searchterm in that terminology. It also returns
@@ -21,29 +24,43 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     // We've already done this so return from cache
     return callback(null, cache[terminology][searchterm]);
   }
-  const escapedTerm = `\"${searchterm}\"`;
-  return Code.find({ $text: { $search: escapedTerm } }, (errFirst, codes) => {
+  // const escapedTerm = `\"${searchterm}\"`;
+  const bit = searchterm.substr(0, BIT_LENGTH).toLowerCase();
+  let match = { c: bit };
+  if (bit.length < BIT_LENGTH) {
+    const reg = new RegExp(`^${escapeRegExp(bit)}`);
+    match = { c: { $regex: reg } };
+  }
+  // { $text: { $search: escapedTerm } }
+  return Code.find(match, { c: 0 }, (errFirst, codes) => {
     if (errFirst) {
       return callback(errFirst);
     }
-    const codesForQuery = codes.map((v) => {
-      if (terminology === 'Readv2') {
-        return v._id.substr(0, 5);
-      }
-      return v._id;
-    });
-    const codesForNotQuery = codes.map(v => v._id);
+    const codesWithSearchTerm = codes
+      .map((v) => {
+        if (v.t.toLowerCase().indexOf(searchterm.toLowerCase()) > -1) return v;
+        return null;
+      })
+      .filter(v => v);
+    const codesForQuery = codesWithSearchTerm
+      .map((v) => {
+        if (terminology === 'Readv2') {
+          return v._id.substr(0, 5);
+        }
+        return v._id;
+      });
+    const codesForNotQuery = codesWithSearchTerm.map(v => v._id);
     const query = { $and: [
         // matches all descendents of the codes already found
         { p: { $in: codesForQuery } },
         // but doesn't match any of the original codes
         { _id: { $not: { $in: codesForNotQuery } } },
     ] };
-    return Code.find(query, (errSecond, allCodes) => {
+    return Code.find(query, { c: 0 }, (errSecond, allCodes) => {
       if (errSecond) {
         return callback(errSecond);
       }
-      cache[terminology][searchterm] = allCodes.concat(codes);
+      cache[terminology][searchterm] = allCodes.concat(codesWithSearchTerm);
       return callback(null, cache[terminology][searchterm]);
     });
   });
@@ -137,13 +154,52 @@ const frequencyOfTerm = term => new Promise((resolve, reject) => {
   if (!term.term) {
     rtnTerm = { term };
   }
-  const escapedTerm = `\"${rtnTerm.term}\"`;
-  Code.count({ $text: { $search: escapedTerm } }, (err, count) => {
+  // const escapedTerm = `\"${rtnTerm.term}\"`;
+  const bit = rtnTerm.term.substr(0, BIT_LENGTH).toLowerCase();
+  let match = { c: bit };
+  if (bit.length < BIT_LENGTH) {
+    const reg = new RegExp(`^${escapeRegExp(bit)}`);
+    match = { c: reg };
+  }
+  const wholeReg = new RegExp(escapeRegExp(rtnTerm.term), 'i');
+  const aggregate = [
+    { $match: match },
+    { $match: { t: wholeReg } },
+    { $group: { _id: null, count: { $sum: 1 } } },
+  ];
+
+  // { $text: { $search: escapedTerm } }
+  Code.aggregate(aggregate, (err, result) => {
     if (err) reject(err);
-    rtnTerm.n = count;
+    if (result && result.length > 0)rtnTerm.n = result[0].count;
+    else rtnTerm.n = 0;
     resolve(rtnTerm);
   });
 });
+
+// TODO can perhaps make multiple frequency count quicker like this..
+/* const frequencyOfTermsAlt = terms => new Promise((resolve, reject) => {
+  const bits = terms.map((v) => {
+    if (!v.term) v = { term: v };
+    if (v.term.length < BIT_LENGTH) {
+      return new RegExp(`^${escapeRegExp(v.term)}`);
+    }
+    return v.term.substr(0, BIT_LENGTH).toLowerCase();
+  });
+  const wholeReg = terms.map(v => new RegExp(escapeRegExp(v.term), 'i'));
+  const aggregate = [
+    { $match: { c: { $in: bits } } },
+    { $match: { t: { $in: wholeReg } } },
+  ];
+
+  // { $text: { $search: escapedTerm } }
+  Code.aggregate(aggregate, (err, results) => {
+    if (err) reject(err);
+    if (results && results.length > 0)rtnTerm.n = result[0].count;
+    else rtnTerm.n = 0;
+    resolve(rtnTerm);
+  });
+});*/
 
 const frequencyOfTerms = terms => Promise.all(terms.map(term => frequencyOfTerm(term)));
 
@@ -211,7 +267,7 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
  */
 exports.enhance = (req, res) => {
   const processedCodes = processCodesForTerminology(req.body.codes, req.body.terminology);
-  Code.find({ _id: { $in: processedCodes } }, (err, codes) => {
+  Code.find({ _id: { $in: processedCodes } }, { c: 0, a: 0, p: 0 }, (err, codes) => {
     const returnedCodes = codes.map(v => v._id);
     const unfoundCodes = [];
     processedCodes.forEach((v) => {
