@@ -7,7 +7,7 @@ mixin codeFrequencyTable(codes)
         th Frequency in terminology
         th Relative frequency (higher better)
     tbody
-      each code, idx in codeFrequency
+      each code, idx in codes
         tr
           td= code.term
           td= code.freq

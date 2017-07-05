@@ -1,6 +1,7 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 const enhanceTemplate = require('../../shared/templates/enhance.jade');
-const enhanceResultsTemplate = require('../../shared/templates/enhanceResults.jade');
+// const enhanceResultsTemplate = require('../../shared/templates/enhanceResults.jade');
+const enhanceResultsTemplate = require('../../shared/templates/enhanceResultsAlt.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const codeTableTemplate = require('../../shared/templates/partials/code-table.jade');
@@ -25,6 +26,17 @@ let m = {};
 
 let existingList;
 let matchedList;
+
+// Finds y value of given object
+const findPos = (obj) => {
+  let curtop = 0;
+  if (obj.offsetParent) {
+    do {
+      curtop += obj.offsetTop;
+    } while (obj = obj.offsetParent);
+  }
+  return [curtop];
+};
 
 const removeExclusions = list => list.filter((item) => {
   let isMatch = true;
@@ -171,6 +183,26 @@ const addIfLongEnough = (element) => {
   }
 };
 
+const getStamp = {
+  exists: (numCodes, numUnfound) => {
+    const rtn = { title: 'Found', status: 'warn' };
+    rtn.perf = Math.floor((100 * numCodes) / (numCodes + numUnfound));
+
+    if (rtn.perf === 100) rtn.status = 'pass';
+    else if (rtn.perf < 90) rtn.status = 'fail';
+    rtn.perf += '%';
+    return rtn;
+  },
+  unmatchedChildren: (numUnmatchedChildren) => {
+    const rtn = { title: 'Missing children', status: 'warn' };
+    rtn.perf = numUnmatchedChildren;
+
+    if (rtn.perf < 5) rtn.status = 'pass';
+    else if (rtn.perf > 20) rtn.status = 'fail';
+    return rtn;
+  },
+};
+
 const wireUp = () => {
   $codeSet = $('#codeSet');
   $output = $('#results');
@@ -207,6 +239,10 @@ const wireUp = () => {
     addIfLongEnough($exclusionInput);
   });
 
+  $output.on('click', '.token', () => {
+    window.scroll(0, findPos(document.getElementById('results')));
+  });
+
   $codeSet.on('paste', () => {
     $output.html(ajaxLoaderTemplate());
     currentTerminology = $('input[name=terminology]:checked').val();
@@ -215,12 +251,20 @@ const wireUp = () => {
       $
         .ajax({
           type: 'POST',
-          url: '/code/enhance',
+          url: '/code/unmatchedChildren',
           data: JSON.stringify({ terminology: currentTerminology, codes: codeSet }),
           dataType: 'json',
           contentType: 'application/json',
         })
         .done((data) => {
+          const codesObj = {};
+          const stamps = [];
+          stamps.push(getStamp.exists(data.codes.length, data.unfoundCodes.length));
+          stamps.push(getStamp.unmatchedChildren(data.unmatchedCodes.length));
+          data.stamps = stamps;
+          data.codes.forEach((v) => {
+            codesObj[v._id] = v;
+          });
           existingList = data.codes;
           x = {};
           existingList.forEach((code) => {

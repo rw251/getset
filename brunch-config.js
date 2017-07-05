@@ -27,5 +27,10 @@ module.exports = {
     babel: {
       pattern: /sw\.js$/,
     },
+    sass: {
+      options: {
+        includePaths: ['app/styles'],
+      },
+    },
   },
 };

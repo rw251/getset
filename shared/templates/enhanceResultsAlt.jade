@@ -1,0 +1,52 @@
+include ./mixins/code-table.jade
+include ./mixins/code-freq-table.jade
+include ./mixins/perf-stamp.jade
+
+.token-container
+  - each stamp in stamps
+    +perfStamp(stamp.title, stamp.perf, stamp.status)
+.panel.panel-default
+  .panel-heading Missing codes
+  .panel-body
+    - if(unfoundCodes && unfoundCodes.length > 0)
+      = 'The following codes in your set do not appear in the selected terminology: ' + unfoundCodes.join(', ')
+    - else
+      | I found all the codes in your set.
+.panel.panel-default
+  .panel-heading Missing codes
+  .panel-body
+    - if(unmatchedCodes && unmatchedCodes.length > 0)
+      = 'The following codes are not in your set but they are descendents of codes that are.'
+      +codeTable(unmatchedCodes)
+    - else
+      | All descendents of codes in your set are also in your set.
+div
+  // Nav tabs
+  ul.nav.nav-tabs(role='tablist')
+    li(class=codeFrequency ? '' : 'active', role='presentation')
+      a(href='#existingTabContent', aria-controls='existingTabContent', role='tab', data-toggle='tab')= 'Existing code set (' + codes.length + ')'
+    li(class=codeFrequency ? 'active' : '', role='presentation')
+      a(href='#frequencyTabContent', aria-controls='frequencyTabContent', role='tab', data-toggle='tab') Term frequency
+    li(role='presentation')
+      a(href='#matchedExistingTabContent', aria-controls='matchedExistingTabContent', role='tab', data-toggle='tab') Matched - in existing (0)
+    li(role='presentation')
+      a(href='#matchedNotExistingTabContent', aria-controls='matchedNotExistingTabContent', role='tab', data-toggle='tab') Matched - not in existing (0)
+    li(role='presentation')
+      a(href='#existingNotMatchedTabContent', aria-controls='existingNotMatchedTabContent', role='tab', data-toggle='tab')= 'Existing - not matched (' + codes.length + ')'
+    li(role='presentation')
+      a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab') Matched - excluded (0)
+
+  // Tab panes
+  .tab-content
+    #existingTabContent.tab-pane(class=codeFrequency ? '' : 'active in', role='tabpanel')
+      +codeTable(codes)
+    #frequencyTabContent.tab-pane(class=codeFrequency ? 'active in' : '', role='tabpanel')
+      +codeFrequencyTable(codes)
+    #matchedExistingTabContent.tab-pane(role='tabpanel')
+      +codeTable([])
+    #matchedNotExistingTabContent.tab-pane(role='tabpanel')
+      +codeTable([])
+    #existingNotMatchedTabContent.tab-pane(role='tabpanel')
+      +codeTable(codes)
+    #excludedTabContent.tab-pane(role='tabpanel')
+      +codeTable([])

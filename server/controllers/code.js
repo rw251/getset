@@ -259,6 +259,44 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
 });
 
 /**
+ * @description Takes a list of codes and returns a list of descendents not in the initial list
+ *
+ * @param {any} req The express request object
+ * @param {any} res The express response object
+ * @returns {null} No return
+ */
+exports.unmatchedChildren = (req, res) => {
+  const processedCodes = processCodesForTerminology(req.body.codes, req.body.terminology);
+
+  Code.find({ _id: { $in: processedCodes } }, { c: 0, a: 0, p: 0 }, (err, codes) => {
+    const returnedCodes = codes.map(v => v._id);
+    const unfoundCodes = [];
+    processedCodes.forEach((v) => {
+      if (returnedCodes.indexOf(v) < 0) {
+        unfoundCodes.push(v);
+      }
+    });
+    const codesForQuery = processedCodes
+      .map((v) => {
+        if (req.body.terminology === 'Readv2') {
+          return v.substr(0, 5);
+        }
+        return v;
+      });
+
+    const query = { $and: [
+      // matches all descendents of the codes already found
+      { a: { $in: codesForQuery } },
+      // but doesn't match any of the original codes
+      { _id: { $not: { $in: processedCodes } } },
+    ] };
+    return Code.find(query, { c: 0 }, (errSecond, unmatchedCodes) => {
+      res.send({ codes, unfoundCodes, unmatchedCodes });
+    });
+  });
+};
+
+/**
  * @description Takes a list of codes and returns a list of definitions
  *
  * @param {any} req The express request object
@@ -294,4 +332,3 @@ exports.freqMult = (req, res) => {
       res.send({ n: terms });
     });
 };
-
