@@ -1,0 +1,17 @@
+mixin codeTableOfGraph(graph)
+  table.table.table-condensed
+    thead
+      tr
+        th Code
+        th Description(s)
+        th Ancestor code(s)
+        th Parent(s)
+    tbody
+      each subgraph in graph
+        each item in subgraph
+          if !item.exclude
+            tr
+              td= item.code
+              td= item.description
+              td= item.depth
+              td= item.p

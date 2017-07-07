@@ -1,7 +1,8 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 
 const createTemplate = require('../../shared/templates/create.jade');
-const codeListTemplate = require('../../shared/templates/partials/code-list.jade');
+const createResultsTemplate = require('../../shared/templates/createResults.jade');
+const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const graphUtils = require('../scripts/graph-utils');
 const utils = require('../scripts/utils');
@@ -12,120 +13,111 @@ const $ = require('jquery');
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 
 // jQuery elements
-let $synonymInput;
-let $exclusionInput;
-let $synonymAdd;
-let $exclusionAdd;
-let $outputInclude;
-let $outputExclude;
+const $synonym = { include: {}, exclude: {} };
+let $results;
 let $status;
-let $synonymList;
-let $exclusionList;
+let startedAt;
 
-let currentGroups;
+const currentGroups = { excluded: [] };
 
 const displayResults = (groups) => {
-  const html = codeListTemplate({ groups });
-  $outputInclude.html(html);
-};
-
-const lastTextValue = '';
-let mostRecent = 0;
-let currentTerminology = '';
-
-const doSearch = () => {
-  $status.text('Searching...');
-  $
-    .ajax({
-      type: 'GET',
-      url: `/code/search/${$('input[name=terminology]:checked').val()}/for/${lastTextValue}`,
-      dataType: 'json',
-      contentType: 'application/json',
-    })
-    .done((data) => {
-      if (data.timestamp < mostRecent) {
-        console.log('Not updating as a newer query was fired');
-      } else {
-        currentTerminology = $('input[name=terminology]:checked').val();
-        mostRecent = data.timestamp;
-        $status.text(`Result! (n=${data.codes.length})`);
-        currentGroups = graphUtils.getHierarchy(data.codes, currentTerminology, data.searchTerm);
-        displayResults(currentGroups);
-      }
+  const html = createResultsTemplate(groups);
+  if (new Date() - startedAt < 150) {
+    $results.html(html);
+  } else {
+    $results.fadeOut(500, () => {
+      $results.html(html).fadeIn(300);
     });
+  }
 };
 
-const search = utils.debounce(() => {
-  doSearch();
-}, 250);
+let currentTerminology = '';
 
 const s = {};
 const e = {};
 
-const refresh = () => {
-  $status.text('Refreshing list...');
-  $
-    .ajax({
-      type: 'GET',
-      url: `/code/search/${$('input[name=terminology]:checked').val()}/forlist?t=${Object.keys(s).join('&t=')}`,
-      dataType: 'json',
-      contentType: 'application/json',
-    })
-    .done((data) => {
-      currentTerminology = $('input[name=terminology]:checked').val();
-      mostRecent = data.timestamp;
-      $status.text(`Result! (n=${data.codes.length})`);
-      currentGroups = graphUtils.getHierarchy(data.codes, currentTerminology, data.searchTerm);
-      displayResults(currentGroups);
-    });
-};
 const refreshExclusion = () => {
   const exArray = Object.keys(e);
-  currentGroups.forEach((g, gi) => {
+  currentGroups.excluded = [];
+  currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      code.description = [].concat(code.description);
-      if (exArray.filter(a => code.description.map(v => v.text).join('').toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
-        currentGroups[gi][i].exclude = true;
-      } else {
-        delete currentGroups[gi][i].exclude;
+      // code.description = [].concat(code.description);
+      if (exArray.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+        if (!currentGroups.matched[gi][i].exclude) {
+          currentGroups.matched[gi][i].exclude = true;
+          currentGroups.numMatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.matched[gi][i]);
+      } else if (currentGroups.matched[gi][i].exclude) {
+        currentGroups.numMatched += 1;
+        delete currentGroups.matched[gi][i].exclude;
+      }
+    });
+  });
+  currentGroups.unmatched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      // code.description = [].concat(code.description);
+      if (exArray.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+        if (!currentGroups.unmatched[gi][i].exclude) {
+          currentGroups.unmatched[gi][i].exclude = true;
+          currentGroups.numUnmatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+      } else if (currentGroups.unmatched[gi][i].exclude) {
+        currentGroups.numUnmatched += 1;
+        delete currentGroups.unmatched[gi][i].exclude;
       }
     });
   });
   displayResults(currentGroups);
-  // Object.keys(e).forEach((v) => {
-  //   $(`.code-description:icontains("${v}")`).each((i, el) => {
-  //     const $el = $(el);
-  //     $el.parent().addClass('exclusion');
-  //     const text = $el.text();
-  //     const idx = text.toLowerCase().indexOf(v.toLowerCase());
-  //     const newEls = [];
-  //     if (idx > 0) {
-  //       newEls.push($(`<span class="code-description">${text.substr(0, idx)}</span>`));
-  //     }
-  //     newEls.push($(`<span class="code-description-exclusion">${text.substr(idx, v.length)}</span>`));
-  //     if (idx + v.length < text.length) {
-  //       newEls.push($(`<span class="code-description">${text.substr(idx + v.length)}</span>`));
-  //     }
-  //     newEls.forEach((vv, ii) => {
-  //       if (ii === 0) $el.replaceWith(vv);
-  //       else newEls[ii - 1].after(vv);
-  //     });
-  //   });
-  // });
 };
+
+const refresh = () => {
+  $status.text('Refreshing list...');
+  $results.html(ajaxLoaderTemplate());
+  currentTerminology = $('input[name=terminology]:checked').val();
+  setTimeout(() => {
+    const terms = Object.keys(s);
+    $
+    .ajax({
+      type: 'POST',
+      url: '/code/search',
+      data: JSON.stringify({ terminology: currentTerminology, terms }),
+      dataType: 'json',
+      contentType: 'application/json',
+    })
+    .done((data) => {
+      $status.text(`Result! (n=${data.codes.length})`);
+      const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
+      currentGroups.matched = hierarchies.matched;
+      currentGroups.unmatched = hierarchies.unmatched;
+      currentGroups.numMatched = hierarchies.numMatched;
+      currentGroups.numUnmatched = hierarchies.numUnmatched;
+      // displayResults(currentGroups);
+      refreshExclusion();
+    });
+  }, 1);
+};
+
+const clearInputs = () => {
+  $synonym.include.input.val('');
+  $synonym.exclude.input.val('');
+};
+
 const refreshSynonymUI = () => {
   const html = synonymTemplate({ synonyms: Object.keys(s) });
-  $synonymList.html(html);
-  $synonymInput.val('');
+  $synonym.include.list.html(html);
+  clearInputs();
 };
+
 const refreshExclusionUI = () => {
   const html = synonymTemplate({ synonyms: Object.keys(e) });
-  $exclusionList.html(html);
-  $exclusionInput.val('');
+  $synonym.exclude.list.html(html);
+  clearInputs();
 };
 
-
 const addTerm = (term, isExclusion) => {
+  startedAt = new Date();
   if (isExclusion) {
     e[term] = true;
     refreshExclusionUI();
@@ -143,7 +135,7 @@ const addTerm = (term, isExclusion) => {
       refreshExclusion();
     } else {
       delete s[termToRemove];
-      refresh();
+      if (Object.keys(s).length > 0) refresh();
     }
   });
 };
@@ -153,48 +145,86 @@ const addIfLongEnough = (element) => {
   if (latestSynonym.length < 2) {
         // alertBecauseTooShort
   } else {
-    addTerm(latestSynonym, element === $exclusionInput);
+    addTerm(latestSynonym, element === $synonym.exclude.input);
   }
 };
 
 const wireup = () => {
-  $synonymInput = $('#synonym');
-  $exclusionInput = $('#exclusion');
-  $synonymAdd = $('#addSynonym');
-  $exclusionAdd = $('#addExclusion');
-  $outputInclude = $('#outputInclude');
-  $outputExclude = $('#outputExclude');
+  $synonym.include.input = $('#synonym');
+  $synonym.include.input.focus();
+  $synonym.exclude.input = $('#exclusion');
+  $synonym.include.add = $('#addSynonym');
+  $synonym.exclude.add = $('#addExclusion');
+  $results = $('#results');
   $status = $('#status');
-  $synonymList = $('#synonymList');
-  $exclusionList = $('#exclusionList');
+  $synonym.include.list = $('#synonymList');
+  $synonym.exclude.list = $('#exclusionList');
 
-  $synonymInput.on('keypress', (evt) => {
-    // If ENTER key
-    if (evt.which === 13) {
-      addIfLongEnough($synonymInput);
-    }
-    // if ($('#synonym').val().length >= 3 && $('#synonym').val() !== lastTextValue) {
-    //   lastTextValue = $('#synonym').val();
-    //   search();
-    // }
-  });
-
-  $exclusionInput.on('keypress', (evt) => {
-    // If ENTER key
-    if (evt.which === 13) {
-      addIfLongEnough($exclusionInput);
+  $synonym.include.input.on('keypress', (evt) => {
+    if (evt.which === 13) { // ENTER key
+      addIfLongEnough($synonym.include.input);
     }
   });
 
-  $('#createForm').on('submit', (e) => {
-    e.preventDefault();
+  $synonym.exclude.input.on('keypress', (evt) => {
+    if (evt.which === 13) { // ENTER key
+      addIfLongEnough($synonym.exclude.input);
+    }
   });
 
-  $synonymAdd.on('click', () => {
-    addIfLongEnough($synonymInput);
+  $('#createForm').on('submit', (evt) => {
+    evt.preventDefault();
   });
-  $exclusionAdd.on('click', () => {
-    addIfLongEnough($exclusionInput);
+
+  $synonym.include.add.on('click', () => { addIfLongEnough($synonym.include.input); });
+  $synonym.exclude.add.on('click', () => { addIfLongEnough($synonym.exclude.input); });
+
+  $('#results').on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
+    currentGroups.selected = evt.target.href.split('#')[1];
+  });
+
+  let lastPopOverElements;
+  $('#results').on('mouseup', 'td', (evt) => {
+    let selection = '';
+    if (window.getSelection) {
+      selection = window.getSelection();
+    } else if (document.selection) {
+      selection = document.selection.createRange();
+    }
+    $synonym.include.input.val(selection);
+    $synonym.exclude.input.val(selection);
+
+    if (selection.toString().length > 0) {
+      if (lastPopOverElements) {
+        lastPopOverElements.popover('hide');
+        lastPopOverElements = null;
+      }
+      const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
+      const selectionCoords = utils.getSelectionCoords();
+      $(evt.target).popover({
+        animation: true,
+        content: popupElement,
+        container: '#results',
+        html: true,
+        placement: 'right',
+      });
+      setTimeout(() => {
+        $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
+      }, 1);
+      if (!lastPopOverElements) lastPopOverElements = $(evt.target);
+      else lastPopOverElements = lastPopOverElements.add($(evt.target));
+    } else if (lastPopOverElements) {
+      lastPopOverElements.popover('hide');
+      lastPopOverElements = null;
+    }
+  });
+
+  $('#results').on('click', '.btn-include', () => {
+    $synonym.include.add.click();
+  });
+
+  $('#results').on('click', '.btn-exclude', () => {
+    $synonym.exclude.add.click();
   });
 
   $('.code-list').on('click', '.code-line', (evt) => {

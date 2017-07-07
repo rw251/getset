@@ -127,6 +127,43 @@ exports.searchMultiple = (req, res) => {
 };
 
 /**
+ * @description Takes a list of search terms and returns the combined set of matching
+ * codes for each search term combined.
+ *
+ * @param {any} req The express request object
+ * @param {any} res The express response object
+ * @returns {null} No return
+ */
+exports.newSearchMultiple = (req, res) => {
+  const terms = req.body.terms;
+  const terminology = req.body.terminology;
+  let hasErrorOccurred = false;
+  let hasReturned = 0;
+  const toReturn = {};
+  terms.forEach((t) => {
+    findCodesForTerm(t, terminology, (err, result) => {
+      hasReturned += 1;
+      if (!hasErrorOccurred) {
+        if (err) {
+          hasErrorOccurred = true;
+          req.log(err);
+          res.send();
+        } else {
+          mergeResults(toReturn, result);
+          if (hasReturned === terms.length) {
+            res.send({
+              codes: toArray(toReturn),
+              timestamp: Date.now(),
+              searchTerm: terms.map(term => term.toLowerCase()),
+            });
+          }
+        }
+      }
+    });
+  });
+};
+
+/**
  * @description Takes a single search term and returns the set of matching
  * codes.
  *

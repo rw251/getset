@@ -1,5 +1,3 @@
-include ./partials/title.jade
-
 h1 Create
 if !user
   p 
@@ -35,17 +33,4 @@ else
             span.input-group-btn
               button#addExclusion.btn.btn-default(type="button") Add!
   p#status
-  div
-    // Nav tabs 
-    ul.nav.nav-tabs(role="tablist")
-      li.active(role="presentation")
-        a(href="#inc",aria-controls="inc",role="tab",data-toggle="tab") Included codes
-      li(role="presentation")
-        a(href="#exc",aria-controls="exc",role="tab",data-toggle="tab") Excluded codes
-
-    // Tab panes
-    .tab-content
-      #inc.tab-pane.active(role="tabpanel")
-        #outputInclude.code-list
-      #exc.tab-pane(role="tabpanel")
-        #outputExclude.code-list
+  #results

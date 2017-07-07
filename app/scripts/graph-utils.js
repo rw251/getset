@@ -125,11 +125,89 @@ const getConnectedSubgraphs = (graph) => {
 
 module.exports = {
 
+  getHierarchies: (codes, currentTerminology, searchTerm) => {
+    let isTree = true;
+    const codeDic = {};
+    codes.forEach((v) => {
+      const parents = v.p;
+      const codeForTerminology = getCodeForTerminology(v._id, currentTerminology);
+      if (!codeDic[codeForTerminology]) {
+        codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v._id, t: v.t }] };
+      } else if (codeDic[codeForTerminology].codes.length === 0) {
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].p = parents;
+      } else {
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].p = parents;
+      }
+      if (parents.length > 1) {
+        isTree = false;
+        console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
+      }
+      parents.forEach((vv) => {
+        if (codeDic[vv]) {
+          codeDic[vv].c.push(codeForTerminology);
+        } else {
+          codeDic[vv] = { c: [codeForTerminology], p: [], codes: [] };
+        }
+      });
+    });
+
+    const connectedSubgraphs = isTree
+                                ? getConnectedSubtrees(codeDic)
+                                : getConnectedSubgraphs(codeDic);
+    const matchedCodesConnectedSubgraphs = [];
+    const unmatchedDescendentsConnectedSubgraphs = [];
+    let numMatched = 0;
+    let numUnmatched = 0;
+    connectedSubgraphs.forEach((graph) => {
+      const matchedGraphToReturn = [];
+      const unmatchedGraphToReturn = [];
+
+      Object.keys(graph).forEach((node) => {
+        if (graph[node].codes.length === 0) {
+          // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
+        } else {
+          graph[node].codes.forEach((code) => {
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, searchTerm);
+            const item = {
+              code: code.code,
+              description: descriptionBits.text,
+              depth: graph[node].depth,
+            };
+            if (descriptionBits.match) {
+              matchedGraphToReturn.push(item);
+              numMatched += 1;
+            } else {
+              unmatchedGraphToReturn.push(item);
+              numUnmatched += 1;
+            }
+          });
+        }
+      });
+
+      if (matchedGraphToReturn.length > 0) {
+        matchedCodesConnectedSubgraphs.push(matchedGraphToReturn);
+      }
+      if (unmatchedGraphToReturn.length > 0) {
+        unmatchedDescendentsConnectedSubgraphs.push(unmatchedGraphToReturn);
+      }
+    });
+    matchedCodesConnectedSubgraphs.sort((b, a) => a.length - b.length);
+    unmatchedDescendentsConnectedSubgraphs.sort((b, a) => a.length - b.length);
+    return {
+      matched: matchedCodesConnectedSubgraphs,
+      unmatched: unmatchedDescendentsConnectedSubgraphs,
+      numMatched,
+      numUnmatched,
+    };
+  },
+
   getHierarchy: (codes, currentTerminology, searchTerm) => {
     let isTree = true;
     const codeDic = {};
     codes.forEach((v) => {
-      const parents = v.p.split(',');
+      const parents = v.p;
       const codeForTerminology = getCodeForTerminology(v._id, currentTerminology);
       if (!codeDic[codeForTerminology]) {
         codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v._id, t: v.t }] };

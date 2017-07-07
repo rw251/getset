@@ -36,8 +36,7 @@
     "javascript-brunch": "^2.0.0",
     "npm-run-all": "^4.0.1",
     "sass-brunch": "^2.6.3",
-    "standard": "^8.6.0",
-    "testcafe": "^0.16.2"
+    "standard": "^8.6.0"
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",

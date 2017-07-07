@@ -1,0 +1,22 @@
+include ./mixins/code-table.jade
+include ./mixins/code-table-of-graph.jade
+include ./mixins/code-freq-table.jade
+
+div
+  // Nav tabs
+  ul.nav.nav-tabs(role='tablist')
+    li(class=!selected || selected==='matchedTabContent' ? 'active' : '', role='presentation')
+      a(href='#matchedTabContent', aria-controls='matchedTabContent', role='tab', data-toggle='tab')= 'Matching codes (' + numMatched + ')'
+    li(class=selected==='unmatchedDescendentsTabContent' ? 'active' : '', role='presentation')
+      a(href='#unmatchedDescendentsTabContent', aria-controls='unmatchedDescendentsTabContent', role='tab', data-toggle='tab')= 'Unmatched descendents (' + numUnmatched + ')'
+    li(class=selected==='excludedTabContent' ? 'active' : '', role='presentation')
+      a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
+
+  // Tab panes
+  .tab-content
+    #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel')
+      +codeTableOfGraph(matched)
+    #unmatchedDescendentsTabContent.tab-pane(class=selected==='unmatchedDescendentsTabContent' ? 'active in' : '', role='tabpanel')
+      +codeTableOfGraph(unmatched)
+    #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel')
+      +codeTable(excluded)

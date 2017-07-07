@@ -92,4 +92,78 @@ module.exports = {
     }
     return descriptionBits;
   },
+
+  parseDescriptionMultipleTermsNEW: (description, searchTerms) => {
+    const descriptionBits = [];
+    const descArr = description.split('|');
+    let n = descArr.length - 1;
+
+    const searchTermsInDescription = searchTerms
+                                        .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
+
+    if (searchTermsInDescription.length === 0) {
+      descriptionBits.push({ text: descArr[n] });
+      return { text: descArr[n], match: false };
+    }
+    while (searchTermsInDescription.filter(t => descArr[n].toLowerCase().indexOf(t.toLowerCase()) >= 0).length === 0) {
+      n -= 1;
+    }
+    return { text: descArr[n], match: true };
+  },
+
+  getSelectionCoords: (win = window) => {
+    const doc = win.document;
+    let sel = doc.selection;
+    let range;
+    let rects;
+    let rect;
+    let x = 0;
+    let y = 0;
+    let right = 0;
+    if (sel) {
+      if (sel.type !== 'Control') {
+        range = sel.createRange();
+        // range.collapse(true);
+        x = range.boundingLeft;
+        y = range.boundingTop;
+        right = x + range.boundingWidth;
+      }
+    } else if (win.getSelection) {
+      sel = win.getSelection();
+      if (sel.rangeCount) {
+        range = sel.getRangeAt(0).cloneRange();
+        if (range.getClientRects) {
+          // range.collapse(true);
+          rects = range.getClientRects();
+          if (rects.length > 0) {
+            rect = rects[0];
+          }
+          // console.log(rect);
+          x = rect.left;
+          y = rect.top;
+          right = rect.right;
+        }
+            // Fall back to inserting a temporary element
+        if (x === 0 && y === 0) {
+          const span = doc.createElement('span');
+          if (span.getClientRects) {
+                    // Ensure span has dimensions and position by
+                    // adding a zero-width space character
+            span.appendChild(doc.createTextNode('\u200b'));
+            range.insertNode(span);
+            rect = span.getClientRects()[0];
+            x = rect.left;
+            y = rect.top;
+            right = rect.right;
+            const spanParent = span.parentNode;
+            spanParent.removeChild(span);
+
+                    // Glue any broken text nodes back together
+            spanParent.normalize();
+          }
+        }
+      }
+    }
+    return { x, y, right };
+  },
 };

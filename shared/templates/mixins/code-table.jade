@@ -9,7 +9,7 @@ mixin codeTable(codes)
     tbody
       each code in codes
         tr
-          td= code._id
-          td= code.t
+          td= code._id || code.code
+          td= code.t || code.description
           td= code.a
           td= code.p
