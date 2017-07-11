@@ -21,6 +21,10 @@
   "bugs": {
     "url": "https://github.com/rw251/getset/issues"
   },
+  "engines":{
+    "npm": "3.10.x",
+    "node": "6.9.x"
+  },
   "homepage": "https://github.com/rw251/getset#readme",
   "devDependencies": {
     "appcache-brunch": "^1.7.1",
