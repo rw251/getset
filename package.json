@@ -23,7 +23,7 @@
   },
   "engines":{
     "npm": "3.10.x",
-    "node": "6.9.x"
+    "node": "6.11.x"
   },
   "homepage": "https://github.com/rw251/getset#readme",
   "devDependencies": {
