@@ -1,7 +1,7 @@
 include ./partials/title.jade
 
 h1 Search
-if !user
+if !user.name
   p 
     | A bit about searching - why not 
     a.btn.btn-github.btn-social(href='/auth/github?returnTo=/search')

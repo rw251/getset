@@ -1,7 +1,5 @@
-include ./partials/title.jade
-
 h1 Validate
-if !user
+if !user.name
   p 
     | A bit about validating - why not 
     a.btn.btn-github.btn-social(href='/auth/github?returnTo=/validate')
@@ -9,7 +7,20 @@ if !user
       | sign in with GitHub 
     | to see more.
 else
-  p#status
+  form.box(method='post', action='', enctype='multipart/form-data')
+    .box__input
+      input#file.box__file(type='file', name='files[]', data-multiple-caption='{count} files selected', multiple='')
+      label(for='file')
+        strong Choose a file
+        span.box__dragndrop  or drag it here
+        | .
+      button.box__button(type='submit') Upload
+    .box__uploading Uploading…
+    .box__success Done!
+    .box__error
+      | Error! 
+      span
+      | .
   form
     .form-group
       label.radio-inline
@@ -24,3 +35,4 @@ else
     .form-group
       label(for='output')
       textarea#output.form-control
+  p#status
