@@ -5,9 +5,12 @@ const createResultsTemplate = require('../../shared/templates/createResults.jade
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const graphUtils = require('../scripts/graph-utils');
+const global = require('../scripts/global');
 const utils = require('../scripts/utils');
 const defaultController = require('./default');
 const $ = require('jquery');
+const FileSaver = require('file-saver');
+const JSZip = require('jszip');
 
 // Add a case insensitive contains
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
@@ -35,6 +38,48 @@ let currentTerminology = '';
 
 const s = {};
 const e = {};
+
+const getMetaDataFile = () => {
+  const metadata = {
+    includeTerms: Object.keys(s),
+    excludeTerms: Object.keys(e),
+    terminology: currentTerminology,
+  };
+  if (global.user) {
+    metadata.createdBy = {};
+    if (global.user.name) metadata.createdBy.name = global.user.name;
+    if (global.user.email) metadata.createdBy.email = global.user.email;
+  }
+  metadata.createdOn = new Date();
+  const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json;charset=utf-8' });
+  return blob;
+};
+const getCodeSetFile = () => {
+  const currentCodeSet = [];
+  currentGroups.matched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      if (!currentGroups.matched[gi][i].exclude) currentCodeSet.push(code.code || code._id);
+    });
+  });
+  const blob = new Blob([currentCodeSet.join('\r\n')], { type: 'text/plain;charset=utf-8' });
+  return blob;
+};
+const triggerDownload = (file, name) => {
+  FileSaver.saveAs(file, name);
+};
+const zipFiles = (files) => {
+  const zip = new JSZip();
+  files.forEach((file) => {
+    zip.file(file.name, file.content);
+  });
+  let promise = null;
+  if (JSZip.support.uint8array) {
+    promise = zip.generateAsync({ type: 'uint8array' });
+  } else {
+    promise = zip.generateAsync({ type: 'string' });
+  }
+  return promise;
+};
 
 const refreshExclusion = () => {
   const exArray = Object.keys(e);
@@ -93,7 +138,6 @@ const refresh = () => {
       currentGroups.unmatched = hierarchies.unmatched;
       currentGroups.numMatched = hierarchies.numMatched;
       currentGroups.numUnmatched = hierarchies.numUnmatched;
-      // displayResults(currentGroups);
       refreshExclusion();
     });
   }, 1);
@@ -141,7 +185,7 @@ const addTerm = (term, isExclusion) => {
 };
 
 const addIfLongEnough = (element) => {
-  const latestSynonym = element.val();
+  const latestSynonym = element.val().trim();
   if (latestSynonym.length < 2) {
         // alertBecauseTooShort
   } else {
@@ -179,53 +223,79 @@ const wireup = () => {
   $synonym.include.add.on('click', () => { addIfLongEnough($synonym.include.input); });
   $synonym.exclude.add.on('click', () => { addIfLongEnough($synonym.exclude.input); });
 
-  $('#results').on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
-    currentGroups.selected = evt.target.href.split('#')[1];
-  });
-
   let lastPopOverElements;
-  $('#results').on('mouseup', 'td', (evt) => {
-    let selection = '';
-    if (window.getSelection) {
-      selection = window.getSelection();
-    } else if (document.selection) {
-      selection = document.selection.createRange();
-    }
-    $synonym.include.input.val(selection);
-    $synonym.exclude.input.val(selection);
 
-    if (selection.toString().length > 0) {
-      if (lastPopOverElements) {
+  $('#results')
+    .on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
+      currentGroups.selected = evt.target.href.split('#')[1];
+    })
+    .on('mouseup', 'td', (evt) => {
+      let selection = '';
+      if (window.getSelection) {
+        selection = window.getSelection();
+      } else if (document.selection) {
+        selection = document.selection.createRange();
+      }
+      $synonym.include.input.val(selection);
+      $synonym.exclude.input.val(selection);
+
+      if (selection.toString().length > 0) {
+        if (lastPopOverElements) {
+          lastPopOverElements.popover('hide');
+          lastPopOverElements = null;
+        }
+        const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
+        const selectionCoords = utils.getSelectionCoords();
+        $(evt.target).popover({
+          animation: true,
+          content: popupElement,
+          container: '#results',
+          html: true,
+          placement: 'right',
+        });
+        setTimeout(() => {
+          $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
+        }, 1);
+        if (!lastPopOverElements) lastPopOverElements = $(evt.target);
+        else lastPopOverElements = lastPopOverElements.add($(evt.target));
+      } else if (lastPopOverElements) {
         lastPopOverElements.popover('hide');
         lastPopOverElements = null;
       }
-      const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
-      const selectionCoords = utils.getSelectionCoords();
-      $(evt.target).popover({
-        animation: true,
-        content: popupElement,
-        container: '#results',
-        html: true,
-        placement: 'right',
+    })
+    .on('click', '.btn-include', () => {
+      $synonym.include.add.click();
+    })
+    .on('click', '.btn-exclude', () => {
+      $synonym.exclude.add.click();
+    })
+    .on('click', '#downloadCodeSet,#downloadAll', (evt) => {
+      evt.preventDefault();
+      const metadata = getMetaDataFile();
+      const codeSet = getCodeSetFile();
+      const timestamp = new Date().toISOString().replace(/[^0-9]/g, '');
+
+      zipFiles([
+        { content: codeSet, name: `codeset.${timestamp}.txt` },
+        { content: metadata, name: `codeset.metadata.${timestamp}.json` },
+      ]).then((file) => {
+        // console.log(file);
+        triggerDownload(new Blob([file], { type: 'application/zip' }), `codeset.${timestamp}.zip`);
+      }).catch((err) => {
+        console.log(`whoops ${err}`);
       });
-      setTimeout(() => {
-        $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
-      }, 1);
-      if (!lastPopOverElements) lastPopOverElements = $(evt.target);
-      else lastPopOverElements = lastPopOverElements.add($(evt.target));
-    } else if (lastPopOverElements) {
-      lastPopOverElements.popover('hide');
-      lastPopOverElements = null;
-    }
-  });
-
-  $('#results').on('click', '.btn-include', () => {
-    $synonym.include.add.click();
-  });
-
-  $('#results').on('click', '.btn-exclude', () => {
-    $synonym.exclude.add.click();
-  });
+      // triggerDownload(str2bytes(;
+    })
+    .on('click', '#downloadCodes', (evt) => {
+      evt.preventDefault();
+      const codeSet = getCodeSetFile();
+      triggerDownload(codeSet, `codeset.${new Date().toISOString().replace(/[^0-9]/g, '')}.txt`);
+    })
+    .on('click', '#downloadMeta', (evt) => {
+      evt.preventDefault();
+      const metadata = getMetaDataFile();
+      triggerDownload(metadata, `codeset.metadata.${new Date().toISOString().replace(/[^0-9]/g, '')}.json`);
+    });
 
   $('.code-list').on('click', '.code-line', (evt) => {
     // The line that is clicked and the one after it

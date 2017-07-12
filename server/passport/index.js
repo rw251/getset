@@ -59,6 +59,7 @@ passport.use(new GitHubStrategy({
   clientSecret: process.env.GITHUB_SECRET,
   callbackURL: '/auth/github/callback',
   passReqToCallback: true,
+  scope: 'user:email',
 }, (req, accessToken, refreshToken, profile, done) => {
   if (req.user) {
     User.findOne({ github: profile.id }, (err, existingUser) => {
@@ -96,6 +97,15 @@ passport.use(new GitHubStrategy({
         }
         const user = new User();
         user.email = profile._json.email;
+        if (profile.emails && profile.emails.length > 0) {
+          profile.emails.forEach((email) => {
+            if (email.primary && email.value) user.email = email.value;
+          });
+        }
+        if (!user.email) {
+          req.flash('errors', { msg: "You don't have an email address associated with your github account so we can't sign you up this way" });
+          return done(err);
+        }
         user.github = profile.id;
         user.tokens.push({ kind: 'github', accessToken });
         user.profile.name = profile.displayName;

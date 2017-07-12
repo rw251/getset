@@ -8,7 +8,9 @@ const App = {
     $(document).ready(() => {
       if ($('#userLoggedIn').length > 0) global.isLoggedIn = true;
       else global.isLoggedIn = false;
-      global.user = $('#userName').val();
+      global.user = {};
+      global.user.name = $('#userName').val();
+      global.user.email = $('#userEmail').val();
 
       routes.start();
       main.init();

@@ -33,4 +33,5 @@
               li
                 a(href='/logout') Logout
           input#userLoggedIn(type='hidden')
-          input#userName(type='hidden', value=user.profile.name || user.email || user.id)
+          input#userName(type='hidden', value=user.profile.name || user.id)
+          input#userEmail(type='hidden', value=user.email)

@@ -11,6 +11,20 @@ div
       a(href='#unmatchedDescendentsTabContent', aria-controls='unmatchedDescendentsTabContent', role='tab', data-toggle='tab')= 'Unmatched descendents (' + numUnmatched + ')'
     li(class=selected==='excludedTabContent' ? 'active' : '', role='presentation')
       a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
+    li(role='presentation',style="float:right;line-height:45px;")
+      .btn-group
+        button#downloadCodeSet.btn.btn-success Download code set
+        button.btn.btn-success.dropdown-toggle(type='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false')
+          span.caret
+          span.sr-only Toggle Dropdown
+        ul.dropdown-menu
+          li#downloadCodes
+            a(href='#') Download codes
+          li#downloadMeta
+            a(href='#') Download meta
+          li.divider(role='separator')
+          li#downloadAll
+            a(href='#') Download all
 
   // Tab panes
   .tab-content
