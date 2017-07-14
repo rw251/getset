@@ -24,7 +24,6 @@ html.no-js(lang='en')
     script.
       (function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);
 
-
   body
     include partials/header
 
@@ -45,5 +44,28 @@ html.no-js(lang='en')
       deferredFonts.href = 'https://fonts.googleapis.com/css?family=PT+Mono|PT+Sans:400,700';
       var godefer = document.getElementsByTagName('link')[0];
       godefer.parentNode.insertBefore(deferredFonts, godefer);
+    script.
+      // Add bluebird cdn if no promises
+      // First use modernizr scipt to detect if promises enables
+      var isPromiseImplemented = 'Promise' in window &&
+        // Some of these methods are missing from
+        // Firefox/Chrome experimental implementations
+        'resolve' in window.Promise &&
+        'reject' in window.Promise &&
+        'all' in window.Promise &&
+        'race' in window.Promise &&
+        // Older version of the spec had a resolver object
+        // as the arg rather than a function
+        (function() {
+          var resolve;
+          new window.Promise(function(r) { resolve = r; });
+          return typeof resolve === 'function';
+        }());
+      if(!isPromiseImplemented) {
+        var bluebirdScript = document.createElement('script');
+        bluebirdScript.src = "https://cdn.jsdelivr.net/bluebird/latest/bluebird.core.min.js";
+        var bb = document.getElementsByTagName('script')[0];
+        bb.parentNode.insertBefore(bluebirdScript, bb);
+      }
 
 

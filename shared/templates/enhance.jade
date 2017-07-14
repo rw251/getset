@@ -1,5 +1,5 @@
 h1 Enhance
-if !user.name
+if !user || !user.name
   p 
     | A bit about enhancing - why not 
     a.btn.btn-github.btn-social(href='/auth/github?returnTo=/enhance')

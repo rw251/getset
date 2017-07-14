@@ -25,7 +25,7 @@ module.exports = {
 
   plugins: {
     babel: {
-      pattern: /sw\.js$/,
+      // pattern: /sw\.js$/,
     },
     sass: {
       options: {

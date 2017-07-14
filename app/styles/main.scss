@@ -318,6 +318,7 @@ $failBackColour: rgba(222,5,5,0.3);
   background-color: #c8dadf;
   position: relative;
   padding: 100px 20px;
+  text-align: center;
 }
 .box.has-advanced-upload {
   outline: 2px dashed #92b0b3;
@@ -368,6 +369,9 @@ $failBackColour: rgba(222,5,5,0.3);
 
   -webkit-transform: translateY( -50% );
   transform: translateY( -50% );
+
+  font-size: 20px;
+  color: #0f3c4b;
 }
 .box__uploading {
   font-style: italic;
@@ -413,6 +417,9 @@ $failBackColour: rgba(222,5,5,0.3);
   cursor: pointer;
   display: inline-block;
   overflow: hidden;
+  font-weight: normal; /* bootstrap makes this bold */
+  font-size: 20px;
+  color: #0f3c4b;
 }
 .js .box__file + label:hover strong,
 .box__file:focus + label strong,
