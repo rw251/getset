@@ -15,9 +15,25 @@ else
       label.radio-inline
         input(type="radio", name="terminology", id="terminology2", value="SNOMED")
         | SNOMED CT
-    .form-group
-      label Code set
-      textarea#codeSet.form-control(placeholder='Paste your existing code set here...')
+    .row
+      .col-sm-9
+        .form-group
+          label Code set
+          textarea#codeSet.form-control(placeholder='Paste your existing code set here...')
+      .col-sm-3
+        .form-group#separatorForm(style="display:none")
+          label Code set separator
+          .btn-group(data-toggle='buttons')
+            label.btn.btn-default
+              input#sepComma(type='radio', name='separator', autocomplete='off', value='comma')
+              |  , 
+            label.btn.btn-default
+              input#sepNewLine(type='radio', name='separator', autocomplete='off', value='newline')
+              |  \n 
+            label.btn.btn-default
+              input#sepTab(type='radio', name='separator', autocomplete='off', value='tab')
+              |  \t 
+
     .row
       .col-lg-6
         #synonymList

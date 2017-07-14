@@ -18,6 +18,8 @@ let $synonymAdd;
 let $exclusionAdd;
 let $synonymList;
 let $exclusionList;
+let $separatorForm;
+const $separatorRadio = {};
 
 const s = {};
 const e = {};
@@ -203,6 +205,26 @@ const getStamp = {
   },
 };
 
+const separators = {
+  comma: { id: 'sepComma', character: ',' },
+  newline: { id: 'sepNewLine', character: '\n' },
+  tab: { id: 'sepTab', character: '\t' },
+};
+let codeSetSeparator = separators.newline;
+
+const updateSeparatorRadio = () => {
+  $separatorRadio[codeSetSeparator.id]
+    .prop('checked', true) // set radio to checked
+    .parent() // get the parent label and..
+    .addClass('active') // ..add the active class
+    .siblings() // get all the other labels..
+    .removeClass('active'); // ..and remove the active class
+};
+
+const updateCodeSetSeparator = (oldSep, newSep) => {
+  $codeSet.val($codeSet.val().split(oldSep).join(newSep));
+};
+
 const wireUp = () => {
   $codeSet = $('#codeSet');
   $output = $('#results');
@@ -212,6 +234,16 @@ const wireUp = () => {
   $exclusionAdd = $('#addExclusion');
   $synonymList = $('#synonymList');
   $exclusionList = $('#exclusionList');
+  $separatorForm = $('#separatorForm');
+  $('input[name="separator"]')
+    .each((idx, el) => {
+      $separatorRadio[el.id] = $(el);
+    })
+    .on('change', () => {
+      const val = $('input[name="separator"]:checked').val();
+      updateCodeSetSeparator(codeSetSeparator.character, separators[val].character);
+      codeSetSeparator = separators[val];
+    });
 
   $synonymInput.on('keypress', (evt) => {
     // If ENTER key
@@ -231,7 +263,6 @@ const wireUp = () => {
     }
   });
 
-
   $synonymAdd.on('click', () => {
     addIfLongEnough($synonymInput);
   });
@@ -245,9 +276,14 @@ const wireUp = () => {
 
   $codeSet.on('paste', () => {
     $output.html(ajaxLoaderTemplate());
+    $separatorForm.show();
     currentTerminology = $('input[name=terminology]:checked').val();
     setTimeout(() => {
-      const codeSet = $codeSet.val().split('\n').filter(v => v.replace(/ /g, '').length > 0);
+      if ($codeSet.val().indexOf('\t') > -1) codeSetSeparator = separators.tab;
+      else if ($codeSet.val().indexOf(',') > -1) codeSetSeparator = separators.comma;
+      else codeSetSeparator = separators.newline;
+      updateSeparatorRadio();
+      const codeSet = $codeSet.val().split(codeSetSeparator.character).filter(v => v.replace(/ /g, '').length > 0);
       $
         .ajax({
           type: 'POST',
