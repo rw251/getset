@@ -82,12 +82,14 @@ const zipFiles = (files) => {
 };
 
 const refreshExclusion = () => {
-  const exArray = Object.keys(e);
+  const excludedTerms = Object.keys(e);
   currentGroups.excluded = [];
+
+  // update the excluded codes for the set of matched codes
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
       // code.description = [].concat(code.description);
-      if (exArray.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+      if (excludedTerms.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
         if (!currentGroups.matched[gi][i].exclude) {
           currentGroups.matched[gi][i].exclude = true;
           currentGroups.numMatched -= 1;
@@ -99,10 +101,12 @@ const refreshExclusion = () => {
       }
     });
   });
+
+  // update the excluded codes for the set of unmatched codes
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
       // code.description = [].concat(code.description);
-      if (exArray.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+      if (excludedTerms.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
           currentGroups.numUnmatched -= 1;
@@ -114,6 +118,24 @@ const refreshExclusion = () => {
       }
     });
   });
+
+  // finally, add to the exclude list any unmatched items who have an excluded ancestor
+  currentGroups.unmatched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      if (currentGroups.excluded.filter(a => code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1).length > 0) {
+        if (!currentGroups.unmatched[gi][i].excludedByParent) {
+          currentGroups.unmatched[gi][i].excludedByParent = true;
+          currentGroups.numUnmatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+      } else if (currentGroups.unmatched[gi][i].excludedByParent) {
+        currentGroups.numUnmatched += 1;
+        delete currentGroups.unmatched[gi][i].excludedByParent;
+      }
+    });
+  });
+
+
   displayResults(currentGroups);
 };
 
@@ -224,6 +246,11 @@ const wireup = () => {
   $synonym.exclude.add.on('click', () => { addIfLongEnough($synonym.exclude.input); });
 
   let lastPopOverElements;
+  let lastSelectedText = '';
+
+  /* document.addEventListener('selectionchange', () => {
+    textSelected();
+  });*/
 
   $('#results')
     .on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
@@ -236,6 +263,8 @@ const wireup = () => {
       } else if (document.selection) {
         selection = document.selection.createRange();
       }
+      if (selection.toString() === lastSelectedText) return;
+      lastSelectedText = selection.toString();
       $synonym.include.input.val(selection);
       $synonym.exclude.input.val(selection);
 
@@ -259,7 +288,7 @@ const wireup = () => {
         if (!lastPopOverElements) lastPopOverElements = $(evt.target);
         else lastPopOverElements = lastPopOverElements.add($(evt.target));
       } else if (lastPopOverElements) {
-        lastPopOverElements.popover('hide');
+        lastPopOverElements.popover('destroy');
         lastPopOverElements = null;
       }
     })

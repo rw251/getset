@@ -166,4 +166,11 @@ module.exports = {
     }
     return { x, y, right };
   },
+
+  getCodeForTerminology: (code, terminology) => {
+    if (terminology === 'Readv2') {
+      return code.substr(0, 5);
+    }
+    return code;
+  },
 };

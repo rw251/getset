@@ -9,7 +9,7 @@ mixin codeTableOfGraph(graph)
     tbody
       each subgraph in graph
         each item in subgraph
-          if !item.exclude
+          if !item.exclude && !item.excludedByParent
             tr
               td= item.code
               td= item.description

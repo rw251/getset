@@ -18,7 +18,9 @@ else
         | .
       button.box__button(type='submit') Upload
     .box__uploading Uploading…
-    .box__success Done!
+    .box__success 
+      | Done!
+      a.box__restart(role="button")  Choose another file.
     .box__error
       | Error! 
       span

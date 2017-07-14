@@ -166,6 +166,7 @@ const wireup = () => {
                   readMetaDataFile(fileContents[0]);
                   readCodeSetFile(fileContents[1]);
                   refreshTermUI();
+                  $form.addClass('is-success').removeClass('is-uploading').removeClass('is-error');
                 })
                 .catch((err) => {
                   $errorMsg.text(err);
@@ -185,7 +186,7 @@ const wireup = () => {
 
     $restart.on('click', (evt) => {
       evt.preventDefault();
-      $form.removeClass('is-error is-success');
+      $form.removeClass('is-error');
       $input.trigger('click');
     });
 

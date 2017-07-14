@@ -37,13 +37,6 @@ const addDepth = (graph) => {
   return G;
 };
 
-const getCodeForTerminology = (code, terminology) => {
-  if (terminology === 'Readv2') {
-    return code.substr(0, 5);
-  }
-  return code;
-};
-
 const getConnectedSubtrees = (graph) => {
   let i;
   let u;
@@ -130,15 +123,18 @@ module.exports = {
     const codeDic = {};
     codes.forEach((v) => {
       const parents = v.p;
-      const codeForTerminology = getCodeForTerminology(v._id, currentTerminology);
+      const ancestors = v.a;
+      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
       if (!codeDic[codeForTerminology]) {
-        codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v._id, t: v.t }] };
+        codeDic[codeForTerminology] = { p: parents, a: ancestors, c: [], codes: [{ code: v._id, t: v.t }] };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
         codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
         codeDic[codeForTerminology].p = parents;
+        codeDic[codeForTerminology].a = ancestors;
       } else {
         codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
         codeDic[codeForTerminology].p = parents;
+        codeDic[codeForTerminology].a = ancestors;
       }
       if (parents.length > 1) {
         isTree = false;
@@ -172,6 +168,7 @@ module.exports = {
             const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, searchTerm);
             const item = {
               code: code.code,
+              ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,
               description: descriptionBits.text,
               depth: graph[node].depth,
             };
@@ -208,7 +205,7 @@ module.exports = {
     const codeDic = {};
     codes.forEach((v) => {
       const parents = v.p;
-      const codeForTerminology = getCodeForTerminology(v._id, currentTerminology);
+      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
       if (!codeDic[codeForTerminology]) {
         codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v._id, t: v.t }] };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
