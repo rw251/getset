@@ -1,4 +1,7 @@
+const dotenv = require('dotenv');
 const pino = require('pino')();
+
+dotenv.load({ path: '.env' });
 
 const mustExist = function mustExist(name) {
   if (!process.env[name]) {
@@ -11,7 +14,7 @@ const mustExist = function mustExist(name) {
 
 const ENV = {
   // mongo url
-  MONGO_URL: mustExist('GETSET_MONGO_URL'),
+  MONGO_URL: mustExist('MONGODB_URI'),
 
   // passport secret for expressjs authentication
   PASSPORT_SECRET: mustExist('GETSET_PASSPORT_SECRET'),
@@ -23,9 +26,6 @@ const ENV = {
 };
 
 module.exports = {
-  db: {
-    url: ENV.MONGO_URL,
-  },
   // user auth
   passport: {
     secret: ENV.PASSPORT_SECRET,

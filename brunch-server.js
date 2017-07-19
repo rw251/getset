@@ -8,14 +8,11 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const expressSession = require('express-session');
 const flash = require('express-flash');
-const dotenv = require('dotenv');
 const config = require('./server/config');
 const mongoose = require('mongoose');
 const http = require('http');
 
 const DEBUG = true;
-
-dotenv.load({ path: '.env' });
 
 const routes = require('./server/routes/index')(passport);
 
@@ -25,7 +22,7 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
 
   mongoose.set('debug', DEBUG);
   mongoose.Promise = global.Promise;
-  mongoose.connect(config.db.url);
+  mongoose.connect(process.env.MONGODB_URI);
   mongoose.connection.on('error', (err) => {
     pino.error(err);
     pino.info('MongoDB connection error. Please make sure MongoDB is running.');
