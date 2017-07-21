@@ -11,7 +11,7 @@ mixin codeTableOfGraph(graph)
         each item in subgraph
           if !item.exclude && !item.excludedByParent
             tr
-              td= item.code
+              td.disable-select= item.code
               td= item.description
-              td= item.depth
-              td= item.p
+              td.disable-select= item.depth
+              td.disable-select= item.p

@@ -305,7 +305,7 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
 exports.unmatchedChildren = (req, res) => {
   const processedCodes = processCodesForTerminology(req.body.codes, req.body.terminology);
 
-  Code.find({ _id: { $in: processedCodes } }, { c: 0, a: 0, p: 0 }, (err, codes) => {
+  Code.find({ _id: { $in: processedCodes } }, { c: 0 }, (err, codes) => {
     const returnedCodes = codes.map(v => v._id);
     const unfoundCodes = [];
     processedCodes.forEach((v) => {

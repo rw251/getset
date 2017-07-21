@@ -1,5 +1,6 @@
-mixin perfStamp(title, perf, status)
-  .token(class='token-'+status)
+mixin perfStamp(title, perf, status, id)
+  .token(class='token-'+status,data-panel-id=id)
     .token-content
-      span.token-title= title
       span.token-perf= perf
+      |  
+      span.token-title= title

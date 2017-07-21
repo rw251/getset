@@ -118,10 +118,135 @@ const getConnectedSubgraphs = (graph) => {
 
 module.exports = {
 
+  getHierarchiesWithExistingCodeList: (codes, currentTerminology, searchTerm, existingCodeSet, existingCodeSetObject) => {
+    let isTree = true;
+    const codeDic = {};
+    const combinedCodes = codes.concat(existingCodeSet);
+    combinedCodes.forEach((v) => {
+      if (!v.p) {
+        console.log(v);
+      }
+      const parents = v.p;
+      const ancestors = v.a;
+      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
+      if (!codeDic[codeForTerminology]) {
+        codeDic[codeForTerminology] = { p: parents, a: ancestors, c: [], codes: [{ code: v._id, t: v.t }] };
+      } else if (codeDic[codeForTerminology].codes.length === 0) {
+        codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
+        codeDic[codeForTerminology].p = parents;
+        codeDic[codeForTerminology].a = ancestors;
+      } else {
+        codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
+        codeDic[codeForTerminology].p = parents;
+        codeDic[codeForTerminology].a = ancestors;
+      }
+      if (parents.length > 1) {
+        isTree = false;
+        console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
+      }
+      parents.forEach((vv) => {
+        if (codeDic[vv]) {
+          codeDic[vv].c.push(codeForTerminology);
+        } else {
+          codeDic[vv] = { c: [codeForTerminology], p: [], codes: [] };
+        }
+      });
+    });
+
+    const connectedSubgraphs = isTree
+                                ? getConnectedSubtrees(codeDic)
+                                : getConnectedSubgraphs(codeDic);
+    const inCodeSetAndMatched = [];
+    const inCodeSetAndUnmatched = [];
+    const notInCodeSetButMatched = [];
+    const matchedDescendentButNotMatched = [];
+    let numInCodeSetAndMatched = 0;
+    let numInCodeSetAndUnmatched = 0;
+    let numNotInCodeSetButMatched = 0;
+    let numMatchedDescendentButNotMatched = 0;
+    connectedSubgraphs.forEach((graph) => {
+      const inCodeSetAndMatchedGraphToReturn = [];
+      const inCodeSetAndUnmatchedGraphToReturn = [];
+      const notInCodeSetButMatchedGraphToReturn = [];
+      const matchedDescendentButNotMatchedGraphToReturn = [];
+
+      Object.keys(graph).forEach((node) => {
+        if (graph[node].codes.length === 0) {
+          // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
+        } else {
+          graph[node].codes.forEach((code) => {
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, searchTerm);
+            const item = {
+              code: code.code,
+              ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,
+              description: descriptionBits.text,
+              depth: graph[node].depth,
+            };
+            if (descriptionBits.match) {
+              if (existingCodeSetObject[code.code]) {
+                inCodeSetAndMatchedGraphToReturn.push(item);
+                numInCodeSetAndMatched += 1;
+                // delete existingCodeSet[code.code];
+              } else if (existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]) {
+                inCodeSetAndMatchedGraphToReturn.push(item);
+                numInCodeSetAndMatched += 1;
+                // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
+              } else {
+                notInCodeSetButMatchedGraphToReturn.push(item);
+                numNotInCodeSetButMatched += 1;
+              }
+            } else if (existingCodeSetObject[code.code]) {
+              inCodeSetAndUnmatchedGraphToReturn.push(item);
+              numInCodeSetAndUnmatched += 1;
+              // delete existingCodeSet[code.code];
+            } else if (existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]) {
+              inCodeSetAndUnmatchedGraphToReturn.push(item);
+              numInCodeSetAndUnmatched += 1;
+              // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
+            } else {
+              matchedDescendentButNotMatchedGraphToReturn.push(item);
+              numMatchedDescendentButNotMatched += 1;
+            }
+          });
+        }
+      });
+
+      if (inCodeSetAndMatchedGraphToReturn.length > 0) {
+        inCodeSetAndMatched.push(inCodeSetAndMatchedGraphToReturn);
+      }
+      if (inCodeSetAndUnmatchedGraphToReturn.length > 0) {
+        inCodeSetAndUnmatched.push(inCodeSetAndUnmatchedGraphToReturn);
+      }
+      if (notInCodeSetButMatchedGraphToReturn.length > 0) {
+        notInCodeSetButMatched.push(notInCodeSetButMatchedGraphToReturn);
+      }
+      if (matchedDescendentButNotMatchedGraphToReturn.length > 0) {
+        matchedDescendentButNotMatched.push(matchedDescendentButNotMatchedGraphToReturn);
+      }
+    });
+    inCodeSetAndMatched.sort((b, a) => a.length - b.length);
+    inCodeSetAndUnmatched.sort((b, a) => a.length - b.length);
+    notInCodeSetButMatched.sort((b, a) => a.length - b.length);
+    matchedDescendentButNotMatched.sort((b, a) => a.length - b.length);
+    return {
+      inCodeSetAndMatched,
+      inCodeSetAndUnmatched,
+      notInCodeSetButMatched,
+      matchedDescendentButNotMatched,
+      numInCodeSetAndMatched,
+      numInCodeSetAndUnmatched,
+      numNotInCodeSetButMatched,
+      numMatchedDescendentButNotMatched,
+    };
+  },
+
   getHierarchies: (codes, currentTerminology, searchTerm) => {
     let isTree = true;
     const codeDic = {};
     codes.forEach((v) => {
+      if (!v.p) {
+        console.log(v);
+      }
       const parents = v.p;
       const ancestors = v.a;
       const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
@@ -153,7 +278,7 @@ module.exports = {
                                 ? getConnectedSubtrees(codeDic)
                                 : getConnectedSubgraphs(codeDic);
     const matchedCodesConnectedSubgraphs = [];
-    const unmatchedDescendentsConnectedSubgraphs = [];
+    const matchedDescendentButNotMatchedConnectedSubgraphs = [];
     let numMatched = 0;
     let numUnmatched = 0;
     connectedSubgraphs.forEach((graph) => {
@@ -187,14 +312,14 @@ module.exports = {
         matchedCodesConnectedSubgraphs.push(matchedGraphToReturn);
       }
       if (unmatchedGraphToReturn.length > 0) {
-        unmatchedDescendentsConnectedSubgraphs.push(unmatchedGraphToReturn);
+        matchedDescendentButNotMatchedConnectedSubgraphs.push(unmatchedGraphToReturn);
       }
     });
     matchedCodesConnectedSubgraphs.sort((b, a) => a.length - b.length);
-    unmatchedDescendentsConnectedSubgraphs.sort((b, a) => a.length - b.length);
+    matchedDescendentButNotMatchedConnectedSubgraphs.sort((b, a) => a.length - b.length);
     return {
       matched: matchedCodesConnectedSubgraphs,
-      unmatched: unmatchedDescendentsConnectedSubgraphs,
+      unmatched: matchedDescendentButNotMatchedConnectedSubgraphs,
       numMatched,
       numUnmatched,
     };

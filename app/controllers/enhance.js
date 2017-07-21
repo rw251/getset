@@ -1,160 +1,241 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
 const enhanceTemplate = require('../../shared/templates/enhance.jade');
-// const enhanceResultsTemplate = require('../../shared/templates/enhanceResults.jade');
 const enhanceResultsTemplate = require('../../shared/templates/enhanceResultsAlt.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
-const codeTableTemplate = require('../../shared/templates/partials/code-table.jade');
-const codeFrequencyTableTemplate = require('../../shared/templates/partials/code-freq-table.jade');
+const utils = require('../scripts/utils');
+const graphUtils = require('../scripts/graph-utils');
 const defaultController = require('./default');
 const $ = require('jquery');
 
-let $output;
-let $codeSet;
-let currentTerminology = '';
-let $synonymInput;
-let $exclusionInput;
-let $synonymAdd;
-let $exclusionAdd;
-let $synonymList;
-let $exclusionList;
-let $separatorForm;
+const $synonym = { include: {}, exclude: {} };
 const $separatorRadio = {};
-
+const currentGroups = { excluded: [], matchedDescendentButNotMatched: [] };
+// will have:
+// codeSet
+// inCodeSetNotInTerminology
+// notInCodeSetDescendentOfCodeSet
+// inCodeSetAndMatched,
+// inCodeSetAndUnmatched,
+// notInCodeSetButMatched,
+// matchedDescendentButNotMatched,
 const s = {};
 const e = {};
-let x = {};
-let m = {};
+const separators = {
+  comma: { id: 'sepComma', character: ',' },
+  newline: { id: 'sepNewLine', character: '\n' },
+  tab: { id: 'sepTab', character: '\t' },
+};
 
-let existingList;
-let matchedList;
+let codeSetSeparator = separators.newline;
+let $results;
+let $codeSet;
+let currentTerminology = '';
+let $separatorForm;
+let startedAt;
 
-// Finds y value of given object
-const findPos = (obj) => {
-  let curtop = 0;
-  if (obj.offsetParent) {
-    do {
-      curtop += obj.offsetTop;
-    } while (obj = obj.offsetParent);
+const displayResults = (groups) => {
+  const html = enhanceResultsTemplate(groups);
+  if (new Date() - startedAt < 150) {
+    $results.html(html);
+  } else {
+    $results.fadeOut(500, () => {
+      $results.html(html).fadeIn(300);
+    });
   }
-  return [curtop];
 };
 
-const removeExclusions = list => list.filter((item) => {
-  let isMatch = true;
+const getStamp = {
+  exists: (numCodes, numUnfound) => {
+    const rtn = { title: 'found', status: 'warn', id: 'unfoundPanel' };
+    rtn.perf = Math.floor((100 * numCodes) / (numCodes + numUnfound));
 
-  Object.keys(e).forEach((v) => {
-    if (item.t.toLowerCase().indexOf(v.toLowerCase()) >= 0) isMatch = false;
+    if (rtn.perf === 100) rtn.status = 'pass';
+    else if (rtn.perf < 90) rtn.status = 'fail';
+    rtn.perf += '%';
+    return rtn;
+  },
+  unmatchedChildren: (numUnmatchedChildren) => {
+    const rtn = { title: 'missing children', status: 'warn', id: 'unmatchedChildrenPanel' };
+    rtn.perf = numUnmatchedChildren;
+
+    if (rtn.perf < 5) rtn.status = 'pass';
+    else if (rtn.perf > 20) rtn.status = 'fail';
+    return rtn;
+  },
+  unmatchedCodes: (numUnmatchedCodes) => {
+    const rtn = { title: 'unmatched codes', status: 'warn', id: 'unmatchedCodesPanel' };
+    rtn.perf = numUnmatchedCodes;
+
+    if (rtn.perf < 5) rtn.status = 'pass';
+    else if (rtn.perf > 20) rtn.status = 'fail';
+    return rtn;
+  },
+  matchedDescendentButNotMatched: (numMatchedDescendentButNotMatched) => {
+    const rtn = { title: 'unmatched descendents', status: 'warn', id: 'matchedDescendentButNotMatchedPanel' };
+    rtn.perf = numMatchedDescendentButNotMatched;
+
+    if (rtn.perf < 5) rtn.status = 'pass';
+    else if (rtn.perf > 20) rtn.status = 'fail';
+    return rtn;
+  },
+  notInCodeSetButMatched: (numNotInCodeSetButMatched) => {
+    const rtn = { title: 'matched but not in code set', status: 'warn', id: 'notInCodeSetButMatchedPanel' };
+    rtn.perf = numNotInCodeSetButMatched;
+
+    if (rtn.perf < 5) rtn.status = 'pass';
+    else if (rtn.perf > 20) rtn.status = 'fail';
+    return rtn;
+  },
+  excluded: (numExcluded) => {
+    const rtn = { title: 'excluded', status: 'pass', id: 'excludedPanel' };
+    rtn.perf = numExcluded;
+    return rtn;
+  },
+};
+
+// For a given description when passed to a filter returns all terms
+// that are contained in that description
+const thatMatch = description => term => description.toLowerCase().indexOf(term.toLowerCase()) > -1;
+
+const refreshExclusion = () => {
+  const excludedTerms = Object.keys(e);
+  currentGroups.excluded = [];
+
+  // do this for: notInCodeSetDescendentOfCodeSet,
+  // matchedDescendentButNotMatched, notInCodeSetButMatched
+
+  currentGroups.notInCodeSetButMatched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      if (excludedTerms.filter(thatMatch(code.description)).length > 0) {
+        if (!currentGroups.notInCodeSetButMatched[gi][i].exclude) {
+          currentGroups.notInCodeSetButMatched[gi][i].exclude = true;
+          currentGroups.numNotInCodeSetButMatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.notInCodeSetButMatched[gi][i]);
+      } else if (currentGroups.notInCodeSetButMatched[gi][i].exclude) {
+        currentGroups.numNotInCodeSetButMatched += 1;
+        delete currentGroups.notInCodeSetButMatched[gi][i].exclude;
+      }
+    });
   });
 
-  return isMatch;
-});
-
-const returnExclusions = list => list.filter((item) => {
-  let isMatch = false;
-
-  Object.keys(e).forEach((v) => {
-    if (item.t.toLowerCase().indexOf(v.toLowerCase()) >= 0) isMatch = true;
+  // update the excluded codes for the set of matched codes
+  /* currentGroups.matched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      // code.description = [].concat(code.description);
+      if (excludedTerms.filter(thatMatch(code.description)).length > 0) {
+        if (!currentGroups.matched[gi][i].exclude) {
+          currentGroups.matched[gi][i].exclude = true;
+          currentGroups.numMatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.matched[gi][i]);
+      } else if (currentGroups.matched[gi][i].exclude) {
+        currentGroups.numMatched += 1;
+        delete currentGroups.matched[gi][i].exclude;
+      }
+    });
   });
 
-  return isMatch;
-});
+  // update the excluded codes for the set of unmatched codes
+  currentGroups.unmatched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      // code.description = [].concat(code.description);
+      if (excludedTerms.filter(thatMatch(code.description)).length > 0) {
+        if (!currentGroups.unmatched[gi][i].exclude) {
+          currentGroups.unmatched[gi][i].exclude = true;
+          currentGroups.numUnmatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+      } else if (currentGroups.unmatched[gi][i].exclude) {
+        currentGroups.numUnmatched += 1;
+        delete currentGroups.unmatched[gi][i].exclude;
+      }
+    });
+  });
 
-const existingNotMatched = () => removeExclusions(existingList.filter(item => !m[item._id]));
+  // finally, add to the exclude list any unmatched items who have an excluded ancestor
+  currentGroups.unmatched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      if (currentGroups.excluded.filter(a => code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1).length > 0) {
+        if (!currentGroups.unmatched[gi][i].excludedByParent) {
+          currentGroups.unmatched[gi][i].excludedByParent = true;
+          currentGroups.numUnmatched -= 1;
+        }
+        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+      } else if (currentGroups.unmatched[gi][i].excludedByParent) {
+        currentGroups.numUnmatched += 1;
+        delete currentGroups.unmatched[gi][i].excludedByParent;
+      }
+    });
+  });
+*/
 
-const matchedNotExisting = () => removeExclusions(matchedList.filter(item => !x[item._id]));
-
-const matchedExisting = () => removeExclusions(matchedList.filter(item => x[item._id]));
-
-const matchedExcluded = () => returnExclusions(matchedList);
-
-const refreshMatchedInExisting = () => {
-  const codes = matchedExisting();
-  const id = '#matchedExistingTabContent';
-  $(id).html(codeTableTemplate({ codes }));
-  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
+  const stamps = [];
+  stamps.push(getStamp.exists(currentGroups.codeSet.length, currentGroups.inCodeSetNotInTerminology.length));
+  stamps.push(getStamp.unmatchedChildren(currentGroups.numUnmatchedCodesOriginal));
+  stamps.push(getStamp.unmatchedCodes(currentGroups.numInCodeSetAndUnmatched));
+  stamps.push(getStamp.matchedDescendentButNotMatched(currentGroups.numMatchedDescendentButNotMatched));
+  stamps.push(getStamp.notInCodeSetButMatched(currentGroups.numNotInCodeSetButMatched));
+  stamps.push(getStamp.excluded(currentGroups.excluded.length));
+  currentGroups.stamps = stamps;
+  displayResults(currentGroups);
 };
 
-const refreshMatchedNotInExisting = () => {
-  const codes = matchedNotExisting();
-  const id = '#matchedNotExistingTabContent';
-  $(id).html(codeTableTemplate({ codes }));
-  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
-};
-
-const refreshExistingNotMatched = () => {
-  const codes = existingNotMatched();
-  const id = '#existingNotMatchedTabContent';
-  $(id).html(codeTableTemplate({ codes }));
-  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
-};
-
-const refreshMatchedExcluded = () => {
-  const codes = matchedExcluded();
-  const id = '#excludedTabContent';
-  $(id).html(codeTableTemplate({ codes }));
-  $(`a[href="${id}"]`).text($(`a[href="${id}"]`).text().replace(/\([0-9]+\)/, `(${codes.length})`));
-};
-
-const refreshTermFrequency = () => {
-  const codes = existingNotMatched();
-  $('#frequencyTabContent').html(ajaxLoaderTemplate());
+const refresh = () => {
+  $results.html(ajaxLoaderTemplate());
+  currentTerminology = $('input[name=terminology]:checked').val();
   setTimeout(() => {
-    const codeSet = codes.map(c => c._id);
+    const terms = Object.keys(s);
     $
       .ajax({
         type: 'POST',
-        url: '/code/enhance',
-        data: JSON.stringify({ terminology: currentTerminology, codes: codeSet }),
+        url: '/code/search',
+        data: JSON.stringify({ terminology: currentTerminology, terms }),
         dataType: 'json',
         contentType: 'application/json',
       })
       .done((data) => {
-        $('#frequencyTabContent').html(codeFrequencyTableTemplate(data));
+        const hierarchies = graphUtils.getHierarchiesWithExistingCodeList(data.codes,
+            currentTerminology, terms, currentGroups.codeSet, currentGroups.codeLookup);
+
+        // inCodeSetAndMatched,
+        // inCodeSetAndUnmatched,
+        // notInCodeSetButMatched,
+        // matchedDescendentButNotMatched,
+        // numInCodeSetAndMatched,
+        // numInCodeSetAndUnmatched,
+        // numNotInCodeSetButMatched,
+        // numMatchedDescendentButNotMatched,
+        Object.keys(hierarchies).forEach((key) => {
+          currentGroups[key] = hierarchies[key];
+        });
+
+        refreshExclusion();
       });
   }, 1);
 };
-
-const refresh = () => {
-  $
-    .ajax({
-      type: 'GET',
-      url: `/code/search/${$('input[name=terminology]:checked').val()}/forlist?t=${Object.keys(s).join('&t=')}`,
-      dataType: 'json',
-      contentType: 'application/json',
-    })
-    .done((data) => {
-      matchedList = data.codes;
-      m = {};
-      matchedList.forEach((code) => {
-        m[code._id] = true;
-      });
-      refreshTermFrequency();
-      refreshMatchedInExisting();
-      refreshMatchedNotInExisting();
-      refreshExistingNotMatched();
-      refreshMatchedExcluded();
-    });
-};
 const refreshSynonymUI = () => {
   const html = synonymTemplate({ synonyms: Object.keys(s) });
-  $synonymList.html(html);
-  $synonymInput.val('');
+  $synonym.include.list.html(html);
+  $synonym.include.input.val('');
 };
 const refreshExclusionUI = () => {
   const html = synonymTemplate({ synonyms: Object.keys(e) });
-  $exclusionList.html(html);
-  $exclusionInput.val('');
+  $synonym.exclude.list.html(html);
+  $synonym.exclude.input.val('');
 };
 
 const addTerm = (term, isExclusion) => {
+  startedAt = new Date();
   if (isExclusion) {
     e[term] = true;
-    refreshTermFrequency();
+    // refreshTermFrequency();
     refreshExclusionUI();
-    refreshMatchedInExisting();
-    refreshMatchedNotInExisting();
-    refreshMatchedExcluded();
+    // refreshMatchedInExisting();
+    // refreshMatchedNotInExisting();
+    // refreshMatchedExcluded();
+    refreshExclusion();
   } else {
     s[term] = true;
     refreshSynonymUI();
@@ -165,13 +246,14 @@ const addTerm = (term, isExclusion) => {
     const termToRemove = $(evt.target).data('value');
     if (e[termToRemove]) {
       delete e[termToRemove];
-      refreshTermFrequency();
-      refreshMatchedInExisting();
-      refreshMatchedNotInExisting();
-      refreshMatchedExcluded();
+      // refreshTermFrequency();
+      // refreshMatchedInExisting();
+      // refreshMatchedNotInExisting();
+      // refreshMatchedExcluded();
+      refreshExclusion();
     } else {
       delete s[termToRemove];
-      refresh();
+      if (Object.keys(s).length > 0) refresh();
     }
   });
 };
@@ -181,36 +263,9 @@ const addIfLongEnough = (element) => {
   if (latestSynonym.length < 2) {
         // alertBecauseTooShort
   } else {
-    addTerm(latestSynonym, element === $exclusionInput);
+    addTerm(latestSynonym, element === $synonym.exclude.input);
   }
 };
-
-const getStamp = {
-  exists: (numCodes, numUnfound) => {
-    const rtn = { title: 'Found', status: 'warn' };
-    rtn.perf = Math.floor((100 * numCodes) / (numCodes + numUnfound));
-
-    if (rtn.perf === 100) rtn.status = 'pass';
-    else if (rtn.perf < 90) rtn.status = 'fail';
-    rtn.perf += '%';
-    return rtn;
-  },
-  unmatchedChildren: (numUnmatchedChildren) => {
-    const rtn = { title: 'Missing children', status: 'warn' };
-    rtn.perf = numUnmatchedChildren;
-
-    if (rtn.perf < 5) rtn.status = 'pass';
-    else if (rtn.perf > 20) rtn.status = 'fail';
-    return rtn;
-  },
-};
-
-const separators = {
-  comma: { id: 'sepComma', character: ',' },
-  newline: { id: 'sepNewLine', character: '\n' },
-  tab: { id: 'sepTab', character: '\t' },
-};
-let codeSetSeparator = separators.newline;
 
 const updateSeparatorRadio = () => {
   $separatorRadio[codeSetSeparator.id]
@@ -222,18 +277,79 @@ const updateSeparatorRadio = () => {
 };
 
 const updateCodeSetSeparator = (oldSep, newSep) => {
-  $codeSet.val($codeSet.val().split(oldSep).join(newSep));
+  $codeSet.val($codeSet.val().trim().split(oldSep).join(newSep));
+};
+
+const updateFromCodeSet = (codeSet) => {
+  $
+    .ajax({
+      type: 'POST',
+      url: '/code/unmatchedChildren',
+      data: JSON.stringify({ terminology: currentTerminology, codes: codeSet }),
+      dataType: 'json',
+      contentType: 'application/json',
+    })
+    .done((data) => {
+      // data is
+      //  {
+      //    codes, // list of all matching codes
+      //    unfoundCodes, // codes pasted that don't appear in the terminology
+      //    unmatchedCodes, // descendents of codes not included in list
+      //  }
+      const terms = Object.keys(s);
+      const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
+      const stamps = [];
+      stamps.push(getStamp.exists(data.codes.length, data.unfoundCodes.length));
+      stamps.push(getStamp.unmatchedChildren(data.unmatchedCodes.length));
+      stamps.push(getStamp.unmatchedCodes(data.codes.length));
+      stamps.push(getStamp.matchedDescendentButNotMatched(0));
+      stamps.push(getStamp.notInCodeSetButMatched(0));
+      stamps.push(getStamp.excluded(0));
+      currentGroups.stamps = stamps;
+      currentGroups.codeSet = data.codes;
+      currentGroups.codeLookup = {};
+      data.codes.forEach((code) => {
+        currentGroups.codeLookup[utils.getCodeForTerminology(code._id, currentTerminology)] = code;
+      });
+      currentGroups.numUnmatchedCodesOriginal = data.unmatchedCodes.length;
+      const unmatchedCodesReformatted = {};
+      data.unmatchedCodes.forEach((umc) => {
+        umc.a.split(',').forEach((ancestor) => {
+          if (!unmatchedCodesReformatted[ancestor]) unmatchedCodesReformatted[ancestor] = [umc];
+          else unmatchedCodesReformatted[ancestor].push(umc);
+        });
+      });
+      currentGroups.inCodeSetNotInTerminology = data.unfoundCodes;
+      currentGroups.notInCodeSetDescendentOfCodeSet = Object
+        .keys(unmatchedCodesReformatted)
+        .filter(umc => currentGroups.codeLookup[utils.getCodeForTerminology(umc, currentTerminology)])
+        .map(umc => ({
+          code: utils.getCodeForTerminology(umc, currentTerminology),
+          description: currentGroups.codeLookup[utils.getCodeForTerminology(umc, currentTerminology)].t,
+          codes: unmatchedCodesReformatted[umc].sort((a, b) => {
+            if (a._id < b._id) return -1;
+            else if (a._id > b._id) { return 1; }
+            return 0;
+          }),
+        }));
+      currentGroups.inCodeSetAndUnmatched = hierarchies.unmatched;
+      currentGroups.numInCodeSetAndUnmatched = hierarchies.numUnmatched;
+      $results.fadeOut(500, () => {
+        $results.html(enhanceResultsTemplate(currentGroups)).fadeIn(300);
+      });
+    });
 };
 
 const wireUp = () => {
   $codeSet = $('#codeSet');
-  $output = $('#results');
-  $synonymInput = $('#synonym');
-  $exclusionInput = $('#exclusion');
-  $synonymAdd = $('#addSynonym');
-  $exclusionAdd = $('#addExclusion');
-  $synonymList = $('#synonymList');
-  $exclusionList = $('#exclusionList');
+  $results = $('#results');
+  $synonym.include.input = $('#synonym');
+  $synonym.include.input.focus();
+  $synonym.exclude.input = $('#exclusion');
+  $synonym.include.add = $('#addSynonym');
+  $synonym.exclude.add = $('#addExclusion');
+  $synonym.include.list = $('#synonymList');
+  $synonym.exclude.list = $('#exclusionList');
   $separatorForm = $('#separatorForm');
   $('input[name="separator"]')
     .each((idx, el) => {
@@ -245,10 +361,10 @@ const wireUp = () => {
       codeSetSeparator = separators[val];
     });
 
-  $synonymInput.on('keypress', (evt) => {
+  $synonym.include.input.on('keypress', (evt) => {
     // If ENTER key
     if (evt.which === 13) {
-      addIfLongEnough($synonymInput);
+      addIfLongEnough($synonym.include.input);
     }
     // if ($('#synonym').val().length >= 3 && $('#synonym').val() !== lastTextValue) {
     //   lastTextValue = $('#synonym').val();
@@ -256,60 +372,130 @@ const wireUp = () => {
     // }
   });
 
-  $exclusionInput.on('keypress', (evt) => {
+  $synonym.exclude.input.on('keypress', (evt) => {
     // If ENTER key
     if (evt.which === 13) {
-      addIfLongEnough($exclusionInput);
+      addIfLongEnough($synonym.exclude.input);
     }
   });
 
-  $synonymAdd.on('click', () => {
-    addIfLongEnough($synonymInput);
+  $synonym.include.add.on('click', () => {
+    addIfLongEnough($synonym.include.input);
   });
-  $exclusionAdd.on('click', () => {
-    addIfLongEnough($exclusionInput);
+  $synonym.exclude.add.on('click', () => {
+    addIfLongEnough($synonym.exclude.input);
   });
 
-  $output.on('click', '.token', () => {
-    window.scroll(0, findPos(document.getElementById('results')));
-  });
+  let lastPopOverElements;
+  let lastSelectedText = '';
+
+  $results
+    .on('mouseup', 'td', (evt) => {
+      console.log(`up - ${Date.now()}`);
+      let selection = '';
+      if (window.getSelection) {
+        selection = window.getSelection();
+      } else if (document.selection) {
+        selection = document.selection.createRange();
+      }
+      console.log(`up - ${selection.toString()} - ${lastSelectedText}`);
+      if (selection.toString().trim() === lastSelectedText) return;
+      lastSelectedText = selection.toString().trim();
+      $synonym.include.input.val(lastSelectedText);
+      $synonym.exclude.input.val(lastSelectedText);
+
+      if (lastSelectedText.length > 0) {
+        if (lastPopOverElements) {
+          lastPopOverElements.popover('hide');
+          lastPopOverElements = null;
+        }
+        const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
+        const selectionCoords = utils.getSelectionCoords();
+        console.log(selectionCoords);
+        console.log(evt);
+        console.log(evt.target);
+        console.log(evt.currentTarget);
+        $(evt.target).parent().popover({
+          animation: true,
+          content: popupElement,
+          container: '#results',
+          selector: evt.target,
+          html: true,
+          placement: 'right',
+        });
+        setTimeout(() => {
+          console.log((selectionCoords.right + 25) - $('#results').offset().left);
+          $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
+        }, 1);
+        if (!lastPopOverElements) lastPopOverElements = $(evt.target);
+        else lastPopOverElements = lastPopOverElements.add($(evt.target));
+      } else if (lastPopOverElements) {
+        lastPopOverElements.popover('destroy');
+        lastPopOverElements = null;
+      }
+    })
+    .on('click', '.btn-include', () => {
+      $synonym.include.add.click();
+    })
+    .on('click', '.btn-exclude', () => {
+      $synonym.exclude.add.click();
+    })
+    .on('click', '.token', (event) => {
+      // Magic number! 71 = height + padding of navigation bar.
+      // window.scroll(0, utils.findPos(document.getElementById($(event.currentTarget).data('panel-id'))) - 71);
+      /* $('html, body').animate({
+        scrollTop: utils.findPos(document.getElementById($(event.currentTarget).data('panel-id'))),
+      }, 2000);*/
+      $('.scrollable').scroll();
+      $('.scrollable').animate({
+        scrollTop: utils.findPos(document.getElementById($(event.currentTarget).data('panel-id')))
+          - utils.findPos(document.getElementById('resultTables')),
+      }, 200);
+    })
+    .on('change', '#missingCodeCheckAll', (event) => {
+      $('.missingCode').prop('checked', event.currentTarget.checked);
+    })
+    .on('click', '.addSelectedMissingCodes', () => {
+      const codesToAdd = $('input.missingCode:checked').map((i, v) => v.value).get();
+      if (codesToAdd.length === 0) {
+        alert('No codes appear to be selected. Please try again.');
+      } else {
+        const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).concat(codesToAdd);
+        $codeSet.val(newCodeSet.join(codeSetSeparator.character));
+        updateFromCodeSet(newCodeSet);
+      }
+    })
+    .on('click', '.removeParentCode', (event) => {
+      const codeToRemove = $(event.currentTarget).data('code');
+      const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).filter(item => item !== codeToRemove);
+      $codeSet.val(newCodeSet.join(codeSetSeparator.character));
+      updateFromCodeSet(newCodeSet);
+    })
+    .on('change', '#unfoundCodeCheckAll', (event) => {
+      $('.unfoundCode').prop('checked', event.currentTarget.checked);
+    })
+    .on('click', '.removeSelectedUnfoundCodes', () => {
+      const codesToRemove = $('input.unfoundCode:checked').map((i, v) => v.value).get();
+      if (codesToRemove.length === 0) {
+        alert('No codes appear to be selected. Please try again.');
+      } else {
+        const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).filter(item => codesToRemove.indexOf(item) < 0);
+        $codeSet.val(newCodeSet.join(codeSetSeparator.character));
+        updateFromCodeSet(newCodeSet);
+      }
+    });
 
   $codeSet.on('paste', () => {
-    $output.html(ajaxLoaderTemplate());
+    $results.html(ajaxLoaderTemplate());
     $separatorForm.show();
     currentTerminology = $('input[name=terminology]:checked').val();
     setTimeout(() => {
-      if ($codeSet.val().indexOf('\t') > -1) codeSetSeparator = separators.tab;
-      else if ($codeSet.val().indexOf(',') > -1) codeSetSeparator = separators.comma;
+      if ($codeSet.val().trim().indexOf('\t') > -1) codeSetSeparator = separators.tab;
+      else if ($codeSet.val().trim().indexOf(',') > -1) codeSetSeparator = separators.comma;
       else codeSetSeparator = separators.newline;
       updateSeparatorRadio();
-      const codeSet = $codeSet.val().split(codeSetSeparator.character).filter(v => v.replace(/ /g, '').length > 0);
-      $
-        .ajax({
-          type: 'POST',
-          url: '/code/unmatchedChildren',
-          data: JSON.stringify({ terminology: currentTerminology, codes: codeSet }),
-          dataType: 'json',
-          contentType: 'application/json',
-        })
-        .done((data) => {
-          const codesObj = {};
-          const stamps = [];
-          stamps.push(getStamp.exists(data.codes.length, data.unfoundCodes.length));
-          stamps.push(getStamp.unmatchedChildren(data.unmatchedCodes.length));
-          data.stamps = stamps;
-          data.codes.forEach((v) => {
-            codesObj[v._id] = v;
-          });
-          existingList = data.codes;
-          x = {};
-          existingList.forEach((code) => {
-            x[code._id] = true;
-          });
-          $output.fadeOut(500, () => {
-            $output.html(enhanceResultsTemplate(data)).fadeIn(300);
-          });
-        });
+      const codeSet = $codeSet.val().trim().split(codeSetSeparator.character).filter(v => v.replace(/ /g, '').length > 0);
+      updateFromCodeSet(codeSet);
     }, 1);
   });
 };

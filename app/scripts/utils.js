@@ -135,6 +135,9 @@ module.exports = {
         if (range.getClientRects) {
           // range.collapse(true);
           rects = range.getClientRects();
+          // if (rects.length > 1) {
+          //   rect = rects[1];
+          // } else
           if (rects.length > 0) {
             rect = rects[0];
           }
@@ -172,5 +175,16 @@ module.exports = {
       return code.substr(0, 5);
     }
     return code;
+  },
+
+  // Finds y value of given object
+  findPos: (obj) => {
+    let curtop = 0;
+    if (obj.offsetParent) {
+      do {
+        curtop += obj.offsetTop;
+      } while (obj = obj.offsetParent);
+    }
+    return [curtop];
   },
 };

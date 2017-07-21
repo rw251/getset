@@ -1,23 +1,24 @@
-include ./partials/title.jade
+.container
+  include ./partials/title.jade
 
-.row
-  .col-sm-6
-    h2 Create
-    p Create a new set of clinical codes.
-    p
-      a.btn.btn-default(href='/create', role='button') Go! »
-  .col-sm-6
-    h2 Validate
-    p Validate an existing set of clinical codes.
-    p
-      a.btn.btn-default(href='/validate', role='button') Go! »
-  .col-sm-6
-    h2 Search
-    p Search for clinical code sets.
-    p
-      a.btn.btn-default(href='/search', role='button') Go! »
-  .col-sm-6
-    h2 Enhance
-    p Take an existing code set and retrospectively add metadata.
-    p
-      a.btn.btn-default(href='/enhance', role='button') Go! »
+  .row
+    .col-sm-6
+      h2 Create
+      p Create a new set of clinical codes.
+      p
+        a.btn.btn-default(href='/create', role='button') Go! »
+    .col-sm-6
+      h2 Validate
+      p Validate an existing set of clinical codes.
+      p
+        a.btn.btn-default(href='/validate', role='button') Go! »
+    .col-sm-6
+      h2 Search
+      p Search for clinical code sets.
+      p
+        a.btn.btn-default(href='/search', role='button') Go! »
+    .col-sm-6
+      h2 Enhance
+      p Take an existing code set and retrospectively add metadata.
+      p
+        a.btn.btn-default(href='/enhance', role='button') Go! »
