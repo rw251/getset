@@ -24,10 +24,11 @@ html.no-js(lang='en')
     script.
       (function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);
 
-  body
-    include partials/header
+  body.vbox.viewport
+    header
+      include partials/header
 
-    #mainContent.scrollable-parent
+    section#mainContent.main.hbox.space-between
       include partials/flash
       block content
 

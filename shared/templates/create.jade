@@ -1,37 +1,43 @@
-.container
-  h1 Create
-  if !user || !user.name
-    p 
-      | A bit about creating - why not 
+if !user || !user.name
+  .container
+    h1 Create
+    p A bit about creating - why not..
+    p
       a.btn.btn-github.btn-social(href='/auth/github?returnTo=/create')
         i.fa.fa-github
         | sign in with GitHub 
-      | to see more.
-  else
-    form#createForm
-      .form-group
-        label.radio-inline
-          input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
-          | Read v2
-        label.radio-inline
-          input(type="radio", name="terminology", id="terminology2", value="SNOMED")
-          | SNOMED CT
-      .row
-        .col-lg-6
-          #synonymList
+    p ..to see more.
+else
+  .container-fluid.scrollable-parent
+    .row.scrollable-parent
+      .col-lg-4.col-md-3.scrollable(style="padding-bottom:25px")
+        h1 Create
+        form#createForm
           .form-group
-            label(for='synonym') Search term
-            .input-group
-              input#synonym.form-control(type='text',placeholder='Enter synonyms here...',autocomplete='off')
-              span.input-group-btn
-                button#addSynonym.btn.btn-default(type="button") Add!
-        .col-lg-6
-          #exclusionList
-          .form-group
-            label(for='exclusion') Exclusion term
-            .input-group
-              input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
-              span.input-group-btn
-                button#addExclusion.btn.btn-default(type="button") Add!
-    p#status
-    #results
+            label.radio-inline
+              input(type="radio", name="terminology", id="terminology1", value="Readv2", checked='true')
+              | Read v2
+            label.radio-inline
+              input(type="radio", name="terminology", id="terminology2", value="SNOMED")
+              | SNOMED CT
+          .row
+            .col-lg-6
+              #synonymList
+              .form-group
+                label(for='synonym') Search term
+                .input-group
+                  input#synonym.form-control(type='text',placeholder='Enter synonyms here...',autocomplete='off')
+                  span.input-group-btn
+                    button#addSynonym.btn.btn-default(type="button") Add!
+            .col-lg-6
+              #exclusionList
+              .form-group
+                label(for='exclusion') Exclusion term
+                .input-group
+                  input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
+                  span.input-group-btn
+                    button#addExclusion.btn.btn-default(type="button") Add!
+        p#status
+      #results.col-lg-8.col-md-9.scrollable-parent
+        .result-placeholder(style="height: 350px;text-align:center;border: 1px dashed gray;background-color: lightgray;padding-top:100px")
+          span(style="font-size:20px") Results will go here

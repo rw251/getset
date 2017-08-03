@@ -3,12 +3,12 @@
 
   h1 Search
   if !user || !user.name
-    p 
-      | A bit about searching - why not 
+    p A bit about searching - why not..
+    p
       a.btn.btn-github.btn-social(href='/auth/github?returnTo=/search')
         i.fa.fa-github
         | sign in with GitHub 
-      | to see more.
+    p ..to see more.
   else
     p#status
     form

@@ -5,12 +5,19 @@ const validate = require('../controllers/validate');
 const search = require('../controllers/search');
 const enhance = require('../controllers/enhance');
 const login = require('../controllers/login');
+const $ = require('jquery');
 
-page('/', home);
-page('/login', login);
-page('/create', create.show);
-page('/validate', validate.show);
-page('/search', search);
-page('/enhance', enhance.show);
+const updateSelectedTab = (ctx, next) => {
+  $('.navbar-nav li').removeClass('active');
+  $(`.navbar-nav li a[href="${ctx.pathname}"]`).parent().addClass('active');
+  next();
+};
+
+page('/', updateSelectedTab, home);
+page('/login', updateSelectedTab, login);
+page('/create', updateSelectedTab, create.show);
+page('/validate', updateSelectedTab, validate.show);
+page('/search', updateSelectedTab, search);
+page('/enhance', updateSelectedTab, enhance.show);
 
 module.exports = page;

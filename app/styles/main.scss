@@ -16,8 +16,8 @@ body {
 }
 
 footer {
-  position: absolute;
-  bottom: 0;
+  /*position: absolute;
+  bottom: 0;*/
   width: 100%;
   height: 25px;
   line-height: 25px;
@@ -478,16 +478,115 @@ $failBackColour: rgba(222,5,5,0.3);
   background-color: #0f3c4b;
 }
 
-/* scrollable columns */
-html,body {
-  overflow: hidden;
+/*
+  Force full width & height.
+
+  If this block is removed, the layout height/length will be determined by
+  the amount of content in the page. That might result in a page which has
+  a footer only a few inches from the top of the viewport, or one which
+  scrolls beyond the viewport.
+
+  This forces the layout to always be full screen regardless of how much,
+  or how little, content is in place. Neither is "right" or "wrong", there
+  are valid cases for each. I just want to be clear what's controlling the
+  page/viewport height.
+*/
+html, body, .viewport {
+  width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
+
+/* encapsulate the various syntax in helper clases */
+/* inspired by http://infrequently.org/2009/08/css-3-progress/ */
+
+/* items flex/expand vertically */
+.vbox {
+  /* previous syntax */
+  display: -webkit-box;
+  display:    -moz-box;
+  display:         box;
+
+  -webkit-box-orient: vertical;
+      -moz-box-orient: vertical;
+      -ms-box-orient: vertical;
+          box-orient: vertical;
+
+  /* current syntax */
+  display: -webkit-flex;
+  display:    -moz-flex;
+  display:     -ms-flex;
+  display:         flex;
+
+  -webkit-flex-direction: column;
+      -moz-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+
+/* items flex/expand horizontally */
+.hbox {
+  /* previous syntax */
+  display: -webkit-box;
+  display:    -moz-box;
+  display:     -ms-box;
+  display:         box;
+
+  -webkit-box-orient: horizontal;
+      -moz-box-orient: horizontal;
+      -ms-box-orient: horizontal;
+          box-orient: horizontal;
+
+  /* current syntax */
+  display: -webkit-flex;
+  display:    -moz-flex;
+  display:     -ms-flex;
+  display:         flex;
+
+  -webkit-flex-direction: row;
+      -moz-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+}
+
+.space-between {
+  /* previous syntax */
+  -webkit-box-pack: justify;
+      -moz-box-pack: justify;
+      -ms-box-pack: justify;
+          box-pack: justify;
+
+  /* current syntax */
+  -webkit-justify-content: space-between;
+      -moz-justify-content: space-between;
+      -ms-justify-content: space-between;
+          justify-content: space-between;
+}
+
+.main {
+  /* previous syntax */
+  -webkit-box-flex: 1;
+      -moz-box-flex: 1;
+      -ms-box-flex: 1;
+          box-flex: 1;
+
+  /* current syntax */
+  -webkit-flex: 1;
+      -moz-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  
+  /* for mobile viewing */
+  overflow-y: auto;
+}
+
+
 .scrollable-parent {
   height: 100%;
 }
 .scrollable {
-  height:100%;
+  height:90%;
   overflow-y: auto; 
 }
 

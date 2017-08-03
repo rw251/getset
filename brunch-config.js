@@ -17,6 +17,11 @@ module.exports = {
     },
     stylesheets: {
       joinTo: 'app.css',
+      order: {
+        before: [
+          'vendor/styles/bootstrap.scss',
+        ],
+      },
     },
     templates: {
       joinTo: 'app.js',

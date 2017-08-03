@@ -2,7 +2,7 @@ include ./mixins/code-table.jade
 include ./mixins/code-table-of-graph.jade
 include ./mixins/code-freq-table.jade
 
-div
+.scrollable-parent
   // Nav tabs
   ul.nav.nav-tabs(role='tablist')
     li(class=!selected || selected==='matchedTabContent' ? 'active' : '', role='presentation')
@@ -27,10 +27,10 @@ div
             a(href='#') Download all
 
   // Tab panes
-  .tab-content
-    #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel')
+  .tab-content.scrollable
+    #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTableOfGraph(matched)
-    #matchedDescendentButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendentButNotMatchedTabContent' ? 'active in' : '', role='tabpanel')
+    #matchedDescendentButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendentButNotMatchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTableOfGraph(unmatched)
-    #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel')
+    #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTable(excluded)
