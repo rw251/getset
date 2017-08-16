@@ -159,16 +159,16 @@ module.exports = {
     const inCodeSetAndMatched = [];
     const inCodeSetAndUnmatched = [];
     const notInCodeSetButMatched = [];
-    const matchedDescendentButNotMatched = [];
+    const matchedDescendantButNotMatched = [];
     let numInCodeSetAndMatched = 0;
     let numInCodeSetAndUnmatched = 0;
     let numNotInCodeSetButMatched = 0;
-    let numMatchedDescendentButNotMatched = 0;
+    let numMatchedDescendantButNotMatched = 0;
     connectedSubgraphs.forEach((graph) => {
       const inCodeSetAndMatchedGraphToReturn = [];
       const inCodeSetAndUnmatchedGraphToReturn = [];
       const notInCodeSetButMatchedGraphToReturn = [];
-      const matchedDescendentButNotMatchedGraphToReturn = [];
+      const matchedDescendantButNotMatchedGraphToReturn = [];
 
       Object.keys(graph).forEach((node) => {
         if (graph[node].codes.length === 0) {
@@ -204,8 +204,8 @@ module.exports = {
               numInCodeSetAndUnmatched += 1;
               // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
             } else {
-              matchedDescendentButNotMatchedGraphToReturn.push(item);
-              numMatchedDescendentButNotMatched += 1;
+              matchedDescendantButNotMatchedGraphToReturn.push(item);
+              numMatchedDescendantButNotMatched += 1;
             }
           });
         }
@@ -220,23 +220,23 @@ module.exports = {
       if (notInCodeSetButMatchedGraphToReturn.length > 0) {
         notInCodeSetButMatched.push(notInCodeSetButMatchedGraphToReturn);
       }
-      if (matchedDescendentButNotMatchedGraphToReturn.length > 0) {
-        matchedDescendentButNotMatched.push(matchedDescendentButNotMatchedGraphToReturn);
+      if (matchedDescendantButNotMatchedGraphToReturn.length > 0) {
+        matchedDescendantButNotMatched.push(matchedDescendantButNotMatchedGraphToReturn);
       }
     });
     inCodeSetAndMatched.sort((b, a) => a.length - b.length);
     inCodeSetAndUnmatched.sort((b, a) => a.length - b.length);
     notInCodeSetButMatched.sort((b, a) => a.length - b.length);
-    matchedDescendentButNotMatched.sort((b, a) => a.length - b.length);
+    matchedDescendantButNotMatched.sort((b, a) => a.length - b.length);
     return {
       inCodeSetAndMatched,
       inCodeSetAndUnmatched,
       notInCodeSetButMatched,
-      matchedDescendentButNotMatched,
+      matchedDescendantButNotMatched,
       numInCodeSetAndMatched,
       numInCodeSetAndUnmatched,
       numNotInCodeSetButMatched,
-      numMatchedDescendentButNotMatched,
+      numMatchedDescendantButNotMatched,
     };
   },
 
@@ -278,7 +278,7 @@ module.exports = {
                                 ? getConnectedSubtrees(codeDic)
                                 : getConnectedSubgraphs(codeDic);
     const matchedCodesConnectedSubgraphs = [];
-    const matchedDescendentButNotMatchedConnectedSubgraphs = [];
+    const matchedDescendantButNotMatchedConnectedSubgraphs = [];
     let numMatched = 0;
     let numUnmatched = 0;
     connectedSubgraphs.forEach((graph) => {
@@ -312,14 +312,14 @@ module.exports = {
         matchedCodesConnectedSubgraphs.push(matchedGraphToReturn);
       }
       if (unmatchedGraphToReturn.length > 0) {
-        matchedDescendentButNotMatchedConnectedSubgraphs.push(unmatchedGraphToReturn);
+        matchedDescendantButNotMatchedConnectedSubgraphs.push(unmatchedGraphToReturn);
       }
     });
     matchedCodesConnectedSubgraphs.sort((b, a) => a.length - b.length);
-    matchedDescendentButNotMatchedConnectedSubgraphs.sort((b, a) => a.length - b.length);
+    matchedDescendantButNotMatchedConnectedSubgraphs.sort((b, a) => a.length - b.length);
     return {
       matched: matchedCodesConnectedSubgraphs,
-      unmatched: matchedDescendentButNotMatchedConnectedSubgraphs,
+      unmatched: matchedDescendantButNotMatchedConnectedSubgraphs,
       numMatched,
       numUnmatched,
     };

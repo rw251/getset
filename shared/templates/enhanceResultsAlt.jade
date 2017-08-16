@@ -17,13 +17,13 @@ include ./mixins/perf-stamp.jade
             .panel-heading= 'Unfound codes (' + inCodeSetNotInTerminology.length + ')'
             .panel-body The following codes in your set do not appear in the selected terminology:
             +codeMissingTable(inCodeSetNotInTerminology)
-    - if(notInCodeSetDescendentOfCodeSet && notInCodeSetDescendentOfCodeSet.length > 0)
+    - if(notInCodeSetDescendantOfCodeSet && notInCodeSetDescendantOfCodeSet.length > 0)
       .row
         .col-xs-12
           #unmatchedChildrenPanel.panel.panel-default
             .panel-heading= 'Missing codes (' + numUnmatchedCodesOriginal + ')'
-            .panel-body The following codes are not in your set but they are descendents of codes that are.
-            +codeParentTable(notInCodeSetDescendentOfCodeSet)
+            .panel-body The following codes are not in your set but they are descendants of codes that are.
+            +codeParentTable(notInCodeSetDescendantOfCodeSet)
     - if(inCodeSetAndUnmatched && inCodeSetAndUnmatched.length > 0)
       .row
         .col-xs-12
@@ -31,13 +31,13 @@ include ./mixins/perf-stamp.jade
             .panel-heading= 'Unmatched codes (' + numInCodeSetAndUnmatched + ')'
             .panel-body The following codes are in your set but they are not yet matched by a synonym.
             +codeTableOfGraph(inCodeSetAndUnmatched)
-    - if(matchedDescendentButNotMatched && matchedDescendentButNotMatched.length > 0)
+    - if(matchedDescendantButNotMatched && matchedDescendantButNotMatched.length > 0)
       .row
         .col-xs-12
-          #matchedDescendentButNotMatchedPanel.panel.panel-default
-            .panel-heading= 'Unmatched descendents (' + numMatchedDescendentButNotMatched + ')'
+          #matchedDescendantButNotMatchedPanel.panel.panel-default
+            .panel-heading= 'Unmatched descendants (' + numMatchedDescendantButNotMatched + ')'
             .panel-body The following codes not matched by a synonym, but have an ancestor that is.
-            +codeTableOfGraph(matchedDescendentButNotMatched)
+            +codeTableOfGraph(matchedDescendantButNotMatched)
     - if(notInCodeSetButMatched && notInCodeSetButMatched.length > 0)
       .row
         .col-xs-12

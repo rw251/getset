@@ -51,7 +51,7 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
       });
     const codesForNotQuery = codesWithSearchTerm.map(v => v._id);
     const query = { $and: [
-        // matches all descendents of the codes already found
+        // matches all descendants of the codes already found
         { p: { $in: codesForQuery } },
         // but doesn't match any of the original codes
         { _id: { $not: { $in: codesForNotQuery } } },
@@ -296,7 +296,7 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
 });
 
 /**
- * @description Takes a list of codes and returns a list of descendents not in the initial list
+ * @description Takes a list of codes and returns a list of descendants not in the initial list
  *
  * @param {any} req The express request object
  * @param {any} res The express response object
@@ -322,7 +322,7 @@ exports.unmatchedChildren = (req, res) => {
       });
 
     const query = { $and: [
-      // matches all descendents of the codes already found
+      // matches all descendants of the codes already found
       { a: { $in: codesForQuery } },
       // but doesn't match any of the original codes
       { _id: { $not: { $in: processedCodes } } },

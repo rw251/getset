@@ -10,15 +10,15 @@ const $ = require('jquery');
 
 const $synonym = { include: {}, exclude: {} };
 const $separatorRadio = {};
-const currentGroups = { excluded: [], matchedDescendentButNotMatched: [] };
+const currentGroups = { excluded: [], matchedDescendantButNotMatched: [] };
 // will have:
 // codeSet
 // inCodeSetNotInTerminology
-// notInCodeSetDescendentOfCodeSet
+// notInCodeSetDescendantOfCodeSet
 // inCodeSetAndMatched,
 // inCodeSetAndUnmatched,
 // notInCodeSetButMatched,
-// matchedDescendentButNotMatched,
+// matchedDescendantButNotMatched,
 const s = {};
 const e = {};
 const separators = {
@@ -71,9 +71,9 @@ const getStamp = {
     else if (rtn.perf > 20) rtn.status = 'fail';
     return rtn;
   },
-  matchedDescendentButNotMatched: (numMatchedDescendentButNotMatched) => {
-    const rtn = { title: 'unmatched descendents', status: 'warn', id: 'matchedDescendentButNotMatchedPanel' };
-    rtn.perf = numMatchedDescendentButNotMatched;
+  matchedDescendantButNotMatched: (numMatchedDescendantButNotMatched) => {
+    const rtn = { title: 'unmatched descendants', status: 'warn', id: 'matchedDescendantButNotMatchedPanel' };
+    rtn.perf = numMatchedDescendantButNotMatched;
 
     if (rtn.perf < 5) rtn.status = 'pass';
     else if (rtn.perf > 20) rtn.status = 'fail';
@@ -102,8 +102,8 @@ const refreshExclusion = () => {
   const excludedTerms = Object.keys(e);
   currentGroups.excluded = [];
 
-  // do this for: notInCodeSetDescendentOfCodeSet,
-  // matchedDescendentButNotMatched, notInCodeSetButMatched
+  // do this for: notInCodeSetDescendantOfCodeSet,
+  // matchedDescendantButNotMatched, notInCodeSetButMatched
 
   currentGroups.notInCodeSetButMatched.forEach((g, gi) => {
     g.forEach((code, i) => {
@@ -175,7 +175,7 @@ const refreshExclusion = () => {
   stamps.push(getStamp.exists(currentGroups.codeSet.length, currentGroups.inCodeSetNotInTerminology.length));
   stamps.push(getStamp.unmatchedChildren(currentGroups.numUnmatchedCodesOriginal));
   stamps.push(getStamp.unmatchedCodes(currentGroups.numInCodeSetAndUnmatched));
-  stamps.push(getStamp.matchedDescendentButNotMatched(currentGroups.numMatchedDescendentButNotMatched));
+  stamps.push(getStamp.matchedDescendantButNotMatched(currentGroups.numMatchedDescendantButNotMatched));
   stamps.push(getStamp.notInCodeSetButMatched(currentGroups.numNotInCodeSetButMatched));
   stamps.push(getStamp.excluded(currentGroups.excluded.length));
   currentGroups.stamps = stamps;
@@ -202,11 +202,11 @@ const refresh = () => {
         // inCodeSetAndMatched,
         // inCodeSetAndUnmatched,
         // notInCodeSetButMatched,
-        // matchedDescendentButNotMatched,
+        // matchedDescendantButNotMatched,
         // numInCodeSetAndMatched,
         // numInCodeSetAndUnmatched,
         // numNotInCodeSetButMatched,
-        // numMatchedDescendentButNotMatched,
+        // numMatchedDescendantButNotMatched,
         Object.keys(hierarchies).forEach((key) => {
           currentGroups[key] = hierarchies[key];
         });
@@ -294,7 +294,7 @@ const updateFromCodeSet = (codeSet) => {
       //  {
       //    codes, // list of all matching codes
       //    unfoundCodes, // codes pasted that don't appear in the terminology
-      //    unmatchedCodes, // descendents of codes not included in list
+      //    unmatchedCodes, // descendants of codes not included in list
       //  }
       const terms = Object.keys(s);
       const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
@@ -302,7 +302,7 @@ const updateFromCodeSet = (codeSet) => {
       stamps.push(getStamp.exists(data.codes.length, data.unfoundCodes.length));
       stamps.push(getStamp.unmatchedChildren(data.unmatchedCodes.length));
       stamps.push(getStamp.unmatchedCodes(data.codes.length));
-      stamps.push(getStamp.matchedDescendentButNotMatched(0));
+      stamps.push(getStamp.matchedDescendantButNotMatched(0));
       stamps.push(getStamp.notInCodeSetButMatched(0));
       stamps.push(getStamp.excluded(0));
       currentGroups.stamps = stamps;
@@ -320,7 +320,7 @@ const updateFromCodeSet = (codeSet) => {
         });
       });
       currentGroups.inCodeSetNotInTerminology = data.unfoundCodes;
-      currentGroups.notInCodeSetDescendentOfCodeSet = Object
+      currentGroups.notInCodeSetDescendantOfCodeSet = Object
         .keys(unmatchedCodesReformatted)
         .filter(umc => currentGroups.codeLookup[utils.getCodeForTerminology(umc, currentTerminology)])
         .map(umc => ({

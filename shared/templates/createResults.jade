@@ -7,8 +7,8 @@ include ./mixins/code-freq-table.jade
   ul.nav.nav-tabs(role='tablist')
     li(class=!selected || selected==='matchedTabContent' ? 'active' : '', role='presentation')
       a(href='#matchedTabContent', aria-controls='matchedTabContent', role='tab', data-toggle='tab')= 'Matching codes (' + numMatched + ')'
-    li(class=selected==='matchedDescendentButNotMatchedTabContent' ? 'active' : '', role='presentation')
-      a(href='#matchedDescendentButNotMatchedTabContent', aria-controls='matchedDescendentButNotMatchedTabContent', role='tab', data-toggle='tab')= 'Unmatched descendents (' + numUnmatched + ')'
+    li(class=selected==='matchedDescendantButNotMatchedTabContent' ? 'active' : '', role='presentation')
+      a(href='#matchedDescendantButNotMatchedTabContent', aria-controls='matchedDescendantButNotMatchedTabContent', role='tab', data-toggle='tab')= 'Unmatched descendants (' + numUnmatched + ')'
     li(class=selected==='excludedTabContent' ? 'active' : '', role='presentation')
       a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
     li(role='presentation',style="float:right;line-height:45px;")
@@ -30,7 +30,7 @@ include ./mixins/code-freq-table.jade
   .tab-content.scrollable
     #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTableOfGraph(matched)
-    #matchedDescendentButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendentButNotMatchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
+    #matchedDescendantButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendantButNotMatchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTableOfGraph(unmatched)
     #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTable(excluded)
