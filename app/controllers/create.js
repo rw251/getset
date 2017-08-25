@@ -183,13 +183,14 @@ const refreshExclusionUI = () => {
 };
 
 const addTerm = (term, isExclusion) => {
+  const lowerCaseTerm = term.toLowerCase();
   startedAt = new Date();
   if (isExclusion) {
-    e[term] = true;
+    e[lowerCaseTerm] = true;
     refreshExclusionUI();
     refreshExclusion();
   } else {
-    s[term] = true;
+    s[lowerCaseTerm] = true;
     refreshSynonymUI();
     refresh();
   }

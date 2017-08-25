@@ -99,6 +99,7 @@ module.exports = {
     let n = descArr.length - 1;
 
     const searchTermsInDescription = searchTerms
+                                        .map(t => t.replace(/^\[?([^\]]*)\]?$/, '$1'))
                                         .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
 
     if (searchTermsInDescription.length === 0) {

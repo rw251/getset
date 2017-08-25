@@ -11,7 +11,12 @@ const escapeRegExp = str => str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '
 /**
  * @description For a given searchterm and terminology this returns all
  * codes that match the searchterm in that terminology. It also returns
- * the descendants of any matched term .
+ * the descendants of any matched term.
+ *
+ * [pert] - just matches the whole word pert
+ * [pert  - matches anything starting with "pert" e.g. pert, pertly
+ * pert]  - matches anything ending with "pert" e.g. expert, pert
+ * pert   - matches anything containing pert e.g. pert, expert, pertly, hypertension
  *
  * @param {string} searchterm The term to search for e.g. 'diabetes'
  * @param {string} terminology The terminology e.g. 'Readv2', 'snomed'
@@ -23,6 +28,16 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
   if (cache[terminology][searchterm]) {
     // We've already done this so return from cache
     return callback(null, cache[terminology][searchterm]);
+  }
+  let wildAtStart = true;
+  let wildAtEnd = true;
+  if (searchterm[0] === '[') {
+    wildAtStart = false;
+    searchterm = searchterm.substr(1);
+  }
+  if (searchterm[searchterm.length - 1] === ']') {
+    wildAtEnd = false;
+    searchterm = searchterm.substr(0, searchterm.length - 1);
   }
   // const escapedTerm = `\"${searchterm}\"`;
   const bit = searchterm.substr(0, BIT_LENGTH).toLowerCase();
@@ -38,7 +53,17 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     }
     const codesWithSearchTerm = codes
       .map((v) => {
-        if (v.t.toLowerCase().indexOf(searchterm.toLowerCase()) > -1) return v;
+        const indexOfSearchTermStart = v.t.toLowerCase().indexOf(searchterm.toLowerCase());
+        if (indexOfSearchTermStart > -1) {
+          const indexOfSearchTermEnd = indexOfSearchTermStart + searchterm.length;
+          const endOfWord = indexOfSearchTermEnd >= v.t.length || v.t[indexOfSearchTermEnd].search(/[a-z]/i) === -1;
+          const startOfWord = indexOfSearchTermStart === 0 || v.t[indexOfSearchTermStart - 1].search(/[a-z]/i) === -1;
+          if (wildAtStart && wildAtEnd) return v;
+          if (wildAtStart && endOfWord) return v;
+          if (wildAtEnd && startOfWord) return v;
+          if (startOfWord && endOfWord) return v;
+          return null;
+        }
         return null;
       })
       .filter(v => v);
