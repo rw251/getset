@@ -17,7 +17,7 @@ page('/', updateSelectedTab, home);
 page('/login', updateSelectedTab, login);
 page('/create', updateSelectedTab, create.show);
 page('/validate', updateSelectedTab, validate.show);
-page('/search', updateSelectedTab, search);
+page('/search', updateSelectedTab, search.show);
 page('/enhance', updateSelectedTab, enhance.show);
 
 module.exports = page;

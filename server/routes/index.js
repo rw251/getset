@@ -4,6 +4,7 @@ const homeController = require('../controllers/home');
 const userController = require('../controllers/user');
 const apiController = require('../controllers/api');
 const codeController = require('../controllers/code');
+const githubController = require('../controllers/github');
 
 const router = express.Router();
 
@@ -72,5 +73,9 @@ module.exports = function routeIndex(passport) {
   router.post('/code/unmatchedChildren', codeController.unmatchedChildren);
   router.get('/code/freq/:term', codeController.freq);
   router.post('/code/freqMult', codeController.freqMult);
+
+  router.post('/save/to/github', githubController.create);
+
+  router.get('/codesetlist', githubController.search);
   return router;
 };

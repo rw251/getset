@@ -1,4 +1,20 @@
 module.exports = {
+
+  // inspired from moment.js fromNow()
+  momentFromNow: (date) => {
+    const diffInSeconds = (new Date() - date) / 1000;
+    if (diffInSeconds < 45) return 'a few seconds ago';
+    if (diffInSeconds < 90) return 'a minute ago';
+    if (diffInSeconds < 45 * 60) return `${Math.round(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 90 * 60) return 'an hour ago';
+    if (diffInSeconds < 21 * 60 * 60) return `${Math.round(diffInSeconds / (60 * 60))} hours ago`;
+    if (diffInSeconds < 36 * 60 * 60) return 'a day ago';
+    if (diffInSeconds < 25 * 24 * 60 * 60) return `${Math.round(diffInSeconds / (24 * 60 * 60))} days ago`;
+    if (diffInSeconds < 46 * 24 * 60 * 60) return 'a month ago';
+    if (diffInSeconds < 319 * 24 * 60 * 60) return `${Math.round(diffInSeconds / (30.5 * 24 * 60 * 60))} months ago`;
+    if (diffInSeconds < 549 * 24 * 60 * 60) return 'a year ago';
+    return `${Math.round(diffInSeconds / (365.25 * 24 * 60 * 60))} years ago`;
+  },
   // Returns a function, that, as long as it continues to be invoked, will not
   // be triggered. The function will be called after it stops being called for
   // N milliseconds. If `immediate` is passed, trigger the function on the

@@ -23,23 +23,12 @@ let startedAt;
 
 const currentGroups = { excluded: [] };
 
-const displayResults = (groups) => {
-  const html = createResultsTemplate(groups);
-  if (new Date() - startedAt < 150) {
-    $results.html(html);
-  } else {
-    $results.fadeOut(500, () => {
-      $results.html(html).fadeIn(300);
-    });
-  }
-};
-
 let currentTerminology = '';
 
 const s = {};
 const e = {};
 
-const getMetaDataFile = () => {
+const getMetaDataFileContent = (propArray) => {
   const metadata = {
     includeTerms: Object.keys(s),
     excludeTerms: Object.keys(e),
@@ -50,17 +39,30 @@ const getMetaDataFile = () => {
     if (global.user.name) metadata.createdBy.name = global.user.name;
     if (global.user.email) metadata.createdBy.email = global.user.email;
   }
+  if (propArray && propArray.length > 0) {
+    propArray.forEach((prop) => {
+      metadata[prop.name] = prop.value;
+    });
+  }
   metadata.createdOn = new Date();
+  return metadata;
+};
+const getMetaDataFile = (propArray) => {
+  const metadata = getMetaDataFileContent(propArray);
   const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json;charset=utf-8' });
   return blob;
 };
-const getCodeSetFile = () => {
+const getCodeSetFileContent = () => {
   const currentCodeSet = [];
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
       if (!currentGroups.matched[gi][i].exclude) currentCodeSet.push(code.code || code._id);
     });
   });
+  return currentCodeSet;
+};
+const getCodeSetFile = () => {
+  const currentCodeSet = getCodeSetFileContent();
   const blob = new Blob([currentCodeSet.join('\r\n')], { type: 'text/plain;charset=utf-8' });
   return blob;
 };
@@ -79,6 +81,47 @@ const zipFiles = (files) => {
     promise = zip.generateAsync({ type: 'string' });
   }
   return promise;
+};
+
+const wireUpButtonsAndModal = () => {
+  $('#saveModal').on('shown.bs.modal', () => {
+    $('#firstInput').focus();
+  });
+  $('#saveModal form').on('submit', (evt) => {
+    evt.preventDefault();
+    const metadata = getMetaDataFileContent($('#saveModal form').serializeArray());
+    const codeSet = getCodeSetFileContent();
+    const metadataFileContent = JSON.stringify(metadata, null, 2);
+    const codeSetFileContent = codeSet.join('\r\n');
+    $
+      .ajax({
+        type: 'POST',
+        url: '/save/to/github',
+        data: JSON.stringify({ metadataFileContent, codeSetFileContent, name: metadata.name, description: metadata.description }),
+        dataType: 'json',
+        contentType: 'application/json',
+      })
+      .done(() => {
+        $('#saveModal').modal('hide');
+      })
+      .fail(() => {
+        alert('Something went wrong and your code set is not saved. Feel free to try again but I\'m not very hopeful.');
+      });
+    console.log($('#saveModal form').serializeArray());
+  });
+};
+
+const displayResults = (groups) => {
+  const html = createResultsTemplate(groups);
+  if (new Date() - startedAt < 150) {
+    $results.html(html);
+    wireUpButtonsAndModal();
+  } else {
+    $results.fadeOut(500, () => {
+      $results.html(html).fadeIn(300);
+      wireUpButtonsAndModal();
+    });
+  }
 };
 
 const refreshExclusion = () => {

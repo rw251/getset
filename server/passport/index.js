@@ -4,6 +4,7 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github').Strategy;
+const github = require('../controllers/github');
 
 const User = require('../models/User');
 
@@ -59,10 +60,11 @@ passport.use(new GitHubStrategy({
   clientSecret: process.env.GITHUB_SECRET,
   callbackURL: '/auth/github/callback',
   passReqToCallback: true,
-  scope: 'user:email',
+  scope: ['user:email', 'public_repo'],
 }, (req, accessToken, refreshToken, profile, done) => {
+  console.log(`PROTIEL: ${JSON.stringify(profile)}`);
   if (req.user) {
-    User.findOne({ github: profile.id }, (err, existingUser) => {
+    User.findOne({ 'github.id': profile.id }, (err, existingUser) => {
       if (existingUser) {
         req.flash('errors', { msg: 'There is already a GitHub account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
         done(err);
@@ -70,8 +72,12 @@ passport.use(new GitHubStrategy({
         User.findById(req.user.id, (errFind, userFromDb) => {
           const user = userFromDb;
           if (errFind) { return done(errFind); }
-          user.github = profile.id;
-          user.tokens.push({ kind: 'github', accessToken });
+          user.github = {
+            id: profile.id,
+            username: profile.username,
+          };
+          if (!user.tokens) user.tokens = {};
+          user.tokens.github = accessToken;
           user.profile.name = user.profile.name || profile.displayName;
           user.profile.picture = user.profile.picture || profile._json.avatar_url;
           user.profile.location = user.profile.location || profile._json.location;
@@ -84,10 +90,17 @@ passport.use(new GitHubStrategy({
       }
     });
   } else {
-    User.findOne({ github: profile.id }, (err, existingUser) => {
+    User.findOne({ 'github.id': profile.id }, (err, existingUser) => {
       if (err) { return done(err); }
+
       if (existingUser) {
-        return done(null, existingUser);
+        existingUser.tokens.github = accessToken;
+        return existingUser.save((updateErr, updateduser) => {
+          if (updateErr) {
+            return done(updateErr);
+          }
+          return github.createUsersGetSetRepo(updateduser, () => done(null, updateduser));
+        });
       }
       return User.findOne({ email: profile._json.email }, (errFind, existingEmailUser) => {
         if (errFind) { return done(errFind); }
@@ -106,8 +119,12 @@ passport.use(new GitHubStrategy({
           req.flash('errors', { msg: "You don't have an email address associated with your github account so we can't sign you up this way" });
           return done(err);
         }
-        user.github = profile.id;
-        user.tokens.push({ kind: 'github', accessToken });
+        user.github = {
+          id: profile.id,
+          username: profile.username,
+        };
+        if (!user.tokens) user.tokens = {};
+        user.tokens.github = accessToken;
         user.profile.name = profile.displayName;
         user.profile.picture = profile._json.avatar_url;
         user.profile.location = profile._json.location;
@@ -126,7 +143,7 @@ passport.use(new GitHubStrategy({
 
 exports.isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
-    return next();
+    next();
   }
   return res.redirect('/login');
 };
@@ -137,7 +154,7 @@ exports.isAuthenticated = (req, res, next) => {
 
 exports.isAuthorized = (req, res, next) => {
   const provider = req.path.split('/').slice(-1)[0];
-  const token = req.user.tokens.find(tkn => tkn.kind === provider);
+  const token = req.user.tokens[provider];
   if (token) {
     next();
   } else {

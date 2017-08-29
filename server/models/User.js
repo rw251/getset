@@ -11,11 +11,16 @@ const userSchema = new mongoose.Schema({
   facebook: String,
   twitter: String,
   google: String,
-  github: String,
+  github: {
+    id: String,
+    username: String,
+  },
   instagram: String,
   linkedin: String,
   steam: String,
-  tokens: Array,
+  tokens: {
+    github: String,
+  },
 
   profile: {
     name: String,

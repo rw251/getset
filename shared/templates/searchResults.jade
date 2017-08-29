@@ -1,0 +1,18 @@
+.scrollable-parent
+  table.table.table-condensed
+    thead
+      tr
+        th Name
+        th Created by
+        th Created
+        th Link
+        th
+    tbody
+      each item in list
+        tr
+          td= item.name
+          td= item.createdBy
+          td= item.createdOn
+          td
+            a(href=item.link, target='_blank')= item.link
+          td actions

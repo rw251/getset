@@ -12,19 +12,21 @@ include ./mixins/code-freq-table.jade
     li(class=selected==='excludedTabContent' ? 'active' : '', role='presentation')
       a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
     li(role='presentation',style="float:right;line-height:45px;")
-      .btn-group
-        button#downloadCodeSet.btn.btn-success Download code set
-        button.btn.btn-success.dropdown-toggle(type='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false')
-          span.caret
-          span.sr-only Toggle Dropdown
-        ul.dropdown-menu
-          li#downloadCodes
-            a(href='#') Download codes
-          li#downloadMeta
-            a(href='#') Download meta
-          li.divider(role='separator')
-          li#downloadAll
-            a(href='#') Download all
+      .btn-toolbar
+        button.btn.btn-warning#saveToGit(type="button", data-toggle="modal", data-target="#saveModal") Save to GitHub
+        .btn-group
+          button#downloadCodeSet.btn.btn-success Download code set
+          button.btn.btn-success.dropdown-toggle(type='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false')
+            span.caret
+            span.sr-only Toggle Dropdown
+          ul.dropdown-menu
+            li#downloadCodes
+              a(href='#') Download codes
+            li#downloadMeta
+              a(href='#') Download meta
+            li.divider(role='separator')
+            li#downloadAll
+              a(href='#') Download all
 
   // Tab panes
   .tab-content.scrollable
@@ -34,3 +36,23 @@ include ./mixins/code-freq-table.jade
       +codeTableOfGraph(unmatched)
     #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTable(excluded)
+// Modal
+#saveModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel')
+  .modal-dialog(role='document')
+    .modal-content
+      form(action="")
+        .modal-header
+          button.close(type='button', data-dismiss='modal', aria-label='Close')
+            span(aria-hidden='true') ×
+          h4#myModalLabel.modal-title Save code set to GitHub
+        .modal-body
+          p This allows you to publish and share your code sets with other researchers
+          .form-group
+            label(for='name') Name
+            input#firstInput.form-control(type='text',placeholder='A name for your code set - try to make it descriptive!', name='name')
+          .form-group
+            label(for='description') Description
+            textarea.form-control(rows='3',placeholder='Tell us a bit more about what the code set is.', name='description')
+        .modal-footer
+          button.btn.btn-default(type='button', data-dismiss='modal') Cancel
+          button.btn.btn-primary(type='submit') Save to GitHub

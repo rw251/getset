@@ -2,8 +2,8 @@ const compression = require('compression');
 const express = require('express');
 const path = require('path');
 const forceSsl = require('express-force-ssl');
-const logger = require('express-pino-logger');
 const pino = require('pino')();
+const expressPino = require('express-pino-logger');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const expressSession = require('express-session');
@@ -44,7 +44,7 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
 
   // uncomment after placing your favicon in /public
   // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-  app.use(logger());
+  app.use(expressPino({ logger: pino }));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   // app.use(expressValidator());

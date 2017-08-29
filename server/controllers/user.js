@@ -217,7 +217,7 @@ exports.getOauthUnlink = (req, res, next) => {
     const user = userFromDb;
     if (err) { return next(err); }
     user[provider] = undefined;
-    user.tokens = user.tokens.filter(token => token.kind !== provider);
+    user.tokens[provider] = null;
     return user.save((errSave) => {
       if (errSave) { return next(errSave); }
       req.flash('info', { msg: `${provider} account has been unlinked.` });
@@ -393,4 +393,14 @@ exports.postForgot = (req, res, next) => {
     .then(sendForgotPasswordEmail)
     .then(() => res.redirect('/forgot'))
     .catch(next);
+};
+
+exports.githubUsers = (callback) => {
+  User.find({ 'github.username': { $exists: true } }, (err, users) => {
+    if (err) {
+      console.log(err);
+      return callback(err);
+    }
+    return callback(null, users);
+  });
 };
