@@ -8,6 +8,11 @@ if !user || !user.name
         | sign in with GitHub 
     p ..to see more.
 else
+  if loading
+    .loading-overlay
+      .loading-content
+        i.fa.fa-refresh.fa-spin.fa-fw  
+        | Loading...
   .container-fluid.scrollable-parent
     .row.scrollable-parent
       .col-lg-4.col-md-3.scrollable(style="padding-bottom:25px")

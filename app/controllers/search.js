@@ -29,20 +29,10 @@ const wireup = () => {
   });
   $('#results').on('click', '.btn-edit', (evt) => {
     const $button = $(evt.currentTarget);
+    global.codeSetId = $button.data('id');
+    delete global.currentSet;
+    page('/create');
     // const $row = $button.closest('tr');
-    $
-      .ajax({
-        url: `/codeset/${$button.data('id')}`,
-        dataType: 'json',
-        method: 'GET',
-        contentType: 'application/json',
-      })
-      .done((codeset) => {
-        // save to state
-        global.currentSet = codeset;
-        // launch create page
-        page('/create');
-      });
     console.log(`editing...${$button.data('path')}`);
     evt.preventDefault();
   });

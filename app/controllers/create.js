@@ -21,12 +21,21 @@ let $results;
 let $status;
 let startedAt;
 
-const currentGroups = { excluded: [] };
+let currentGroups = { excluded: [] };
 
 let currentTerminology = '';
 
-const s = {};
-const e = {};
+let s = {};
+let e = {};
+
+const reset = () => {
+  currentGroups = { excluded: [] };
+
+  currentTerminology = '';
+
+  s = {};
+  e = {};
+};
 
 const getMetaDataFileContent = (propArray) => {
   const nowish = new Date();
@@ -447,12 +456,33 @@ const wireup = () => {
 module.exports = {
 
   show: () => {
-    defaultController(createTemplate);
+    reset();
+    defaultController(createTemplate, { loading: global.codeSetId && !global.currentSet });
     wireup();
 
-    if (global.currentSet) {
-      console.log('Can load from...');
-      console.log(global.currentSet);
+    if (global.codeSetId && !global.currentSet) {
+      $
+      .ajax({
+        url: `/codeset/${global.codeSetId}`,
+        dataType: 'json',
+        method: 'GET',
+        contentType: 'application/json',
+      })
+      .done((codeset) => {
+        // save to state
+        global.currentSet = codeset;
+        // launch create page
+        global.currentSet.metadata.includeTerms.forEach((term) => {
+          s[term] = true;
+        });
+        global.currentSet.metadata.excludeTerms.forEach((term) => {
+          e[term] = true;
+        });
+        currentGroups.githubSet = global.currentSet.githubSet;
+        updateUI();
+        $('.loading-overlay').fadeOut(500);
+      });
+    } else if (global.currentSet) {
       global.currentSet.metadata.includeTerms.forEach((term) => {
         s[term] = true;
       });
