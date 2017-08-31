@@ -22,21 +22,21 @@ else
               | SNOMED CT
           .row
             .col-lg-6
-              #synonymList
               .form-group
                 label(for='synonym') Search term
                 .input-group
                   input#synonym.form-control(type='text',placeholder='Enter synonyms here...',autocomplete='off')
                   span.input-group-btn
                     button#addSynonym.btn.btn-default(type="button") Add!
+              #synonymList
             .col-lg-6
-              #exclusionList
               .form-group
                 label(for='exclusion') Exclusion term
                 .input-group
                   input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
                   span.input-group-btn
                     button#addExclusion.btn.btn-default(type="button") Add!
+              #exclusionList
         p#status
       #results.col-lg-8.col-md-9.scrollable-parent
         .result-placeholder(style="height: 350px;text-align:center;border: 1px dashed gray;background-color: lightgray;padding-top:100px")

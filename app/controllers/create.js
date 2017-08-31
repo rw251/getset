@@ -29,6 +29,7 @@ const s = {};
 const e = {};
 
 const getMetaDataFileContent = (propArray) => {
+  const nowish = new Date();
   const metadata = {
     includeTerms: Object.keys(s),
     excludeTerms: Object.keys(e),
@@ -44,7 +45,8 @@ const getMetaDataFileContent = (propArray) => {
       metadata[prop.name] = prop.value;
     });
   }
-  metadata.createdOn = new Date();
+  metadata.createdOn = currentGroups.githubSet ? currentGroups.githubSet.createdOn : nowish;
+  metadata.lastUpdated = nowish;
   return metadata;
 };
 const getMetaDataFile = (propArray) => {
@@ -83,32 +85,14 @@ const zipFiles = (files) => {
   return promise;
 };
 
+const makeDirty = () => {
+  if (!currentGroups.githubSet) return;
+  currentGroups.isDirty = true;
+  $('#savedToGithub').replaceWith('<button class="btn btn-warning" id="updateGit" type="button">Save</button>');
+};
+
 const wireUpButtonsAndModal = () => {
-  $('#saveModal').on('shown.bs.modal', () => {
-    $('#firstInput').focus();
-  });
-  $('#saveModal form').on('submit', (evt) => {
-    evt.preventDefault();
-    const metadata = getMetaDataFileContent($('#saveModal form').serializeArray());
-    const codeSet = getCodeSetFileContent();
-    const metadataFileContent = JSON.stringify(metadata, null, 2);
-    const codeSetFileContent = codeSet.join('\r\n');
-    $
-      .ajax({
-        type: 'POST',
-        url: '/save/to/github',
-        data: JSON.stringify({ metadataFileContent, codeSetFileContent, name: metadata.name, description: metadata.description }),
-        dataType: 'json',
-        contentType: 'application/json',
-      })
-      .done(() => {
-        $('#saveModal').modal('hide');
-      })
-      .fail(() => {
-        alert('Something went wrong and your code set is not saved. Feel free to try again but I\'m not very hopeful.');
-      });
-    console.log($('#saveModal form').serializeArray());
-  });
+
 };
 
 const displayResults = (groups) => {
@@ -122,6 +106,43 @@ const displayResults = (groups) => {
       wireUpButtonsAndModal();
     });
   }
+};
+
+const saveToGithub = () => {
+  const metadata = getMetaDataFileContent($('#saveModal form').serializeArray());
+  const codeSet = getCodeSetFileContent();
+  const commitMessage = metadata.message;
+  delete metadata.message;
+  const metadataFileContent = JSON.stringify(metadata, null, 2);
+  const codeSetFileContent = codeSet.join('\r\n');
+  const dataToSend = {
+    metadataFileContent,
+    codeSetFileContent,
+    name: metadata.name,
+    description: metadata.description,
+    message: metadata.description,
+  };
+  if (currentGroups.githubSet) {
+    dataToSend.codeSet = currentGroups.githubSet;
+    dataToSend.message = commitMessage;
+  }
+  $
+    .ajax({
+      type: 'POST',
+      url: '/save/to/github',
+      data: JSON.stringify(dataToSend),
+      dataType: 'json',
+      contentType: 'application/json',
+    })
+    .done((set) => {
+      currentGroups.githubSet = set;
+      currentGroups.isDirty = false;
+      $('#saveModal').modal('hide');
+      displayResults(currentGroups);
+    })
+    .fail(() => {
+      alert('Something went wrong and your code set is not saved. Feel free to try again but I\'m not very hopeful.');
+    });
 };
 
 const refreshExclusion = () => {
@@ -226,6 +247,7 @@ const refreshExclusionUI = () => {
 };
 
 const addTerm = (term, isExclusion) => {
+  makeDirty();
   const lowerCaseTerm = term.toLowerCase();
   startedAt = new Date();
   if (isExclusion) {
@@ -239,6 +261,25 @@ const addTerm = (term, isExclusion) => {
   }
 
   $('.alert').alert().on('closed.bs.alert', (evt) => {
+    makeDirty();
+    const termToRemove = $(evt.target).data('value');
+    if (e[termToRemove]) {
+      delete e[termToRemove];
+      refreshExclusion();
+    } else {
+      delete s[termToRemove];
+      if (Object.keys(s).length > 0) refresh();
+    }
+  });
+};
+
+const updateUI = () => {
+  refreshExclusionUI();
+  refreshSynonymUI();
+  refresh();
+
+  $('.alert').alert().on('closed.bs.alert', (evt) => {
+    makeDirty();
     const termToRemove = $(evt.target).data('value');
     if (e[termToRemove]) {
       delete e[termToRemove];
@@ -292,11 +333,16 @@ const wireup = () => {
   let lastPopOverElements;
   let lastSelectedText = '';
 
-  /* document.addEventListener('selectionchange', () => {
-    textSelected();
-  });*/
-
-  $('#results')
+  $results
+    .on('shown.bs.modal', '#saveModal', () => {
+      $('#firstInput').focus();
+    })
+    .on('submit', '#saveModal form', (evt) => {
+      evt.preventDefault();
+      $('#saveModal .hide-on-submit').hide();
+      $('#loader').show();
+      saveToGithub();
+    })
     .on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
       currentGroups.selected = evt.target.href.split('#')[1];
     })
@@ -327,7 +373,7 @@ const wireup = () => {
           placement: 'right',
         });
         setTimeout(() => {
-          $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
+          $('.popover').css('left', (selectionCoords.right + 25) - $results.offset().left);
         }, 1);
         if (!lastPopOverElements) lastPopOverElements = $(evt.target);
         else lastPopOverElements = lastPopOverElements.add($(evt.target));
@@ -403,6 +449,19 @@ module.exports = {
   show: () => {
     defaultController(createTemplate);
     wireup();
+
+    if (global.currentSet) {
+      console.log('Can load from...');
+      console.log(global.currentSet);
+      global.currentSet.metadata.includeTerms.forEach((term) => {
+        s[term] = true;
+      });
+      global.currentSet.metadata.excludeTerms.forEach((term) => {
+        e[term] = true;
+      });
+      currentGroups.githubSet = global.currentSet.githubSet;
+      updateUI();
+    }
   },
 
 };

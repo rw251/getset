@@ -1,6 +1,8 @@
 const request = require('request');
 const userController = require('./user');
 const requestPromise = require('request-promise');
+const atob = require('atob');
+const btoa = require('btoa');
 
 const getSetRepo = '__getset_code_sets';
 const getSetRepoSeparator = ' | ';
@@ -40,7 +42,7 @@ const createFileOnGithub = (user, path, content, message, callback) => {
         name: user.profile.name,
         email: user.email,
       },
-      content: new Buffer(content).toString('base64'),
+      content: btoa(content), // converts to base64
       branch: 'master',
     },
   };
@@ -53,22 +55,27 @@ const createFileOnGithub = (user, path, content, message, callback) => {
   });
 };
 
-
-const updateFileOnGithub = (user, path, content, message, callback) => {
-  const urlGET = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+const getFileFromGithub = (user, path, callback) => {
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
   const options = {
-    url: urlGET,
+    url,
     headers: {
       'User-Agent': 'getset',
     },
     json: true,
   };
 
-  request(options, (errGET, resGET, bodyGET) => {
-    console.log(`STATUS: ${resGET.statusCode}`);
-    console.log(`HEADERS: ${JSON.stringify(resGET.headers)}`);
-    console.log(`BODY: ${JSON.stringify(bodyGET)}`);
+  request(options, (err, res, body) => {
+    console.log(`STATUS: ${res.statusCode}`);
+    console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+    console.log(`BODY: ${JSON.stringify(body)}`);
+    if (err) return callback(err);
+    return callback(null, body);
+  });
+};
 
+const updateFileOnGithub = (user, path, content, message, callback) => {
+  getFileFromGithub(user, path, (errGET, bodyGET) => {
     const urlPUT = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
     console.log(urlPUT);
     const optionsPUT = {
@@ -86,7 +93,7 @@ const updateFileOnGithub = (user, path, content, message, callback) => {
           email: user.email,
         },
         sha: bodyGET.sha,
-        content: new Buffer(content).toString('base64'),
+        content: btoa(content), // converts to base64
         branch: 'master',
       },
     };
@@ -100,12 +107,91 @@ const updateFileOnGithub = (user, path, content, message, callback) => {
   });
 };
 
-exports.create = (req, res) => {
-  const rootFolder = `${req.body.name || 'unknown'}${getSetRepoSeparator}${(new Date()).toISOString()}`;
-  const commitMessage = req.body.description || 'Initial commit of code set';
-  createFileOnGithub(req.user, `${rootFolder}/meta.json`, req.body.metadataFileContent, commitMessage, () => {
-    createFileOnGithub(req.user, `${rootFolder}/codes.txt`, req.body.codeSetFileContent, commitMessage, () => {
-      res.send({});
+const deleteFileFromGithub = (user, path, sha, callback) => {
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  console.log(url);
+  const options = {
+    url,
+    headers: { 'User-Agent': 'getset' },
+    json: true,
+    method: 'DELETE',
+    body: {
+      path,
+      message: `Removing code set: ${path}`,
+      committer: {
+        name: user.profile.name,
+        email: user.email,
+      },
+      sha,
+      branch: 'master',
+    },
+  };
+
+  request(options, (err, res, body) => {
+    console.log(`STATUS: ${res.statusCode}`);
+    console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+    console.log(`BODY: ${JSON.stringify(body)}`);
+    callback();
+  });
+};
+
+const deleteFilesFromGithub = (user, files, callback) => {
+  if (!files || files.length === 0) return callback();
+  const file = files.pop();
+  return deleteFileFromGithub(user, file.path, file.sha, () => {
+    if (files.length === 0) return callback();
+    return deleteFilesFromGithub(user, files, callback);
+  });
+};
+
+const deleteRepo = (user, path, callback) => {
+  // first find all files
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  const options = {
+    url,
+    headers: {
+      'User-Agent': 'getset',
+    },
+    json: true,
+  };
+
+  request(options, (err, res, body) => {
+    deleteFilesFromGithub(user, body, callback);
+  });
+};
+
+exports.name = req => `${req.body.name || 'unknown'}${getSetRepoSeparator}${(new Date()).toISOString()}`;
+exports.description = req => req.body.description || 'Initial commit of code set';
+exports.message = req => req.body.message || 'Code set updated';
+exports.repoUrl = (req, name) => `https://github.com/${req.user.github.username}/${getSetRepo}/tree/master/${name}`;
+exports.githubSeparator = getSetRepoSeparator;
+
+exports.create = (req, name, commitMessage, callback) => {
+  createFileOnGithub(req.user, `${name}/meta.json`, req.body.metadataFileContent, commitMessage, () => {
+    createFileOnGithub(req.user, `${name}/codes.txt`, req.body.codeSetFileContent, commitMessage, () => callback());
+  });
+};
+
+exports.update = (req, name, commitMessage, callback) => {
+  updateFileOnGithub(req.user, `${name}/meta.json`, req.body.metadataFileContent, commitMessage, () => {
+    updateFileOnGithub(req.user, `${name}/codes.txt`, req.body.codeSetFileContent, commitMessage, () => callback());
+  });
+};
+
+exports.get = (req, name, callback) => {
+  getFileFromGithub(req.user, `${name}/meta.json`, (errMeta, metadataFile) => {
+    getFileFromGithub(req.user, `${name}/codes.txt`, (errCodes, codesetFile) => {
+      if (errMeta || errCodes) return callback(errMeta || errCodes);
+      const metadata = JSON.parse(atob(metadataFile.content));
+      return callback(null, {
+        metadata,
+        codeset: atob(codesetFile.content),
+        githubSet: {
+          name,
+          description: metadata.description,
+          createdOn: metadata.createdOn,
+        },
+      });
     });
   });
 };
@@ -156,5 +242,12 @@ exports.search = (req, res, next) => {
         return res.send(stuffToReturn);
       })
       .catch(errPromise => next(errPromise));
+  });
+};
+
+exports.delete = (user, path, callback) => {
+  deleteRepo(user, path, (err) => {
+    if (err) return callback(err);
+    return callback();
   });
 };

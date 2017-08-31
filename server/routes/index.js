@@ -4,7 +4,7 @@ const homeController = require('../controllers/home');
 const userController = require('../controllers/user');
 const apiController = require('../controllers/api');
 const codeController = require('../controllers/code');
-const githubController = require('../controllers/github');
+const codeSetController = require('../controllers/codeSet');
 
 const router = express.Router();
 
@@ -74,8 +74,11 @@ module.exports = function routeIndex(passport) {
   router.get('/code/freq/:term', codeController.freq);
   router.post('/code/freqMult', codeController.freqMult);
 
-  router.post('/save/to/github', githubController.create);
+  router.post('/save/to/github', codeSetController.create);
 
-  router.get('/codesetlist', githubController.search);
+  router.get('/codesetlist', codeSetController.search);
+
+  router.get('/codeset/:id', codeSetController.get);
+  router.delete('/codeset/:id', codeSetController.delete);
   return router;
 };

@@ -44,10 +44,12 @@
     "standard": "^8.6.0"
   },
   "dependencies": {
+    "atob": "^2.0.3",
     "bcrypt-nodejs": "0.0.3",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
     "bootstrap": "^3.3.7",
+    "btoa": "^1.1.2",
     "compression": "^1.6.2",
     "debug": "^2.6.6",
     "digest-brunch": "^1.5.1",

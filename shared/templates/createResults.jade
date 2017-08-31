@@ -13,7 +13,14 @@ include ./mixins/code-freq-table.jade
       a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
     li(role='presentation',style="float:right;line-height:45px;")
       .btn-toolbar
-        button.btn.btn-warning#saveToGit(type="button", data-toggle="modal", data-target="#saveModal") Save to GitHub
+        if githubSet && !isDirty
+          span#savedToGithub.pull-left
+            | Saved as: 
+            a(href=githubSet.repoUrl, target="_blank")= `${githubSet.name.substr(0, 20)}...`
+        else if isDirty
+          button#updateGit.btn.btn-warning(type="button", data-toggle="modal", data-target="#saveModal") Save
+        else
+          button.btn.btn-warning#saveToGit(type="button", data-toggle="modal", data-target="#saveModal") Save to GitHub
         .btn-group
           button#downloadCodeSet.btn.btn-success Download code set
           button.btn.btn-success.dropdown-toggle(type='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false')
@@ -37,22 +44,34 @@ include ./mixins/code-freq-table.jade
     #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +codeTable(excluded)
 // Modal
-#saveModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel')
+#saveModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='saveModalLabel')
   .modal-dialog(role='document')
     .modal-content
       form(action="")
         .modal-header
           button.close(type='button', data-dismiss='modal', aria-label='Close')
             span(aria-hidden='true') ×
-          h4#myModalLabel.modal-title Save code set to GitHub
+          h4#saveModalLabel.modal-title= `Save code set ${githubSet ? 'changes ' : ''}to GitHub`
         .modal-body
           p This allows you to publish and share your code sets with other researchers
-          .form-group
-            label(for='name') Name
-            input#firstInput.form-control(type='text',placeholder='A name for your code set - try to make it descriptive!', name='name')
+          if githubSet
+            .form-group
+              label(for='name') Name
+              input#firstInput.form-control(type='text', name='name', value=githubSet.name.split(' | ')[0], readonly)
+          else
+            .form-group
+              label(for='name') Name
+              input#firstInput.form-control(type='text',placeholder='A name for your code set - try to make it descriptive!', name='name')
           .form-group
             label(for='description') Description
             textarea.form-control(rows='3',placeholder='Tell us a bit more about what the code set is.', name='description')
+              = githubSet ? githubSet.description : ''
+          if githubSet
+            .form-group
+              label(for='message') What's changed?
+              textarea.form-control(rows='3',placeholder='Tell us a bit more about what changes you\'ve made and why', name='message')
         .modal-footer
-          button.btn.btn-default(type='button', data-dismiss='modal') Cancel
-          button.btn.btn-primary(type='submit') Save to GitHub
+          button.btn.btn-default.hide-on-submit(type='button', data-dismiss='modal') Cancel
+          button.btn.btn-primary.hide-on-submit(type='submit') Save to GitHub
+          button.btn.btn-primary.disabled#loader(type='button',style='display:none')
+            i.fa.fa-refresh.fa-spin.fa-fw
