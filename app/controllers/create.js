@@ -11,6 +11,7 @@ const defaultController = require('./default');
 const $ = require('jquery');
 const FileSaver = require('file-saver');
 const JSZip = require('jszip');
+const localforage = require('localforage');
 
 // Add a case insensitive contains
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
@@ -105,6 +106,8 @@ const wireUpButtonsAndModal = () => {
 };
 
 const displayResults = (groups) => {
+  if (global.user) groups.user = global.user;
+  else delete groups.user;
   const html = createResultsTemplate(groups);
   if (new Date() - startedAt < 150) {
     $results.html(html);
@@ -219,22 +222,22 @@ const refresh = () => {
   setTimeout(() => {
     const terms = Object.keys(s);
     $
-    .ajax({
-      type: 'POST',
-      url: '/code/search',
-      data: JSON.stringify({ terminology: currentTerminology, terms }),
-      dataType: 'json',
-      contentType: 'application/json',
-    })
-    .done((data) => {
-      $status.text(`Result! (n=${data.codes.length})`);
-      const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
-      currentGroups.matched = hierarchies.matched;
-      currentGroups.unmatched = hierarchies.unmatched;
-      currentGroups.numMatched = hierarchies.numMatched;
-      currentGroups.numUnmatched = hierarchies.numUnmatched;
-      refreshExclusion();
-    });
+      .ajax({
+        type: 'POST',
+        url: '/code/search',
+        data: JSON.stringify({ terminology: currentTerminology, terms }),
+        dataType: 'json',
+        contentType: 'application/json',
+      })
+      .done((data) => {
+        $status.text(`Result! (n=${data.codes.length})`);
+        const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
+        currentGroups.matched = hierarchies.matched;
+        currentGroups.unmatched = hierarchies.unmatched;
+        currentGroups.numMatched = hierarchies.numMatched;
+        currentGroups.numUnmatched = hierarchies.numUnmatched;
+        refreshExclusion();
+      });
   }, 1);
 };
 
@@ -255,31 +258,46 @@ const refreshExclusionUI = () => {
   clearInputs();
 };
 
-const addTerm = (term, isExclusion) => {
-  makeDirty();
-  const lowerCaseTerm = term.toLowerCase();
-  startedAt = new Date();
-  if (isExclusion) {
-    e[lowerCaseTerm] = true;
-    refreshExclusionUI();
-    refreshExclusion();
-  } else {
-    s[lowerCaseTerm] = true;
-    refreshSynonymUI();
-    refresh();
-  }
+const syncToLocal = () => {
+  localforage.setItem('o', { s, e });
+};
 
-  $('.alert').alert().on('closed.bs.alert', (evt) => {
-    makeDirty();
-    const termToRemove = $(evt.target).data('value');
-    if (e[termToRemove]) {
-      delete e[termToRemove];
-      refreshExclusion();
-    } else {
-      delete s[termToRemove];
-      if (Object.keys(s).length > 0) refresh();
-    }
+const syncFromLocal = () => {
+  localforage.getItem('o').then((o) => {
+    e = o.e;
+    s = o.s;
+    if (Object.keys(e).length + Object.keys(s).length > 0) updateUI();
   });
+};
+
+const addExclusion = (term) => {
+  e[term] = true;
+  syncToLocal();
+};
+
+const addInclusion = (term) => {
+  s[term] = true;
+  syncToLocal();
+};
+
+const removeExclusion = (term) => {
+  delete e[term];
+  syncToLocal();
+  refreshExclusion();
+};
+
+const removeInclusion = (term) => {
+  delete s[term];
+  syncToLocal();
+  if (Object.keys(s).length > 0) refresh();
+};
+
+const removeTerm = (term) => {
+  if (e[term]) {
+    removeExclusion(term);
+  } else {
+    removeInclusion(term);
+  }
 };
 
 const updateUI = () => {
@@ -290,20 +308,35 @@ const updateUI = () => {
   $('.alert').alert().on('closed.bs.alert', (evt) => {
     makeDirty();
     const termToRemove = $(evt.target).data('value');
-    if (e[termToRemove]) {
-      delete e[termToRemove];
-      refreshExclusion();
-    } else {
-      delete s[termToRemove];
-      if (Object.keys(s).length > 0) refresh();
-    }
+    removeTerm(termToRemove);
+  });
+};
+
+const addTerm = (term, isExclusion) => {
+  makeDirty();
+  const lowerCaseTerm = term.toLowerCase();
+  startedAt = new Date();
+  if (isExclusion) {
+    addExclusion(lowerCaseTerm);
+    refreshExclusionUI();
+    refreshExclusion();
+  } else {
+    addInclusion(lowerCaseTerm);
+    refreshSynonymUI();
+    refresh();
+  }
+
+  $('.alert').alert().on('closed.bs.alert', (evt) => {
+    makeDirty();
+    const termToRemove = $(evt.target).data('value');
+    removeTerm(termToRemove);
   });
 };
 
 const addIfLongEnough = (element) => {
   const latestSynonym = element.val().trim();
   if (latestSynonym.length < 2) {
-        // alertBecauseTooShort
+    // alertBecauseTooShort
   } else {
     addTerm(latestSynonym, element === $synonym.exclude.input);
   }
@@ -462,35 +495,37 @@ module.exports = {
 
     if (global.codeSetId && !global.currentSet) {
       $
-      .ajax({
-        url: `/codeset/${global.codeSetId}`,
-        dataType: 'json',
-        method: 'GET',
-        contentType: 'application/json',
-      })
-      .done((codeset) => {
-        // save to state
-        global.currentSet = codeset;
-        // launch create page
-        global.currentSet.metadata.includeTerms.forEach((term) => {
-          s[term] = true;
+        .ajax({
+          url: `/codeset/${global.codeSetId}`,
+          dataType: 'json',
+          method: 'GET',
+          contentType: 'application/json',
+        })
+        .done((codeset) => {
+          // save to state
+          global.currentSet = codeset;
+          // launch create page
+          global.currentSet.metadata.includeTerms.forEach((term) => {
+            addInclusion(term);
+          });
+          global.currentSet.metadata.excludeTerms.forEach((term) => {
+            addExclusion(term);
+          });
+          currentGroups.githubSet = global.currentSet.githubSet;
+          updateUI();
+          $('.loading-overlay').fadeOut(500);
         });
-        global.currentSet.metadata.excludeTerms.forEach((term) => {
-          e[term] = true;
-        });
-        currentGroups.githubSet = global.currentSet.githubSet;
-        updateUI();
-        $('.loading-overlay').fadeOut(500);
-      });
     } else if (global.currentSet) {
       global.currentSet.metadata.includeTerms.forEach((term) => {
-        s[term] = true;
+        addInclusion(term);
       });
       global.currentSet.metadata.excludeTerms.forEach((term) => {
-        e[term] = true;
+        addExclusion(term);
       });
       currentGroups.githubSet = global.currentSet.githubSet;
       updateUI();
+    } else {
+      syncFromLocal();
     }
   },
 

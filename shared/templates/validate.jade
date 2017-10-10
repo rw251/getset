@@ -1,7 +1,13 @@
 .container
   h1 Validate
   if !user || !user.name
-    p A bit about validating - why not..
+    p 
+      | Check out how other people created their code sets. You can
+      ul
+        li Upload a code set created with this tool to check it is error free
+        li Begin to extend other people's code sets
+        li Compare different code sets to spot differences
+      | However for all of this you need to..
     p
       a.btn.btn-github.btn-social(href='/auth/github?returnTo=/validate')
         i.fa.fa-github

@@ -13,14 +13,19 @@ include ./mixins/code-freq-table.jade
       a(href='#excludedTabContent', aria-controls='excludedTabContent', role='tab', data-toggle='tab')= 'Excluded (' + excluded.length + ')'
     li(role='presentation',style="float:right;line-height:45px;")
       .btn-toolbar
-        if githubSet && !isDirty
-          span#savedToGithub.pull-left
-            | Saved as: 
-            a(href=githubSet.repoUrl, target="_blank")= `${githubSet.name.substr(0, 20)}...`
-        else if isDirty
-          button#updateGit.btn.btn-warning(type="button", data-toggle="modal", data-target="#saveModal") Save
+        if !user || !user.name
+          a.btn.btn-github.btn-social(href='/auth/github?returnTo=/create')
+            i.fa.fa-github
+            | Sign in with GitHub to save
         else
-          button.btn.btn-warning#saveToGit(type="button", data-toggle="modal", data-target="#saveModal") Save to GitHub
+          if githubSet && !isDirty
+            span#savedToGithub.pull-left
+              | Saved as: 
+              a(href=githubSet.repoUrl, target="_blank")= `${githubSet.name.substr(0, 20)}...`
+          else if isDirty
+            button#updateGit.btn.btn-warning(type="button", data-toggle="modal", data-target="#saveModal") Save
+          else
+            button.btn.btn-warning#saveToGit(type="button", data-toggle="modal", data-target="#saveModal") Save to GitHub
         .btn-group
           button#downloadCodeSet.btn.btn-success Download code set
           button.btn.btn-success.dropdown-toggle(type='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false')
