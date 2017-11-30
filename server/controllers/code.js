@@ -18,6 +18,8 @@ const escapeRegExp = str => str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '
  * pert]  - matches anything ending with "pert" e.g. expert, pert
  * pert   - matches anything containing pert e.g. pert, expert, pertly, hypertension
  *
+ * prednisolone*tablets - matches Prednisolone 1mg tablets / Prednisolone 5mg tablets etc..
+ *
  * @param {string} searchterm The term to search for e.g. 'diabetes'
  * @param {string} terminology The terminology e.g. 'Readv2', 'snomed'
  * @param {function} callback Called on completion or error (err, output) => {}
@@ -29,8 +31,12 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     // We've already done this so return from cache
     return callback(null, cache[terminology][searchterm]);
   }
+
+  let wildcardsInMiddle = false;
+
   let wildAtStart = true;
   let wildAtEnd = true;
+
   if (searchterm[0] === '[') {
     wildAtStart = false;
     searchterm = searchterm.substr(1);
@@ -39,10 +45,35 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     wildAtEnd = false;
     searchterm = searchterm.substr(0, searchterm.length - 1);
   }
-  // const escapedTerm = `\"${searchterm}\"`;
-  const bit = searchterm.substr(0, BIT_LENGTH).toLowerCase();
+
+  let bit = searchterm.substr(0, BIT_LENGTH).toLowerCase();
   let match = { c: bit };
-  if (bit.length < BIT_LENGTH) {
+
+  if (searchterm.indexOf('*') > -1) {
+    // contains one or more wildcards
+    wildcardsInMiddle = true;
+
+    const bits = searchterm.split('*');
+    let maxBitLength = 0;
+    let maxBit = '';
+    let finished = false;
+    for (let i = 0; i < bits.length; i += 1) {
+      if (bits[i].length >= BIT_LENGTH) {
+        bit = bits[i].substr(0, BIT_LENGTH).toLowerCase();
+        match = { c: bits[i].substr(0, BIT_LENGTH).toLowerCase() };
+        finished = true;
+        break;
+      }
+      if (bits[i].length > maxBitLength) {
+        maxBit = bits[i];
+        maxBitLength = bits[i].length;
+      }
+    }
+    if (!finished) {
+      const reg = new RegExp(`^${escapeRegExp(maxBit)}`);
+      match = { c: { $regex: reg } };
+    }
+  } else if (bit.length < BIT_LENGTH) {
     const reg = new RegExp(`^${escapeRegExp(bit)}`);
     match = { c: { $regex: reg } };
   }
@@ -53,6 +84,12 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     }
     const codesWithSearchTerm = codes
       .map((v) => {
+        if (wildcardsInMiddle) {
+          const regTerm = new RegExp(`${escapeRegExp(searchterm.toLowerCase()).replace('\\*', '.*')}`);
+          const indexOfSearchTermStart = v.t.toLowerCase().search(regTerm);
+          if (indexOfSearchTermStart > -1) return v;
+          return null;
+        }
         const indexOfSearchTermStart = v.t.toLowerCase().indexOf(searchterm.toLowerCase());
         if (indexOfSearchTermStart > -1) {
           const indexOfSearchTermEnd = indexOfSearchTermStart + searchterm.length;
