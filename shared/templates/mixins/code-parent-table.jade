@@ -18,11 +18,12 @@ mixin codeParentTable(parentCodes)
             | INCLUDED
             button.removeParentCode.btn.btn-danger(data-code=parent.code) Remove
         each code in parent.codes
-          tr.child-row
-            td.pre= '  ' + (code._id || code.code)
-            td= code.t || code.description
-            td
-              input.missingCode(type="checkbox",name="missingCode"+idx,checked="checked",value=code._id || code.code)
+          if !code.exclude
+            tr.child-row
+              td.pre= '  ' + (code._id || code.code)
+              td= code.t || code.description
+              td
+                input.missingCode(type="checkbox",name="missingCode"+idx,checked="checked",value=code._id || code.code)
     tfoot
       tr
         td(colspan="2")

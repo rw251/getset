@@ -102,23 +102,46 @@ const refreshExclusion = () => {
   const excludedTerms = Object.keys(e);
   currentGroups.excluded = [];
 
+// inCodeSetAndMatched,
+// inCodeSetAndUnmatched,
+// matchedDescendantButNotMatched,
+
   // do this for: notInCodeSetDescendantOfCodeSet,
   // matchedDescendantButNotMatched, notInCodeSetButMatched
 
-  currentGroups.notInCodeSetButMatched.forEach((g, gi) => {
-    g.forEach((code, i) => {
-      if (excludedTerms.filter(thatMatch(code.description)).length > 0) {
-        if (!currentGroups.notInCodeSetButMatched[gi][i].exclude) {
-          currentGroups.notInCodeSetButMatched[gi][i].exclude = true;
-          currentGroups.numNotInCodeSetButMatched -= 1;
+  if (currentGroups.notInCodeSetButMatched) {
+    currentGroups.notInCodeSetButMatched.forEach((g, gi) => {
+      g.forEach((code, i) => {
+        if (excludedTerms.filter(thatMatch(code.description)).length > 0) {
+          if (!currentGroups.notInCodeSetButMatched[gi][i].exclude) {
+            currentGroups.notInCodeSetButMatched[gi][i].exclude = true;
+            currentGroups.numNotInCodeSetButMatched -= 1;
+          }
+          currentGroups.excluded.push(currentGroups.notInCodeSetButMatched[gi][i]);
+        } else if (currentGroups.notInCodeSetButMatched[gi][i].exclude) {
+          currentGroups.numNotInCodeSetButMatched += 1;
+          delete currentGroups.notInCodeSetButMatched[gi][i].exclude;
         }
-        currentGroups.excluded.push(currentGroups.notInCodeSetButMatched[gi][i]);
-      } else if (currentGroups.notInCodeSetButMatched[gi][i].exclude) {
-        currentGroups.numNotInCodeSetButMatched += 1;
-        delete currentGroups.notInCodeSetButMatched[gi][i].exclude;
-      }
+      });
     });
-  });
+  }
+
+  if (currentGroups.notInCodeSetDescendantOfCodeSet) {
+    currentGroups.notInCodeSetDescendantOfCodeSet.forEach((g, gi) => {
+      g.codes.forEach((code, i) => {
+        if (excludedTerms.filter(thatMatch(code.t)).length > 0) {
+          if (!currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude) {
+            currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude = true;
+            currentGroups.numNotInCodeSetDescendantOfCodeSet -= 1;
+          }
+          currentGroups.excluded.push(currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i]);
+        } else if (currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude) {
+          currentGroups.numNotInCodeSetDescendantOfCodeSet += 1;
+          delete currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude;
+        }
+      });
+    });
+  }
 
   // update the excluded codes for the set of matched codes
   /* currentGroups.matched.forEach((g, gi) => {

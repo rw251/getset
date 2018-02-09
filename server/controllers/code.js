@@ -197,12 +197,13 @@ exports.searchMultiple = (req, res) => {
  * @returns {null} No return
  */
 exports.newSearchMultiple = (req, res) => {
-  const terms = req.body.terms;
+  const inclusionTerms = req.body.terms;
+  const exclusionTerms = req.body.exclusionTerms || [];
   const terminology = req.body.terminology;
   let hasErrorOccurred = false;
   let hasReturned = 0;
   const toReturn = {};
-  terms.forEach((t) => {
+  inclusionTerms.forEach((t) => {
     findCodesForTerm(t, terminology, (err, result) => {
       hasReturned += 1;
       if (!hasErrorOccurred) {
@@ -212,11 +213,11 @@ exports.newSearchMultiple = (req, res) => {
           res.send();
         } else {
           mergeResults(toReturn, result);
-          if (hasReturned === terms.length) {
+          if (hasReturned === inclusionTerms.length) {
             res.send({
               codes: toArray(toReturn),
               timestamp: Date.now(),
-              searchTerm: terms.map(term => term.toLowerCase()),
+              searchTerm: inclusionTerms.map(term => term.toLowerCase()),
             });
           }
         }
