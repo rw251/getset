@@ -3,7 +3,7 @@
 // requires mongo running
 const mongoose = require('mongoose');
 const data = require('../db/test.db');
-const Code = require('../../server/models/Code');
+const Code = require('../../server/models/Code')();
 const db = require('../../server/controllers/db');
 const assert = require('chai').assert;
 require('../../server/config');
@@ -31,7 +31,7 @@ describe('Model Comment Tests', () => {
   });
 
   it('plain', async () => {
-    const codes = await db.searchForTerm('Readv2', { terms: [{ term: 'myocardial infarction', wildcardAtStart: true, wildcardAtEnd: true }] });
+    const codes = await db.searchForTerm('Readv2', { preserveOrder: false, regexes: ['myocardial infarction'] });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 5);
     assert.include(ids, 'HNG0009');
@@ -42,12 +42,12 @@ describe('Model Comment Tests', () => {
   }).timeout(10000);
 
   it('short and plain', async () => {
-    const codes = await db.searchForTerm('Readv2', { terms: [{ term: 'MI', wildcardAtStart: true, wildcardAtEnd: true }] });
+    const codes = await db.searchForTerm('Readv2', { preserveOrder: false, regexes: ['MI'] });
     assert.equal(codes.length, 1225);
   }).timeout(10000);
 
   it('short and exact', async () => {
-    const codes = await db.searchForTerm('Readv2', { terms: [{ term: 'MI', wildcardAtStart: false, wildcardAtEnd: false }] });
+    const codes = await db.searchForTerm('Readv2', { preserveOrder: false, regexes: ['\\bMI\\b'] });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 3);
     assert.include(ids, 'HNG0009');
@@ -58,27 +58,21 @@ describe('Model Comment Tests', () => {
 
   it('multi phrase preserve order #1', async () => {
     const codes = await db.searchForTerm('Readv2', {
-      preserveOrder: true,
-      terms: [
-        { term: 'hip', wildcardAtStart: false, wildcardAtEnd: false },
-        { term: 'dislocat', wildcardAtStart: false, wildcardAtEnd: true },
-      ],
+      preserveOrder: false,
+      regexes: ['\\bhip.*dislocat'],
     });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 4);
     assert.include(ids, 'S451200');
     assert.include(ids, 'PE3..00');
     assert.include(ids, 'S451300');
-    assert.include(ids, 'EGTONHI4');
+    assert.include(ids, 'EG00.00');
   }).timeout(10000);
 
   it('multi phrase preserve order #2', async () => {
     const codes = await db.searchForTerm('Readv2', {
-      preserveOrder: true,
-      terms: [
-        { term: 'dislocat', wildcardAtStart: false, wildcardAtEnd: true },
-        { term: 'hip', wildcardAtStart: false, wildcardAtEnd: false },
-      ],
+      preserveOrder: false,
+      regexes: ['\\bdislocat.*hip\\b'],
     });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 4);
@@ -91,10 +85,7 @@ describe('Model Comment Tests', () => {
   it('multi phrase don\'t preserve order', async () => {
     const codes = await db.searchForTerm('Readv2', {
       preserveOrder: false,
-      terms: [
-          { term: 'hip', wildcardAtStart: false, wildcardAtEnd: false },
-          { term: 'dislocat', wildcardAtStart: false, wildcardAtEnd: true },
-      ],
+      regexes: ['\\bhip\\b', '\\bdislocat'],
     });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 5);
@@ -102,16 +93,23 @@ describe('Model Comment Tests', () => {
     assert.include(ids, 'PE3..00');
     assert.include(ids, 'S451300');
     assert.include(ids, '14H5.00');
-    assert.include(ids, 'EGTONHI4');
+    assert.include(ids, 'EG00.00');
+  }).timeout(10000);
+
+  it('works with hypens', async () => {
+    const codes = await db.searchForTerm('Readv2', {
+      preserveOrder: false,
+      regexes: ['\\bstevens\\-johnson\\b', '\\bsyndrome\\b'],
+    });
+    const ids = codes.map(c => c._id);
+    assert.equal(codes.length, 1);
+    assert.include(ids, 'M151700');
   }).timeout(10000);
 
   it('gets descendants as well', async () => {
     const codes = await db.search('Readv2', {
       preserveOrder: false,
-      terms: [
-        { term: 'hip', wildcardAtStart: false, wildcardAtEnd: false },
-        { term: 'dislocat', wildcardAtStart: false, wildcardAtEnd: true },
-      ],
+      regexes: ['\\bhip\\b', '\\bdislocat'],
     });
     const ids = codes.map(c => c._id);
     assert.equal(codes.length, 6);
@@ -120,7 +118,7 @@ describe('Model Comment Tests', () => {
     assert.include(ids, 'PE34.00');
     assert.include(ids, 'S451300');
     assert.include(ids, '14H5.00');
-    assert.include(ids, 'EGTONHI4');
+    assert.include(ids, 'EG00.00');
   }).timeout(10000);
 });
 

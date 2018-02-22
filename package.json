@@ -9,9 +9,9 @@
     "build:dev": "brunch build",
     "postinstall": "npm run build",
     "predebug": "npm run build:dev",
-    "debug": "node --inspect --debug-brk server.js",
+    "debug": "node --inspect-brk server.js",
     "test": "mocha --recursive test",
-    "test-debug": "mocha --recursive --inspect --debug-brk test"
+    "test-debug": "mocha --recursive --inspect-brk test"
   },
   "repository": {
     "type": "git",
@@ -42,8 +42,9 @@
     "jade-brunch": "^2.8.0",
     "javascript-brunch": "^2.0.0",
     "mocha": "^4.0.1",
+    "node-sass": "^4.7.2",
     "npm-run-all": "^4.0.1",
-    "sass-brunch": "^2.6.3",
+    "sass-brunch": "^2.10.4",
     "standard": "^8.6.0"
   },
   "dependencies": {

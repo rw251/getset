@@ -23,6 +23,8 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
   mongoose.set('debug', DEBUG);
   mongoose.Promise = global.Promise;
   mongoose.connect(process.env.MONGODB_URI);
+  // add connection to other terminologies if they exist
+  if (config.MONGO_URL_EMIS) mongoose.createConnection(config.MONGO_URL_EMIS);
   mongoose.connection.on('error', (err) => {
     pino.error(err);
     pino.info('MongoDB connection error. Please make sure MongoDB is running.');

@@ -1,5 +1,8 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
-const Code = require('../models/Code');
+const Code = require('../models/Code')();
+const db = require('./db');
+const pino = require('pino')();
+const termSvc = require('../services/terminology.js');
 
 const BIT_LENGTH = 6;
 // This will need optimising at some point
@@ -7,7 +10,7 @@ const BIT_LENGTH = 6;
 const cache = {};
 
 // from https://stackoverflow.com/a/6969486/596639
-const escapeRegExp = str => str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+const escapeRegExp = str => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
 /**
  * @description For a given searchterm and terminology this returns all
  * codes that match the searchterm in that terminology. It also returns
@@ -196,34 +199,45 @@ exports.searchMultiple = (req, res) => {
  * @param {any} res The express response object
  * @returns {null} No return
  */
-exports.newSearchMultiple = (req, res) => {
+exports.newSearchMultiple = async (req, res) => {
   const inclusionTerms = req.body.terms;
   const exclusionTerms = req.body.exclusionTerms || [];
   const terminology = req.body.terminology;
-  let hasErrorOccurred = false;
-  let hasReturned = 0;
-  const toReturn = {};
-  inclusionTerms.forEach((t) => {
-    findCodesForTerm(t, terminology, (err, result) => {
-      hasReturned += 1;
-      if (!hasErrorOccurred) {
-        if (err) {
-          hasErrorOccurred = true;
-          req.log(err);
-          res.send();
-        } else {
-          mergeResults(toReturn, result);
-          if (hasReturned === inclusionTerms.length) {
-            res.send({
-              codes: toArray(toReturn),
-              timestamp: Date.now(),
-              searchTerm: inclusionTerms.map(term => term.toLowerCase()),
-            });
-          }
-        }
-      }
-    });
-  });
+
+  const terms = termSvc.getObject(inclusionTerms);
+
+  try {
+    const rtn = await db.searchMultiple(terminology, terms);
+    return res.send(rtn);
+  } catch (e) {
+    pino.error(e);
+    return res.status(500).send({ message: 'error' });
+  }
+
+  // let hasErrorOccurred = false;
+  // let hasReturned = 0;
+  // const toReturn = {};
+  // inclusionTerms.forEach((t) => {
+  //   findCodesForTerm(t, terminology, (err, result) => {
+  //     hasReturned += 1;
+  //     if (!hasErrorOccurred) {
+  //       if (err) {
+  //         hasErrorOccurred = true;
+  //         req.log(err);
+  //         res.send();
+  //       } else {
+  //         mergeResults(toReturn, result);
+  //         if (hasReturned === inclusionTerms.length) {
+  //           res.send({
+  //             codes: toArray(toReturn),
+  //             timestamp: Date.now(),
+  //             searchTerm: inclusionTerms.map(term => term.toLowerCase()),
+  //           });
+  //         }
+  //       }
+  //     }
+  //   });
+  // });
 };
 
 /**

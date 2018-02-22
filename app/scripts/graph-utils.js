@@ -175,7 +175,7 @@ module.exports = {
           // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
         } else {
           graph[node].codes.forEach((code) => {
-            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, searchTerm);
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant);
             const item = {
               code: code.code,
               ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,
@@ -251,7 +251,12 @@ module.exports = {
       const ancestors = v.a;
       const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
       if (!codeDic[codeForTerminology]) {
-        codeDic[codeForTerminology] = { p: parents, a: ancestors, c: [], codes: [{ code: v._id, t: v.t }] };
+        codeDic[codeForTerminology] = {
+          p: parents,
+          a: ancestors,
+          c: [],
+          codes: [{ code: v._id, t: v.t, descendant: v.descendant }],
+        };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
         codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
         codeDic[codeForTerminology].p = parents;
@@ -290,7 +295,7 @@ module.exports = {
           // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
         } else {
           graph[node].codes.forEach((code) => {
-            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, searchTerm);
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant);
             const item = {
               code: code.code,
               ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,

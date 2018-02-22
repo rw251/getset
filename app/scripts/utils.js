@@ -109,23 +109,23 @@ module.exports = {
     return descriptionBits;
   },
 
-  parseDescriptionMultipleTermsNEW: (description, searchTerms) => {
-    const descriptionBits = [];
+  parseDescriptionMultipleTermsNEW: (description, isDescendant) => {
+    // const descriptionBits = [];
     const descArr = description.split('|');
-    let n = descArr.length - 1;
+    const n = descArr.length - 1;
 
-    const searchTermsInDescription = searchTerms
-                                        .map(t => t.replace(/^\[?([^\]]*)\]?$/, '$1'))
-                                        .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
+    // const searchTermsInDescription = searchTerms
+    //                                     .map(t => t.replace(/^\[?([^\]]*)\]?$/, '$1'))
+    //                                     .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
 
-    if (searchTermsInDescription.length === 0) {
-      descriptionBits.push({ text: descArr[n] });
-      return { text: descArr[n], match: false };
-    }
-    while (searchTermsInDescription.filter(t => descArr[n].toLowerCase().indexOf(t.toLowerCase()) >= 0).length === 0) {
-      n -= 1;
-    }
-    return { text: descArr[n], match: true };
+    // if (searchTermsInDescription.length === 0) {
+    //   descriptionBits.push({ text: descArr[n] });
+    //   return { text: descArr[n], match: false };
+    // }
+    // while (searchTermsInDescription.filter(t => descArr[n].toLowerCase().indexOf(t.toLowerCase()) >= 0).length === 0) {
+    //   n -= 1;
+    // }
+    return { text: descArr[n], match: !isDescendant };
   },
 
   getSelectionCoords: (win = window) => {

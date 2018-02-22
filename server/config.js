@@ -16,6 +16,9 @@ const ENV = {
   // mongo url
   MONGO_URL: mustExist('MONGODB_URI'),
 
+  // other mongo urls
+  MONGO_URL_EMIS: process.env.MONGODB_URI_EMIS,
+
   // passport secret for expressjs authentication
   PASSPORT_SECRET: mustExist('GETSET_PASSPORT_SECRET'),
 

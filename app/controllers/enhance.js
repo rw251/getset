@@ -132,14 +132,19 @@ const refreshExclusion = () => {
         if (excludedTerms.filter(thatMatch(code.t)).length > 0) {
           if (!currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude) {
             currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude = true;
-            currentGroups.numNotInCodeSetDescendantOfCodeSet -= 1;
+            currentGroups.numUnmatchedCodesOriginal -= 1;
           }
           currentGroups.excluded.push(currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i]);
         } else if (currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude) {
-          currentGroups.numNotInCodeSetDescendantOfCodeSet += 1;
+          currentGroups.numUnmatchedCodesOriginal += 1;
           delete currentGroups.notInCodeSetDescendantOfCodeSet[gi].codes[i].exclude;
         }
       });
+      if (g.codes.length === g.codes.filter(v => v.exclude).length) {
+        currentGroups.notInCodeSetDescendantOfCodeSet[gi].exclude = true;
+      } else {
+        delete currentGroups.notInCodeSetDescendantOfCodeSet[gi].exclude;
+      }
     });
   }
 
