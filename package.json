@@ -23,8 +23,8 @@
     "url": "https://github.com/rw251/getset/issues"
   },
   "engines": {
-    "npm": "3.10.x",
-    "node": "6.11.x"
+    "npm": "5.x.x",
+    "node": "8.x.x"
   },
   "homepage": "https://getset.herokuapp.com",
   "devDependencies": {
