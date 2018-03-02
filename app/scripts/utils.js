@@ -109,6 +109,16 @@ module.exports = {
     return descriptionBits;
   },
 
+  getSelectedText: () => {
+    let selection = '';
+    if (window.getSelection) {
+      selection = window.getSelection();
+    } else if (document.selection) {
+      selection = document.selection.createRange();
+    }
+    return selection;
+  },
+
   parseDescriptionMultipleTermsNEW: (description, isDescendant) => {
     // const descriptionBits = [];
     const descArr = description.split('|');

@@ -118,7 +118,13 @@ const getConnectedSubgraphs = (graph) => {
 
 module.exports = {
 
-  getHierarchiesWithExistingCodeList: (codes, currentTerminology, searchTerm, existingCodeSet, existingCodeSetObject) => {
+  getHierarchiesWithExistingCodeList: (
+    codes,
+    currentTerminology,
+    searchTerm,
+    existingCodeSet,
+    existingCodeSetObject,
+  ) => {
     let isTree = true;
     const codeDic = {};
     const combinedCodes = codes.concat(existingCodeSet);
@@ -130,7 +136,11 @@ module.exports = {
       const ancestors = v.a;
       const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
       if (!codeDic[codeForTerminology]) {
-        codeDic[codeForTerminology] = { p: parents, a: ancestors, c: [], codes: [{ code: v._id, t: v.t }] };
+        codeDic[codeForTerminology] = {
+          p: parents,
+          a: ancestors,
+          c: [],
+          codes: [{ code: v._id, t: v.t }] };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
         codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
         codeDic[codeForTerminology].p = parents;
@@ -187,7 +197,9 @@ module.exports = {
                 inCodeSetAndMatchedGraphToReturn.push(item);
                 numInCodeSetAndMatched += 1;
                 // delete existingCodeSet[code.code];
-              } else if (existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]) {
+              } else if (
+                  existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
+                ) {
                 inCodeSetAndMatchedGraphToReturn.push(item);
                 numInCodeSetAndMatched += 1;
                 // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
@@ -199,7 +211,9 @@ module.exports = {
               inCodeSetAndUnmatchedGraphToReturn.push(item);
               numInCodeSetAndUnmatched += 1;
               // delete existingCodeSet[code.code];
-            } else if (existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]) {
+            } else if (
+                existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
+              ) {
               inCodeSetAndUnmatchedGraphToReturn.push(item);
               numInCodeSetAndUnmatched += 1;
               // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
@@ -240,7 +254,7 @@ module.exports = {
     };
   },
 
-  getHierarchies: (codes, currentTerminology, searchTerm) => {
+  getHierarchies: (codes, currentTerminology) => {
     let isTree = true;
     const codeDic = {};
     codes.forEach((v) => {
@@ -258,11 +272,11 @@ module.exports = {
           codes: [{ code: v._id, t: v.t, descendant: v.descendant }],
         };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       } else {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       }

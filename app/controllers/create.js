@@ -353,15 +353,68 @@ const wireup = () => {
   $synonym.include.list = $('#synonymList');
   $synonym.exclude.list = $('#exclusionList');
 
+  let isCtrlPressed = false;
+  $(document)
+    .on('keydown', (keyEvent) => {
+      if (keyEvent.keyCode === 17) { // ctrl
+        isCtrlPressed = true;
+      } else if (isCtrlPressed && keyEvent.keyCode === 67) { // c
+        if (utils.getSelectedText().toString() !== '') {
+          // don't want to prevent standard ctrl-c behaviour
+          return;
+        }
+        // do copy
+        const dataToCopy = $('#matchedTabContent table tr')
+          .toArray()
+          .map(r => `${r.cells[0].innerText}\t${r.cells[1].innerText}`)
+          .slice(1) // get rid of headers
+          .sort()
+          .join('\n');
+        const textarea = document.createElement('textarea');
+        textarea.value = dataToCopy;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          const successful = document.execCommand('copy');
+          console.log(`Copying was ${`${successful ? '' : 'un'}successful`}`);
+        } catch (err) {
+          console.log('Unable to copy');
+        }
+        document.body.removeChild(textarea);
+      }
+    })
+    .on('keyup', (keyEvent) => {
+      if (keyEvent.keyCode === 17) { // ctrl
+        isCtrlPressed = false;
+      }
+    });
+
+  $('.btn-remove-all').on('click', (event) => {
+    makeDirty();
+    if ($(event.currentTarget).data('which') === 'inclusion') {
+      s = {};
+      syncToLocal();
+      $synonym.include.list.html('');
+      refresh();
+    } else {
+      e = {};
+      $synonym.exclude.list.html('');
+      syncToLocal();
+      refreshExclusion();
+    }
+  });
+
   $synonym.include.input.on('keypress', (evt) => {
     if (evt.which === 13) { // ENTER key
       addIfLongEnough($synonym.include.input);
+      evt.preventDefault();
     }
   });
 
   $synonym.exclude.input.on('keypress', (evt) => {
     if (evt.which === 13) { // ENTER key
       addIfLongEnough($synonym.exclude.input);
+      evt.preventDefault();
     }
   });
 
@@ -389,12 +442,7 @@ const wireup = () => {
       currentGroups.selected = evt.target.href.split('#')[1];
     })
     .on('mouseup', 'td', (evt) => {
-      let selection = '';
-      if (window.getSelection) {
-        selection = window.getSelection();
-      } else if (document.selection) {
-        selection = document.selection.createRange();
-      }
+      const selection = utils.getSelectedText();
       if (selection.toString() === lastSelectedText) return;
       lastSelectedText = selection.toString();
       $synonym.include.input.val(selection);

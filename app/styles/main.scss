@@ -49,7 +49,17 @@ textarea {
 // -------------------------
 
 .alert {
-  margin-top: 20px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  margin-bottom: 5px;
+}
+
+.btn-remove-all {
+  position: absolute;
+  right: 15px;
+  top: 0;
+  font-size: 0.75em;
+  padding: 2px;
 }
 
 // Thumbnails

@@ -27,6 +27,7 @@ if loading
             | SNOMED CT
         .row
           .col-lg-6
+            button.btn.btn-danger.btn-remove-all(data-which='inclusion') X Remove all terms
             .form-group
               label(for='synonym') Search term
               .input-group
@@ -36,6 +37,7 @@ if loading
             #synonymList
           .col-lg-6
             .form-group
+              button.btn.btn-danger.btn-remove-all(data-which='exclusion') X Remove all terms
               label(for='exclusion') Exclusion term
               .input-group
                 input#exclusion.form-control(type='text',placeholder='Enter exclusion synonyms here...',autocomplete='off')
