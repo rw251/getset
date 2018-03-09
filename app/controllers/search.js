@@ -33,19 +33,19 @@ const wireup = () => {
     delete global.currentSet;
     page('/create');
     // const $row = $button.closest('tr');
-    console.log(`editing...${$button.data('path')}`);
+    // console.log(`editing...${$button.data('path')}`);
     evt.preventDefault();
   });
   $('#results').on('click', '.btn-validate', (evt) => {
-    const $button = $(evt.currentTarget);
+    // const $button = $(evt.currentTarget);
     // const $row = $button.closest('tr');
-    console.log(`validating...${$button.data('path')}`);
+    // console.log(`validating...${$button.data('path')}`);
     evt.preventDefault();
   });
   $('#results').on('click', '.btn-download', (evt) => {
-    const $button = $(evt.currentTarget);
+    // const $button = $(evt.currentTarget);
     // const $row = $button.closest('tr');
-    console.log(`downloading...${$button.data('path')}`);
+    // console.log(`downloading...${$button.data('path')}`);
     evt.preventDefault();
   });
   $
@@ -55,12 +55,12 @@ const wireup = () => {
       contentType: 'application/json',
     })
     .done((list) => {
-      list = list.map((item) => {
+      const localList = list.map((item) => {
         item.createdOn = utils.momentFromNow(new Date(item.createdOn));
         item.lastUpdated = utils.momentFromNow(new Date(item.lastUpdated));
         return item;
       });
-      const html = searchResultsTemplate({ list, user: global.user });
+      const html = searchResultsTemplate({ list: localList, user: global.user });
       $('#results').html(html);
     });
 };

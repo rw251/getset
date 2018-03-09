@@ -6,9 +6,7 @@ const GitHub = require('github');
  */
 
 exports.getApi = (req, res) => {
-  res.render('api/index', {
-    title: 'API Examples',
-  });
+  res.render('api/index', { title: 'API Examples' });
 };
 
 /**

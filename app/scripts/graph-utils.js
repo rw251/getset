@@ -1,4 +1,4 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const utils = require('./utils');
 
 const addDepth = (graph) => {
@@ -19,7 +19,7 @@ const addDepth = (graph) => {
     Q.push(node);
 
     while (Q.length > 0) {
-      u = Q.splice(0, 1)[0];
+      [u] = Q.splice(0, 1);
       const edges = G[u].c;
       for (i = 0; i < edges.length; i += 1) {
         v = edges[i];
@@ -98,7 +98,7 @@ const getConnectedSubgraphs = (graph) => {
     Q.push(node);
 
     while (Q.length > 0) {
-      u = Q.splice(0, 1)[0];
+      [u] = Q.splice(0, 1);
       delete G[u].unvisited;
       subGraph[u] = G[u];
       const edges = G[u].c.concat(G[u].p);
@@ -123,7 +123,7 @@ module.exports = {
     currentTerminology,
     searchTerm,
     existingCodeSet,
-    existingCodeSetObject,
+    existingCodeSetObject
   ) => {
     let isTree = true;
     const codeDic = {};
@@ -164,8 +164,8 @@ module.exports = {
     });
 
     const connectedSubgraphs = isTree
-                                ? getConnectedSubtrees(codeDic)
-                                : getConnectedSubgraphs(codeDic);
+      ? getConnectedSubtrees(codeDic)
+      : getConnectedSubgraphs(codeDic);
     const inCodeSetAndMatched = [];
     const inCodeSetAndUnmatched = [];
     const notInCodeSetButMatched = [];
@@ -198,8 +198,8 @@ module.exports = {
                 numInCodeSetAndMatched += 1;
                 // delete existingCodeSet[code.code];
               } else if (
-                  existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
-                ) {
+                existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
+              ) {
                 inCodeSetAndMatchedGraphToReturn.push(item);
                 numInCodeSetAndMatched += 1;
                 // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
@@ -212,8 +212,8 @@ module.exports = {
               numInCodeSetAndUnmatched += 1;
               // delete existingCodeSet[code.code];
             } else if (
-                existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
-              ) {
+              existingCodeSetObject[utils.getCodeForTerminology(code.code, currentTerminology)]
+            ) {
               inCodeSetAndUnmatchedGraphToReturn.push(item);
               numInCodeSetAndUnmatched += 1;
               // delete existingCodeSet[utils.getCodeForTerminology(code.code)];
@@ -294,8 +294,8 @@ module.exports = {
     });
 
     const connectedSubgraphs = isTree
-                                ? getConnectedSubtrees(codeDic)
-                                : getConnectedSubgraphs(codeDic);
+      ? getConnectedSubtrees(codeDic)
+      : getConnectedSubgraphs(codeDic);
     const matchedCodesConnectedSubgraphs = [];
     const matchedDescendantButNotMatchedConnectedSubgraphs = [];
     let numMatched = 0;
@@ -373,8 +373,8 @@ module.exports = {
     });
 
     let connectedSubgraphs = isTree
-                                ? getConnectedSubtrees(codeDic)
-                                : getConnectedSubgraphs(codeDic);
+      ? getConnectedSubtrees(codeDic)
+      : getConnectedSubgraphs(codeDic);
     connectedSubgraphs = connectedSubgraphs.map((graph) => {
       const graphToReturn = [];
 

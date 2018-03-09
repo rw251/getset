@@ -1,4 +1,4 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const Code = require('../models/Code')();
 const db = require('./db');
 const pino = require('pino')();
@@ -29,10 +29,11 @@ const escapeRegExp = str => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
  * @returns {any} No return
  */
 const findCodesForTerm = (searchterm, terminology, callback) => {
+  let localSearchTerm = searchterm;
   if (!cache[terminology]) cache[terminology] = {};
-  if (cache[terminology][searchterm]) {
+  if (cache[terminology][localSearchTerm]) {
     // We've already done this so return from cache
-    return callback(null, cache[terminology][searchterm]);
+    return callback(null, cache[terminology][localSearchTerm]);
   }
 
   let wildcardsInMiddle = false;
@@ -40,23 +41,23 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
   let wildAtStart = true;
   let wildAtEnd = true;
 
-  if (searchterm[0] === '[') {
+  if (localSearchTerm[0] === '[') {
     wildAtStart = false;
-    searchterm = searchterm.substr(1);
+    localSearchTerm = localSearchTerm.substr(1);
   }
-  if (searchterm[searchterm.length - 1] === ']') {
+  if (localSearchTerm[localSearchTerm.length - 1] === ']') {
     wildAtEnd = false;
-    searchterm = searchterm.substr(0, searchterm.length - 1);
+    localSearchTerm = localSearchTerm.substr(0, localSearchTerm.length - 1);
   }
 
-  let bit = searchterm.substr(0, BIT_LENGTH).toLowerCase();
+  let bit = localSearchTerm.substr(0, BIT_LENGTH).toLowerCase();
   let match = { c: bit };
 
-  if (searchterm.indexOf('*') > -1) {
+  if (localSearchTerm.indexOf('*') > -1) {
     // contains one or more wildcards
     wildcardsInMiddle = true;
 
-    const bits = searchterm.split('*');
+    const bits = localSearchTerm.split('*');
     let maxBitLength = 0;
     let maxBit = '';
     let finished = false;
@@ -88,14 +89,14 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
     const codesWithSearchTerm = codes
       .map((v) => {
         if (wildcardsInMiddle) {
-          const regTerm = new RegExp(`${escapeRegExp(searchterm.toLowerCase()).replace('\\*', '.*')}`);
+          const regTerm = new RegExp(`${escapeRegExp(localSearchTerm.toLowerCase()).replace('\\*', '.*')}`);
           const indexOfSearchTermStart = v.t.toLowerCase().search(regTerm);
           if (indexOfSearchTermStart > -1) return v;
           return null;
         }
-        const indexOfSearchTermStart = v.t.toLowerCase().indexOf(searchterm.toLowerCase());
+        const indexOfSearchTermStart = v.t.toLowerCase().indexOf(localSearchTerm.toLowerCase());
         if (indexOfSearchTermStart > -1) {
-          const indexOfSearchTermEnd = indexOfSearchTermStart + searchterm.length;
+          const indexOfSearchTermEnd = indexOfSearchTermStart + localSearchTerm.length;
           const endOfWord = indexOfSearchTermEnd >= v.t.length || v.t[indexOfSearchTermEnd].search(/[a-z]/i) === -1;
           const startOfWord = indexOfSearchTermStart === 0 || v.t[indexOfSearchTermStart - 1].search(/[a-z]/i) === -1;
           if (wildAtStart && wildAtEnd) return v;
@@ -115,18 +116,20 @@ const findCodesForTerm = (searchterm, terminology, callback) => {
         return v._id;
       });
     const codesForNotQuery = codesWithSearchTerm.map(v => v._id);
-    const query = { $and: [
+    const query = {
+      $and: [
         // matches all descendants of the codes already found
         { p: { $in: codesForQuery } },
         // but doesn't match any of the original codes
         { _id: { $not: { $in: codesForNotQuery } } },
-    ] };
+      ],
+    };
     return Code.find(query, { c: 0 }, (errSecond, allCodes) => {
       if (errSecond) {
         return callback(errSecond);
       }
-      cache[terminology][searchterm] = allCodes.concat(codesWithSearchTerm);
-      return callback(null, cache[terminology][searchterm]);
+      cache[terminology][localSearchTerm] = allCodes.concat(codesWithSearchTerm);
+      return callback(null, cache[terminology][localSearchTerm]);
     });
   });
 };
@@ -201,8 +204,8 @@ exports.searchMultiple = (req, res) => {
  */
 exports.newSearchMultiple = async (req, res) => {
   const inclusionTerms = req.body.terms;
-  const exclusionTerms = req.body.exclusionTerms || [];
-  const terminology = req.body.terminology;
+  // const exclusionTerms = req.body.exclusionTerms || [];
+  const { terminology } = req.body;
 
   const terms = termSvc.getObject(inclusionTerms);
 
@@ -264,7 +267,7 @@ exports.search = (req, res) => {
 };
 
 const frequencyOfTerm = term => new Promise((resolve, reject) => {
-  const rtnTerm = term;
+  let rtnTerm = term;
   if (!term.term) {
     rtnTerm = { term };
   }
@@ -313,7 +316,7 @@ const frequencyOfTerm = term => new Promise((resolve, reject) => {
     else rtnTerm.n = 0;
     resolve(rtnTerm);
   });
-});*/
+}); */
 
 const frequencyOfTerms = terms => Promise.all(terms.map(term => frequencyOfTerm(term)));
 
@@ -338,7 +341,7 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
       const words = vv.split(/\s+/).map(w => w.toLowerCase());
       for (let i = 0; i < words.length; i += 1) {
         if (stopWords.indexOf(words[i].replace(/[^a-z0-9]/g, '')) === -1 && words[i].replace(/[^a-z0-9]/g, '').length > 0) {
-          for (let j = Math.max(0, i - n + 1); j <= i; j += 1) {
+          for (let j = Math.max(0, (i - n) + 1); j <= i; j += 1) {
             if (stopWords.indexOf(words[j].replace(/[^a-z0-9]/g, '')) === -1 && words[j].replace(/[^a-z0-9]/g, '').length > 0) {
               if (j === i) {
                 localTerms[words[i].replace(/,$/, '')] = 1;
@@ -357,10 +360,10 @@ const getWordFrequency = (codes, n) => new Promise((resolve) => {
     });
   });
   const allTermsArray = Object
-                          .keys(allTerms)
-                          .map(k => ({ term: k, freq: allTerms[k] }))
-                          .filter(k => k.freq > 1)
-                          .sort((b, a) => a.freq - b.freq);
+    .keys(allTerms)
+    .map(k => ({ term: k, freq: allTerms[k] }))
+    .filter(k => k.freq > 1)
+    .sort((b, a) => a.freq - b.freq);
   frequencyOfTerms(allTermsArray).then((result) => {
     result.sort((b, a) => {
       if (((2 * a.freq) - a.n) === ((2 * b.freq) - b.n)) {
@@ -398,12 +401,14 @@ exports.unmatchedChildren = (req, res) => {
         return v;
       });
 
-    const query = { $and: [
-      // matches all descendants of the codes already found
-      { a: { $in: codesForQuery } },
-      // but doesn't match any of the original codes
-      { _id: { $not: { $in: processedCodes } } },
-    ] };
+    const query = {
+      $and: [
+        // matches all descendants of the codes already found
+        { a: { $in: codesForQuery } },
+        // but doesn't match any of the original codes
+        { _id: { $not: { $in: processedCodes } } },
+      ],
+    };
     return Code.find(query, { c: 0 }, (errSecond, unmatchedCodes) => {
       res.send({ codes, unfoundCodes, unmatchedCodes });
     });

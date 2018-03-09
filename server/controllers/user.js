@@ -13,9 +13,7 @@ exports.getLogin = (req, res) => {
   if (req.user) {
     return res.redirect('/');
   }
-  return res.render('account/login', {
-    title: 'Login',
-  });
+  return res.render('account/login', { title: 'Login' });
 };
 
 /**
@@ -68,9 +66,7 @@ exports.getSignup = (req, res) => {
   if (req.user) {
     return res.redirect('/');
   }
-  return res.render('account/signup', {
-    title: 'Create Account',
-  });
+  return res.render('account/signup', { title: 'Create Account' });
 };
 
 /**
@@ -212,7 +208,7 @@ exports.postDeleteAccount = (req, res, next) => {
  */
 
 exports.getOauthUnlink = (req, res, next) => {
-  const provider = req.params.provider;
+  const { provider } = req.params;
   User.findById(req.user.id, (err, userFromDb) => {
     const user = userFromDb;
     if (err) { return next(err); }
@@ -244,9 +240,7 @@ exports.getReset = (req, res, next) => {
         req.flash('errors', { msg: 'Password reset token is invalid or has expired.' });
         return res.redirect('/forgot');
       }
-      return res.render('account/reset', {
-        title: 'Password Reset',
-      });
+      return res.render('account/reset', { title: 'Password Reset' });
     });
 };
 
@@ -323,9 +317,7 @@ exports.getForgot = (req, res) => {
   if (req.isAuthenticated()) {
     return res.redirect('/');
   }
-  return res.render('account/forgot', {
-    title: 'Forgot Password',
-  });
+  return res.render('account/forgot', { title: 'Forgot Password' });
 };
 
 /**

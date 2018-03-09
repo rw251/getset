@@ -56,7 +56,7 @@ module.exports = {
           descriptionBits.push({ text: descArr[n].substr(idx, searchTerm.length), isSyn: true });
         }
         left = descArr[n].substr(idx + searchTerm.length);
-        idx = descArr[n].toLowerCase().indexOf(searchTerm, idx + searchTerm.length - 1);
+        idx = descArr[n].toLowerCase().indexOf(searchTerm, idx + (searchTerm.length - 1));
       }
     }
     if (left.length > 0) {
@@ -72,7 +72,7 @@ module.exports = {
     let left = '';
 
     let searchTermsInDescription = searchTerms
-                                        .filter(t => description.toLowerCase().indexOf(t) >= 0);
+      .filter(t => description.toLowerCase().indexOf(t) >= 0);
 
     if (searchTermsInDescription.length === 0) {
       descriptionBits.push({ text: descArr[n] });
@@ -82,25 +82,28 @@ module.exports = {
       }
       left = descArr[n];
       searchTermsInDescription = searchTerms.filter(t => left.toLowerCase().indexOf(t) >= 0);
-      let firstTerm = searchTermsInDescription.map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
-        if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
-        return cur;
-      });
+      let firstTerm = searchTermsInDescription
+        .map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
+          if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
+          return cur;
+        });
       while (firstTerm.idx >= 0) {
         if (firstTerm.idx === 0) {
           descriptionBits.push({ text: left.substr(0, firstTerm.t.length), isSyn: true });
         } else {
           descriptionBits.push({ text: left.substr(0, firstTerm.idx) });
-          descriptionBits.push({ text: left.substr(firstTerm.idx, firstTerm.t.length), isSyn: true });
+          descriptionBits
+            .push({ text: left.substr(firstTerm.idx, firstTerm.t.length), isSyn: true });
         }
         left = left.substr(firstTerm.idx + firstTerm.t.length);
         searchTermsInDescription = searchTerms
-                                        .filter(t => left.toLowerCase().indexOf(t) >= 0);
+          .filter(t => left.toLowerCase().indexOf(t) >= 0);
         if (searchTermsInDescription.length === 0) break;
-        firstTerm = searchTermsInDescription.map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
-          if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
-          return cur;
-        });
+        firstTerm = searchTermsInDescription
+          .map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
+            if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
+            return cur;
+          });
       }
     }
     if (left.length > 0) {
@@ -125,14 +128,15 @@ module.exports = {
     const n = descArr.length - 1;
 
     // const searchTermsInDescription = searchTerms
-    //                                     .map(t => t.replace(/^\[?([^\]]*)\]?$/, '$1'))
-    //                                     .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
+    //   .map(t => t.replace(/^\[?([^\]]*)\]?$/, '$1'))
+    //   .filter(t => description.toLowerCase().indexOf(t.toLowerCase()) >= 0);
 
     // if (searchTermsInDescription.length === 0) {
     //   descriptionBits.push({ text: descArr[n] });
     //   return { text: descArr[n], match: false };
     // }
-    // while (searchTermsInDescription.filter(t => descArr[n].toLowerCase().indexOf(t.toLowerCase()) >= 0).length === 0) {
+    // while (searchTermsInDescription.filter(t => descArr[n].toLowerCase()
+    //  .indexOf(t.toLowerCase()) >= 0).length === 0) {
     //   n -= 1;
     // }
     return { text: descArr[n], match: !isDescendant };
@@ -166,29 +170,29 @@ module.exports = {
           //   rect = rects[1];
           // } else
           if (rects.length > 0) {
-            rect = rects[0];
+            [rect] = rects;
           }
           // console.log(rect);
           x = rect.left;
           y = rect.top;
-          right = rect.right;
+          ({ right } = rect);
         }
-            // Fall back to inserting a temporary element
+        // Fall back to inserting a temporary element
         if (x === 0 && y === 0) {
           const span = doc.createElement('span');
           if (span.getClientRects) {
-                    // Ensure span has dimensions and position by
-                    // adding a zero-width space character
+            // Ensure span has dimensions and position by
+            // adding a zero-width space character
             span.appendChild(doc.createTextNode('\u200b'));
             range.insertNode(span);
-            rect = span.getClientRects()[0];
+            [rect] = span.getClientRects();
             x = rect.left;
             y = rect.top;
-            right = rect.right;
+            ({ right } = rect);
             const spanParent = span.parentNode;
             spanParent.removeChild(span);
 
-                    // Glue any broken text nodes back together
+            // Glue any broken text nodes back together
             spanParent.normalize();
           }
         }

@@ -1,4 +1,4 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 
 const createTemplate = require('../../shared/templates/create.jade');
 const createResultsTemplate = require('../../shared/templates/createResults.jade');
@@ -11,7 +11,6 @@ const defaultController = require('./default');
 const $ = require('jquery');
 const FileSaver = require('file-saver');
 const JSZip = require('jszip');
-const localforage = require('localforage');
 
 // Add a case insensitive contains
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
@@ -159,13 +158,17 @@ const saveToGithub = () => {
 
 const refreshExclusion = () => {
   const excludedTerms = Object.keys(e);
+  const includedTerms = Object.keys(s).map(t => t.toLowerCase());
   currentGroups.excluded = [];
 
   // update the excluded codes for the set of matched codes
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      // code.description = [].concat(code.description);
-      if (excludedTerms.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+      const isInExcludedTerms = excludedTerms
+        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1)
+        .length > 0;
+      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1;
+      if (isInExcludedTerms && !isExactInclusionMatch) {
         if (!currentGroups.matched[gi][i].exclude) {
           currentGroups.matched[gi][i].exclude = true;
           currentGroups.numMatched -= 1;
@@ -182,7 +185,8 @@ const refreshExclusion = () => {
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
       // code.description = [].concat(code.description);
-      if (excludedTerms.filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+      if (excludedTerms
+        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
           currentGroups.numUnmatched -= 1;
@@ -198,7 +202,10 @@ const refreshExclusion = () => {
   // finally, add to the exclude list any unmatched items who have an excluded ancestor
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      if (currentGroups.excluded.filter(a => code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1).length > 0) {
+      if (currentGroups.excluded
+        .filter(a =>
+          code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1)
+        .length > 0) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
           currentGroups.unmatched[gi][i].excludedByParent = true;
           currentGroups.numUnmatched -= 1;
@@ -259,15 +266,7 @@ const refreshExclusionUI = () => {
 };
 
 const syncToLocal = () => {
-  localforage.setItem('o', { s, e });
-};
-
-const syncFromLocal = () => {
-  localforage.getItem('o').then((o) => {
-    e = o.e;
-    s = o.s;
-    if (Object.keys(e).length + Object.keys(s).length > 0) updateUI();
-  });
+  global.syncToLocal({ s, e });
 };
 
 const addExclusion = (term) => {
@@ -311,6 +310,14 @@ const updateUI = () => {
     removeTerm(termToRemove);
   });
 };
+
+const syncFromLocal = () => {
+  global.syncFromLocal((o) => {
+    ({ e, s } = o);
+    if (Object.keys(e).length + Object.keys(s).length > 0) updateUI();
+  });
+};
+
 
 const addTerm = (term, isExclusion) => {
   makeDirty();
@@ -375,10 +382,11 @@ const wireup = () => {
         document.body.appendChild(textarea);
         textarea.select();
         try {
-          const successful = document.execCommand('copy');
-          console.log(`Copying was ${`${successful ? '' : 'un'}successful`}`);
+          document.execCommand('copy');
+          // console.log(`Copying was ${`${successful ? '' : 'un'}successful`}`);
         } catch (err) {
-          console.log('Unable to copy');
+          console.error('Unable to copy');
+          console.error(err);
         }
         document.body.removeChild(textarea);
       }
@@ -439,7 +447,7 @@ const wireup = () => {
       saveToGithub();
     })
     .on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
-      currentGroups.selected = evt.target.href.split('#')[1];
+      [, currentGroups.selected] = evt.target.href.split('#');
     })
     .on('mouseup', 'td', (evt) => {
       const selection = utils.getSelectedText();
@@ -491,9 +499,8 @@ const wireup = () => {
         // console.log(file);
         triggerDownload(new Blob([file], { type: 'application/zip' }), `codeset.${timestamp}.zip`);
       }).catch((err) => {
-        console.log(`whoops ${err}`);
+        console.error(`whoops ${err}`);
       });
-      // triggerDownload(str2bytes(;
     })
     .on('click', '#downloadCodes', (evt) => {
       evt.preventDefault();

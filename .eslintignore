@@ -2,3 +2,6 @@
 
 # Ignore service worker
 sw.js
+
+# Ignore third party files
+vendor/

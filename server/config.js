@@ -24,17 +24,13 @@ const ENV = {
 
   // server details
   SERVER_PORT: process.env.GETSET_SERVER_PORT,
-  //SERVER_URL: mustExist('PINGR_SERVER_URL'),
+  // SERVER_URL: mustExist('PINGR_SERVER_URL'),
 
 };
 
 module.exports = {
   // user auth
-  passport: {
-    secret: ENV.PASSPORT_SECRET,
-  },
-  server: {
-    port: ENV.SERVER_PORT,
-  },
+  passport: { secret: ENV.PASSPORT_SECRET },
+  server: { port: ENV.SERVER_PORT },
   mode: process.env.MODE || 'development',
 };

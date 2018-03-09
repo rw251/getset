@@ -3,6 +3,8 @@ const synonymTemplate = require('../../shared/templates/partials/synonyms.jade')
 const defaultController = require('./default');
 const $ = require('jquery');
 const JSZip = require('jszip');
+const page = require('page');
+const global = require('../scripts/global');
 
 const itSupportsDragging = () => {
   const div = document.createElement('div');
@@ -24,21 +26,20 @@ const readMetaDataFile = (fileContent) => {
   try {
     fileJson = JSON.parse(fileContent);
   } catch (err) {
-    console.log(err);
-    console.log('Your metadata file is not in JSON format.');
-    console.log(fileContent);
+    console.error(err);
+    console.error('Your metadata file is not in JSON format.');
     return;
   }
   if (!fileJson.includeTerms) {
-    console.log('Your metadata file does not contain a property "includeTerms".');
+    console.error('Your metadata file does not contain a property "includeTerms".');
     return;
   }
   if (!fileJson.excludeTerms) {
-    console.log('Your metadata file does not contain a property "excludeTerms".');
+    console.error('Your metadata file does not contain a property "excludeTerms".');
     return;
   }
   if (!fileJson.terminology) {
-    console.log('Your metadata file does not contain a property "terminology".');
+    console.error('Your metadata file does not contain a property "terminology".');
     return;
   }
   currentCodeSet.s = {};
@@ -91,6 +92,7 @@ const wireup = () => {
     const $input = $form.find('input[type="file"]');
     const $errorMsg = $form.find('.box__error span');
     const $restart = $form.find('.box__restart');
+    const $edit = $form.find('.edit-file');
     const itSupportsWhatWeNeed = itSupportsDragDropUpload();
     let droppedFiles = false;
 
@@ -122,7 +124,7 @@ const wireup = () => {
     }
 
     const displayError = (error, friendlyMessage) => {
-      console.log(error);
+      console.error(error);
       $errorMsg.text(friendlyMessage);
       $form.removeClass('is-uploading').addClass('is-error');
     };
@@ -148,7 +150,7 @@ const wireup = () => {
         newZip
           .loadAsync(reader.result)
           .then((zip) => {
-              // you now have every files contained in the loaded zip
+            // you now have every files contained in the loaded zip
             if (!zip) displayError(null, 'No zip file found.');
             else if (!zip.files || Object.keys(zip.files).length !== 2) displayError(null, 'Zip file should contain two files.');
             else if (Object.keys(zip.files).filter(v => v.toLowerCase().indexOf('metadata') > -1).length !== 1) {
@@ -182,7 +184,7 @@ const wireup = () => {
     });
 
 
-      // restart the form if has a state of error/success
+    // restart the form if has a state of error/success
 
     $restart.on('click', (evt) => {
       evt.preventDefault();
@@ -190,7 +192,16 @@ const wireup = () => {
       $input.trigger('click');
     });
 
-      // Firefox focus bug fix for file input
+    // edit the loaded file
+    $edit.on('click', (evt) => {
+      evt.preventDefault();
+      const { e, s } = currentCodeSet;
+      global.syncToLocal({ e, s }, () => {
+        page('/create');
+      });
+    });
+
+    // Firefox focus bug fix for file input
     $input
       .on('focus', () => { $input.addClass('has-focus'); })
       .on('blur', () => { $input.removeClass('has-focus'); });

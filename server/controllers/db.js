@@ -1,4 +1,4 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const Code = require('../models/Code')();
 
 const BIT_LENGTH = 6;
@@ -6,13 +6,6 @@ const BIT_LENGTH = 6;
 // This will need optimising at some point
 // but while small scale it is a good optimisation
 const cache = {};
-
-/**
- * Escapes all characters in a regex string. From https://stackoverflow.com/a/6969486/596639
- * @param {String} str The string to escape for regex
- * @returns {String} The escaped string
- */
-const escapeRegExp = str => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
 
 // Assumes the only regex characters are \b for word boundary and .* for wildcard
 const getSearchTermFromRegex = (regex) => {
@@ -107,13 +100,13 @@ const getDescendantAndSynonymCodes = (terminology, codes) => {
   const codesForSynonymAndDescendantQuery = codesForSynonymQuery.map(v => ({ _id: v }));
   // matches all descendants of the codes already found
   codesForSynonymAndDescendantQuery.push({ p: { $in: codesForQuery } });
-  const query = { $and: [
-    {
-      $or: codesForSynonymAndDescendantQuery,
-    },
-    // but doesn't match any of the original codes
-    { _id: { $not: { $in: codesForNotQuery } } },
-  ] };
+  const query = {
+    $and: [
+      { $or: codesForSynonymAndDescendantQuery },
+      // but doesn't match any of the original codes
+      { _id: { $not: { $in: codesForNotQuery } } },
+    ],
+  };
   return Code.find(query, { c: 0 }).lean().exec();
 };
 

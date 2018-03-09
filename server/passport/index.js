@@ -1,5 +1,5 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_json"] }]*/
-/* _json comes from github so have to make it an exception for eslint*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_json"] }] */
+/* _json comes from github so have to make it an exception for eslint */
 
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;

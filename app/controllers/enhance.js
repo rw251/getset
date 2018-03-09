@@ -1,4 +1,4 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const enhanceTemplate = require('../../shared/templates/enhance.jade');
 const enhanceResultsTemplate = require('../../shared/templates/enhanceResultsAlt.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
@@ -102,9 +102,9 @@ const refreshExclusion = () => {
   const excludedTerms = Object.keys(e);
   currentGroups.excluded = [];
 
-// inCodeSetAndMatched,
-// inCodeSetAndUnmatched,
-// matchedDescendantButNotMatched,
+  // inCodeSetAndMatched,
+  // inCodeSetAndUnmatched,
+  // matchedDescendantButNotMatched,
 
   // do this for: notInCodeSetDescendantOfCodeSet,
   // matchedDescendantButNotMatched, notInCodeSetButMatched
@@ -185,7 +185,8 @@ const refreshExclusion = () => {
   // finally, add to the exclude list any unmatched items who have an excluded ancestor
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      if (currentGroups.excluded.filter(a => code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1).length > 0) {
+      if (currentGroups.excluded.filter(a => code.ancestors.indexOf(utils.
+        getCodeForTerminology(a.code, currentTerminology)) > -1).length > 0) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
           currentGroups.unmatched[gi][i].excludedByParent = true;
           currentGroups.numUnmatched -= 1;
@@ -200,10 +201,14 @@ const refreshExclusion = () => {
 */
 
   const stamps = [];
-  stamps.push(getStamp.exists(currentGroups.codeSet.length, currentGroups.inCodeSetNotInTerminology.length));
+  stamps.push(getStamp.exists(
+    currentGroups.codeSet.length,
+    currentGroups.inCodeSetNotInTerminology.length
+  ));
   stamps.push(getStamp.unmatchedChildren(currentGroups.numUnmatchedCodesOriginal));
   stamps.push(getStamp.unmatchedCodes(currentGroups.numInCodeSetAndUnmatched));
-  stamps.push(getStamp.matchedDescendantButNotMatched(currentGroups.numMatchedDescendantButNotMatched));
+  stamps.push(getStamp
+    .matchedDescendantButNotMatched(currentGroups.numMatchedDescendantButNotMatched));
   stamps.push(getStamp.notInCodeSetButMatched(currentGroups.numNotInCodeSetButMatched));
   stamps.push(getStamp.excluded(currentGroups.excluded.length));
   currentGroups.stamps = stamps;
@@ -224,8 +229,13 @@ const refresh = () => {
         contentType: 'application/json',
       })
       .done((data) => {
-        const hierarchies = graphUtils.getHierarchiesWithExistingCodeList(data.codes,
-            currentTerminology, terms, currentGroups.codeSet, currentGroups.codeLookup);
+        const hierarchies = graphUtils.getHierarchiesWithExistingCodeList(
+          data.codes,
+          currentTerminology,
+          terms,
+          currentGroups.codeSet,
+          currentGroups.codeLookup
+        );
 
         // inCodeSetAndMatched,
         // inCodeSetAndUnmatched,
@@ -289,7 +299,7 @@ const addTerm = (term, isExclusion) => {
 const addIfLongEnough = (element) => {
   const latestSynonym = element.val();
   if (latestSynonym.length < 2) {
-        // alertBecauseTooShort
+    // alertBecauseTooShort
   } else {
     addTerm(latestSynonym, element === $synonym.exclude.input);
   }
@@ -350,10 +360,12 @@ const updateFromCodeSet = (codeSet) => {
       currentGroups.inCodeSetNotInTerminology = data.unfoundCodes;
       currentGroups.notInCodeSetDescendantOfCodeSet = Object
         .keys(unmatchedCodesReformatted)
-        .filter(umc => currentGroups.codeLookup[utils.getCodeForTerminology(umc, currentTerminology)])
+        .filter(umc => currentGroups.codeLookup[utils
+          .getCodeForTerminology(umc, currentTerminology)])
         .map(umc => ({
           code: utils.getCodeForTerminology(umc, currentTerminology),
-          description: currentGroups.codeLookup[utils.getCodeForTerminology(umc, currentTerminology)].t,
+          description: currentGroups
+            .codeLookup[utils.getCodeForTerminology(umc, currentTerminology)].t,
           codes: unmatchedCodesReformatted[umc].sort((a, b) => {
             if (a._id < b._id) return -1;
             else if (a._id > b._id) { return 1; }
@@ -419,14 +431,14 @@ const wireUp = () => {
 
   $results
     .on('mouseup', 'td', (evt) => {
-      console.log(`up - ${Date.now()}`);
+      // console.log(`up - ${Date.now()}`);
       let selection = '';
       if (window.getSelection) {
         selection = window.getSelection();
       } else if (document.selection) {
         selection = document.selection.createRange();
       }
-      console.log(`up - ${selection.toString()} - ${lastSelectedText}`);
+      // console.log(`up - ${selection.toString()} - ${lastSelectedText}`);
       if (selection.toString().trim() === lastSelectedText) return;
       lastSelectedText = selection.toString().trim();
       $synonym.include.input.val(lastSelectedText);
@@ -439,10 +451,10 @@ const wireUp = () => {
         }
         const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
         const selectionCoords = utils.getSelectionCoords();
-        console.log(selectionCoords);
-        console.log(evt);
-        console.log(evt.target);
-        console.log(evt.currentTarget);
+        // console.log(selectionCoords);
+        // console.log(evt);
+        // console.log(evt.target);
+        // console.log(evt.currentTarget);
         $(evt.target).parent().popover({
           animation: true,
           content: popupElement,
@@ -452,7 +464,7 @@ const wireUp = () => {
           placement: 'right',
         });
         setTimeout(() => {
-          console.log((selectionCoords.right + 25) - $('#results').offset().left);
+          // console.log((selectionCoords.right + 25) - $('#results').offset().left);
           $('.popover').css('left', (selectionCoords.right + 25) - $('#results').offset().left);
         }, 1);
         if (!lastPopOverElements) lastPopOverElements = $(evt.target);
@@ -470,10 +482,11 @@ const wireUp = () => {
     })
     .on('click', '.token', (event) => {
       // Magic number! 71 = height + padding of navigation bar.
-      // window.scroll(0, utils.findPos(document.getElementById($(event.currentTarget).data('panel-id'))) - 71);
+      // window.scroll(0, utils.findPos(document.
+      // getElementById($(event.currentTarget).data('panel-id'))) - 71);
       /* $('html, body').animate({
         scrollTop: utils.findPos(document.getElementById($(event.currentTarget).data('panel-id'))),
-      }, 2000);*/
+      }, 2000); */
       $('.scrollable').scroll();
       $('.scrollable').animate({
         scrollTop: utils.findPos(document.getElementById($(event.currentTarget).data('panel-id')))
@@ -488,14 +501,16 @@ const wireUp = () => {
       if (codesToAdd.length === 0) {
         alert('No codes appear to be selected. Please try again.');
       } else {
-        const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).concat(codesToAdd);
+        const newCodeSet = $codeSet.val().trim()
+          .split(codeSetSeparator.character).concat(codesToAdd);
         $codeSet.val(newCodeSet.join(codeSetSeparator.character));
         updateFromCodeSet(newCodeSet);
       }
     })
     .on('click', '.removeParentCode', (event) => {
       const codeToRemove = $(event.currentTarget).data('code');
-      const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).filter(item => item !== codeToRemove);
+      const newCodeSet = $codeSet.val().trim()
+        .split(codeSetSeparator.character).filter(item => item !== codeToRemove);
       $codeSet.val(newCodeSet.join(codeSetSeparator.character));
       updateFromCodeSet(newCodeSet);
     })
@@ -507,7 +522,8 @@ const wireUp = () => {
       if (codesToRemove.length === 0) {
         alert('No codes appear to be selected. Please try again.');
       } else {
-        const newCodeSet = $codeSet.val().trim().split(codeSetSeparator.character).filter(item => codesToRemove.indexOf(item) < 0);
+        const newCodeSet = $codeSet.val().trim()
+          .split(codeSetSeparator.character).filter(item => codesToRemove.indexOf(item) < 0);
         $codeSet.val(newCodeSet.join(codeSetSeparator.character));
         updateFromCodeSet(newCodeSet);
       }
