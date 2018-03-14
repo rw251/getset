@@ -380,6 +380,11 @@ const wireup = () => {
     .on('keydown', (keyEvent) => {
       if (keyEvent.keyCode === 17) { // ctrl
         isCtrlPressed = true;
+        // situations where the ctrl keyup event isn't fired, so
+        // also remove the ctrl after a few seconds
+        setTimeout(() => {
+          isCtrlPressed = false;
+        }, 5000);
       } else if (isCtrlPressed && keyEvent.keyCode === 67) { // c
         if (utils.getSelectedText().toString() !== '') {
           // don't want to prevent standard ctrl-c behaviour
