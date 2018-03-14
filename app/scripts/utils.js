@@ -122,7 +122,7 @@ module.exports = {
     return selection;
   },
 
-  parseDescriptionMultipleTermsNEW: (description, isDescendant) => {
+  parseDescriptionMultipleTermsNEW: (description, isDescendantOrSynonym) => {
     // const descriptionBits = [];
     const descArr = description.split('|');
     const n = descArr.length - 1;
@@ -139,7 +139,7 @@ module.exports = {
     //  .indexOf(t.toLowerCase()) >= 0).length === 0) {
     //   n -= 1;
     // }
-    return { text: descArr[n], match: !isDescendant };
+    return { text: descArr[n], match: !isDescendantOrSynonym };
   },
 
   getSelectionCoords: (win = window) => {

@@ -84,7 +84,7 @@ const searchForTerm = (terminology, term) => {
 
 const unique = arr => arr.filter((item, i, ar) => ar.indexOf(item) === i);
 
-const getDescendantAndSynonymCodes = (terminology, codes) => {
+const getSynonymCodes = (terminology, codes) => {
   const codesForQuery = unique(codes.map((v) => {
     if (terminology === 'Readv2') {
       return v._id.substr(0, 5);
@@ -93,16 +93,30 @@ const getDescendantAndSynonymCodes = (terminology, codes) => {
   }));
   let codesForSynonymQuery = [];
   if (terminology === 'Readv2') {
-    codesForSynonymQuery = codesForQuery.map(v => new RegExp(`^${v}`));
+    codesForSynonymQuery = codesForQuery.map(v => ({ _id: new RegExp(`^${v}`) }));
   }
   const codesForNotQuery = codes.map(v => v._id);
-
-  const codesForSynonymAndDescendantQuery = codesForSynonymQuery.map(v => ({ _id: v }));
-  // matches all descendants of the codes already found
-  codesForSynonymAndDescendantQuery.push({ p: { $in: codesForQuery } });
   const query = {
     $and: [
-      { $or: codesForSynonymAndDescendantQuery },
+      { $or: codesForSynonymQuery },
+      // but doesn't match any of the original codes
+      { _id: { $not: { $in: codesForNotQuery } } },
+    ],
+  };
+  return Code.find(query, { c: 0 }).lean().exec();
+};
+
+const getDescendantCodes = (terminology, codes) => {
+  const codesForQuery = unique(codes.map((v) => {
+    if (terminology === 'Readv2') {
+      return v._id.substr(0, 5);
+    }
+    return v._id;
+  }));
+  const codesForNotQuery = codes.map(v => v._id);
+  const query = {
+    $and: [
+      { p: { $in: codesForQuery } },
       // but doesn't match any of the original codes
       { _id: { $not: { $in: codesForNotQuery } } },
     ],
@@ -115,13 +129,44 @@ const getResults = async (terminology, searchterm) => {
   if (!cache[terminology][searchterm.original]) {
     // Not found, so let's get it and then cache it
     const codes = await searchForTerm(terminology, searchterm);
-    const descendantCodes = await getDescendantAndSynonymCodes(terminology, codes);
+
+    // in case nothing is matched we can return early
+    if (codes.length === 0) {
+      cache[terminology][searchterm.original] = [];
+      return [];
+    }
+    // Get all descendants of the codes - but not those already matched.
+    const descendantCodes = await getDescendantCodes(terminology, codes);
+    const descendantCodeIds = {};
     descendantCodes.map((v) => {
       const item = v;
+      // Keep track of the descendants by id
+      descendantCodeIds[v._id] = true;
+      // Mark the codes as being a descendant so we can easily tell it wasn't matched
       item.descendant = true;
       return item;
     });
-    const allCodes = descendantCodes.concat(codes);
+    // Get all synonym codes - but not those already matched.
+    const synonymCodes = await getSynonymCodes(terminology, codes);
+    synonymCodes.map((v) => {
+      const item = v;
+      item.synonym = true;
+      if (descendantCodeIds[v._id]) {
+        // mark as descendant as well
+        item.descendant = true;
+        descendantCodeIds[v._id] = false;
+      }
+      return item;
+    });
+    // start merging the code lists
+    // using the synonymCodes as the master - later we'll add the descendants
+    const allCodes = synonymCodes.concat(codes);
+    descendantCodes.forEach((v) => {
+      if (descendantCodeIds[v._id]) {
+        // not also a synonym so we can add it to the list
+        allCodes.push(v);
+      }
+    });
     cache[terminology][searchterm.original] = allCodes;
     return allCodes;
   }
@@ -152,7 +197,9 @@ exports.searchMultiple = async (terminology, inclusions) => {
   const results = await Promise.all(inclusions.map(t => getResults(terminology, t)));
   results.forEach((result) => {
     result.forEach((v) => { // merge the results
-      if (!toReturn[v._id] || toReturn[v._id].descendant) toReturn[v._id] = v;
+      if (!toReturn[v._id] || toReturn[v._id].descendant || toReturn[v._id].synonym) {
+        toReturn[v._id] = v;
+      }
     });
   });
   const rtn = {

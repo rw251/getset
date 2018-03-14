@@ -185,7 +185,7 @@ module.exports = {
           // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
         } else {
           graph[node].codes.forEach((code) => {
-            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant);
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant || code.synonym);
             const item = {
               code: code.code,
               ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,
@@ -269,14 +269,14 @@ module.exports = {
           p: parents,
           a: ancestors,
           c: [],
-          codes: [{ code: v._id, t: v.t, descendant: v.descendant }],
+          codes: [{ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym }],
         };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant });
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       } else {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant });
+        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       }
@@ -309,7 +309,7 @@ module.exports = {
           // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
         } else {
           graph[node].codes.forEach((code) => {
-            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant);
+            const descriptionBits = utils.parseDescriptionMultipleTermsNEW(code.t, code.descendant || code.synonym);
             const item = {
               code: code.code,
               ancestors: codeDic[utils.getCodeForTerminology(code.code, currentTerminology)].a,

@@ -162,6 +162,7 @@ const refreshExclusion = () => {
   currentGroups.excluded = [];
 
   // update the excluded codes for the set of matched codes
+  // unless the term is matched exactly by an inclusion term
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
       const isInExcludedTerms = excludedTerms
@@ -182,11 +183,13 @@ const refreshExclusion = () => {
   });
 
   // update the excluded codes for the set of unmatched codes
+  // exclude if:
+  //  - matches an exclusion term
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      // code.description = [].concat(code.description);
-      if (excludedTerms
-        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0) {
+      const isInExcludedTerms = excludedTerms
+        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0;
+      if (isInExcludedTerms) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
           currentGroups.numUnmatched -= 1;
@@ -199,13 +202,25 @@ const refreshExclusion = () => {
     });
   });
 
-  // finally, add to the exclude list any unmatched items who have an excluded ancestor
+  // finally, add to the exclude list any unmatched items who have:
+  //  - are a descendant of a matched code with an excluded ancestor
+  //  - are not a descendant of a matched code AND is a synonym for an excluded code
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      if (currentGroups.excluded
+      const hasExcludedParent = currentGroups.excluded
         .filter(a =>
           code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1)
-        .length > 0) {
+        .length > 0;
+      const hasNoMatchedParent = currentGroups.matched
+        .filter(a => a
+          .filter(b =>
+            code.ancestors.indexOf(utils.getCodeForTerminology(b.code, currentTerminology)) > -1)
+          .length > 0)
+        .length === 0;
+      const isSynonymForExcludedCode = currentGroups.excluded
+        .filter(a => code.code.substr(0, 5) === a.code.substr(0, 5))
+        .length > 0;
+      if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
           currentGroups.unmatched[gi][i].excludedByParent = true;
           currentGroups.numUnmatched -= 1;
