@@ -3,3 +3,6 @@ node_modules/
 
 # API keys and secrets
 .env
+
+# temp code files
+server/codes.txt
