@@ -38,9 +38,31 @@ const loadCodeSet = (filename) => {
   return codes;
 };
 
+let codeDescriptionsAreCached = false;
+let codeDescriptionChunksAreCached = false;
+const cachedCodeDescriptions = {};
+
+/**
+ * Returns an array of descriptions
+ * @param {Array} codes Array of codes e.g. ['G30..00','G31.00']
+ * @returns {Array} Array of descriptions [
+ *  {_id:'G30..00', t:'first description'},
+ *  {_id:'G31..00',t:'second description'}
+ * ]
+ */
 const getCodeDescriptionsFromMongo = codes => Code
   .find({ _id: { $in: codes } }, { t: 1 })
   .lean().exec();
+
+const getCodeDescriptionsFromMongoOrCache = async (codes) => {
+  if (!codeDescriptionsAreCached) {
+    const descriptions = await getCodeDescriptionsFromMongo(codes);
+    descriptions.forEach((description) => {
+      cachedCodeDescriptions[description._id] = { t: description.t.toLowerCase() };
+    });
+    codeDescriptionsAreCached = true;
+  }
+};
 
 const getMatchingCodesFromMongo = term => Code
   .find({
@@ -48,6 +70,38 @@ const getMatchingCodesFromMongo = term => Code
     t: new RegExp(escapeRegExp(term), 'i'),
   }, { _id: 1 })
   .lean().exec();
+
+const getChunksFromCachedDescriptions = (from, to) => {
+  if (!codeDescriptionChunksAreCached) {
+    Object.keys(cachedCodeDescriptions).forEach((d) => {
+      const description = cachedCodeDescriptions[d];
+      const dBits = description.t.split('|');
+      description.c = [];
+      const bits = [];
+      dBits.forEach((bit) => {
+        for (let n = from; n <= to; n += 1) {
+          if (bit.length < n) {
+            bits.push(bit);
+          } else {
+            let lastBit = bit.substr(0, n);
+            bits.push(lastBit);
+            for (let i = n; i < bit.length; i += 1) {
+              lastBit = lastBit.slice(1) + bit[i];
+              if (lastBit[0] !== ' ' && lastBit[lastBit.length - 1] !== ' ') bits.push(lastBit);
+            }
+            while (lastBit.length > 3) {
+              lastBit = lastBit.slice(1);
+              if (lastBit[0] !== ' ' && lastBit[lastBit.length - 1] !== ' ') bits.push(lastBit);
+            }
+          }
+        }
+      });
+
+      description.c = bits;
+    });
+    codeDescriptionChunksAreCached = true;
+  }
+};
 
 const getChunksFromDescriptions = (descriptions, from, to) => descriptions.map((description) => {
   description.t = description.t.toLowerCase();
@@ -77,10 +131,11 @@ const getChunksFromDescriptions = (descriptions, from, to) => descriptions.map((
   description.c = bits;
   return description;
 });
-// For each n character description chunk find the chunks that match the most codes
-const getNChunkRankings = (chunks) => {
+
+const getNChunkRankings = () => {
   const allChunkRankings = {};
-  chunks.forEach((chunk) => {
+  Object.keys(cachedCodeDescriptions).forEach((d) => {
+    const chunk = cachedCodeDescriptions[d];
     const thisChunk = {}; // so we don't double count chunks within a single code
     chunk.c.forEach((bit) => {
       if (!thisChunk[bit]) {
@@ -97,6 +152,26 @@ const getNChunkRankings = (chunks) => {
     .sort((a, b) => b.n - a.n)
     .slice(0, 2000);
 };
+// For each n character description chunk find the chunks that match the most codes
+// const getNChunkRankings = (chunks) => {
+//   const allChunkRankings = {};
+//   chunks.forEach((chunk) => {
+//     const thisChunk = {}; // so we don't double count chunks within a single code
+//     chunk.c.forEach((bit) => {
+//       if (!thisChunk[bit]) {
+//         if (!allChunkRankings[bit]) allChunkRankings[bit] = 1;
+//         else allChunkRankings[bit] += 1;
+//         thisChunk[bit] = true;
+//       }
+//     });
+//   });
+
+//   // return the top 1000 sorted
+//   return Object.keys(allChunkRankings)
+//     .map(bit => ({ bit, n: allChunkRankings[bit] }))
+//     .sort((a, b) => b.n - a.n)
+//     .slice(0, 2000);
+// };
 
 const getCodesNeededToBeExcludedNChunks = bit => Code
   .count({
@@ -133,15 +208,15 @@ const getAmendedChunkRankings = async (rankings) => {
 const terms = [];
 const doItAll = async () => {
   console.time('Get code descriptions from mongo');
-  const descriptions = await getCodeDescriptionsFromMongo(codesYetToBeMatched);
+  await getCodeDescriptionsFromMongoOrCache(codesYetToBeMatched);
   console.timeEnd('Get code descriptions from mongo');
 
   console.time('Get chunks');
-  const chunks = getChunksFromDescriptions(descriptions, 6, 100);
+  getChunksFromCachedDescriptions(6, 100);
   console.timeEnd('Get chunks');
 
   console.time('Get chunk rankings');
-  const rankings = getNChunkRankings(chunks);
+  const rankings = getNChunkRankings();
   console.timeEnd('Get chunk rankings');
 
   console.time('Get amended chunk rankings');
@@ -158,6 +233,7 @@ const doItAll = async () => {
     if (codesYetToBeMatched.indexOf(code) < 0) {
       codesAlreadyExcluded.push(code);
     }
+    delete cachedCodeDescriptions[code];
   });
   codesYetToBeMatched = codesYetToBeMatched.filter(code => matchingCodes.indexOf(code) === -1);
   console.log(codesYetToBeMatched.length);
