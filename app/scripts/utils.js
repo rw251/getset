@@ -1,3 +1,5 @@
+const terminologyCache = { Readv2: {} };
+
 module.exports = {
 
   // inspired from moment.js fromNow()
@@ -203,7 +205,10 @@ module.exports = {
 
   getCodeForTerminology: (code, terminology) => {
     if (terminology === 'Readv2') {
-      return code.substr(0, 5);
+      if (terminologyCache.Readv2[code]) return terminologyCache.Readv2[code];
+      const codeToReturn = code.substr(0, 5);
+      terminologyCache.Readv2[code] = codeToReturn;
+      return codeToReturn;
     }
     return code;
   },

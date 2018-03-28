@@ -1,7 +1,8 @@
 const dotenv = require('dotenv');
 const pino = require('pino')();
+const path = require('path');
 
-dotenv.load({ path: '.env' });
+dotenv.load({ path: path.join(__dirname, '../.env') });
 
 const mustExist = function mustExist(name) {
   if (!process.env[name]) {
