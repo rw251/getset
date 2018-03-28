@@ -152,6 +152,29 @@ const getNChunkRankings = () => {
     .sort((a, b) => b.n - a.n)
     .slice(0, 2000);
 };
+
+let areChunkRankingsCached = false;
+const cachedChunkRankings = {};
+const getNChunkRankingsOrCache = (force) => {
+  if (force || !areChunkRankingsCached) {
+    const rankings = getNChunkRankings();
+    rankings.forEach((ranking) => {
+      cachedChunkRankings[ranking.bit] = ranking.n;
+    });
+    areChunkRankingsCached = true;
+  }
+};
+
+const removeFromNChunkRankings = (code) => {
+  const chunk = cachedCodeDescriptions[code];
+  const thisChunk = {}; // so we don't double count chunks within a single code
+  chunk.c.forEach((bit) => {
+    thisChunk[bit] = true;
+  });
+  Object.keys(thisChunk).forEach((key) => {
+    if (cachedChunkRankings[key]) { cachedChunkRankings[key] -= 1; }
+  });
+};
 // For each n character description chunk find the chunks that match the most codes
 // const getNChunkRankings = (chunks) => {
 //   const allChunkRankings = {};
@@ -206,6 +229,7 @@ const getAmendedChunkRankings = async (rankings) => {
 };
 
 const terms = [];
+let inc = 0;
 const doItAll = async () => {
   console.time('Get code descriptions from mongo');
   await getCodeDescriptionsFromMongoOrCache(codesYetToBeMatched);
@@ -216,11 +240,14 @@ const doItAll = async () => {
   console.timeEnd('Get chunks');
 
   console.time('Get chunk rankings');
-  const rankings = getNChunkRankings();
+  getNChunkRankingsOrCache(inc % 25 === 0);
   console.timeEnd('Get chunk rankings');
-
+  fs.writeFileSync(`new_rankings${inc}`, JSON.stringify(cachedChunkRankings, null, 2));
+  const rankings = Object.keys(cachedChunkRankings).map(key =>
+    ({ bit: key, n: cachedChunkRankings[key] }));
   console.time('Get amended chunk rankings');
   const amendedRankings = await getAmendedChunkRankings(rankings);
+  fs.writeFileSync(`new_amendedRankings${inc}`, JSON.stringify(rankings, null, 2));
   console.timeEnd('Get amended chunk rankings');
   console.log(amendedRankings[0]);
 
@@ -233,11 +260,15 @@ const doItAll = async () => {
     if (codesYetToBeMatched.indexOf(code) < 0) {
       codesAlreadyExcluded.push(code);
     }
-    delete cachedCodeDescriptions[code];
+    if (cachedCodeDescriptions[code]) {
+      removeFromNChunkRankings(code);
+      delete cachedCodeDescriptions[code];
+    }
   });
   codesYetToBeMatched = codesYetToBeMatched.filter(code => matchingCodes.indexOf(code) === -1);
   console.log(codesYetToBeMatched.length);
   console.timeEnd('Get matching codes');
+  inc += 1;
   if (codesYetToBeMatched.length > 0) doItAll();
   else process.exit();
 };
