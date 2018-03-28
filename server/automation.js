@@ -132,8 +132,9 @@ const getAmendedChunkRankings = async (rankings) => {
 
 const terms = [];
 const doItAll = async () => {
-  console.log('Get code descriptions from mongo');
+  console.time('Get code descriptions from mongo');
   const descriptions = await getCodeDescriptionsFromMongo(codesYetToBeMatched);
+  console.timeEnd('Get code descriptions from mongo');
 
   console.time('Get chunks');
   const chunks = getChunksFromDescriptions(descriptions, 6, 100);
