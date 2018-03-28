@@ -164,6 +164,7 @@ const getNChunkRankingsOrCache = (force) => {
     areChunkRankingsCached = true;
   }
 };
+const cachedAmendedChunkRanking = {};
 
 const removeFromNChunkRankings = (code) => {
   const chunk = cachedCodeDescriptions[code];
@@ -173,45 +174,54 @@ const removeFromNChunkRankings = (code) => {
   });
   Object.keys(thisChunk).forEach((key) => {
     if (cachedChunkRankings[key]) { cachedChunkRankings[key] -= 1; }
+    if (cachedAmendedChunkRanking[key]) { cachedAmendedChunkRanking[key].n -= 1; }
   });
 };
-// For each n character description chunk find the chunks that match the most codes
-// const getNChunkRankings = (chunks) => {
-//   const allChunkRankings = {};
-//   chunks.forEach((chunk) => {
-//     const thisChunk = {}; // so we don't double count chunks within a single code
-//     chunk.c.forEach((bit) => {
-//       if (!thisChunk[bit]) {
-//         if (!allChunkRankings[bit]) allChunkRankings[bit] = 1;
-//         else allChunkRankings[bit] += 1;
-//         thisChunk[bit] = true;
-//       }
-//     });
-//   });
 
-//   // return the top 1000 sorted
-//   return Object.keys(allChunkRankings)
-//     .map(bit => ({ bit, n: allChunkRankings[bit] }))
-//     .sort((a, b) => b.n - a.n)
-//     .slice(0, 2000);
-// };
-
-const getCodesNeededToBeExcludedNChunks = bit => Code
+const getCodesNeededToBeExcludedNChunksCount = bit => Code
   .count({
     c: bit.substr(0, 6),
     t: new RegExp(escapeRegExp(bit), 'i'),
     _id: { $nin: codesYetToBeMatched.concat(codesAlreadyExcluded) },
   }).lean().exec();
 
-const getAmendedChunkRanking = async (ranking) => {
-  const numberNeededToExclude = await getCodesNeededToBeExcludedNChunks(ranking.bit);
-  ranking.x = numberNeededToExclude;
-  return ranking;
+const getCodesNeededToBeExcludedNChunks = bit => Code
+  .find({
+    c: bit.substr(0, 6),
+    t: new RegExp(escapeRegExp(bit), 'i'),
+    _id: { $nin: codesYetToBeMatched.concat(codesAlreadyExcluded) },
+  }, { _id: 1 }).lean().exec();
+
+// const getAmendedChunkRanking = async (ranking) => {
+//   const numberNeededToExclude = await getCodesNeededToBeExcludedNChunksCount(ranking.bit);
+//   ranking.x = numberNeededToExclude;
+//   return ranking;
+// };
+
+
+const getAmendedChunkRanking = async (bit, force) => {
+  if (force || !cachedAmendedChunkRanking[bit]) {
+    cachedAmendedChunkRanking[bit] = { n: cachedChunkRankings[bit] };
+    const codesNeededToExclude = await getCodesNeededToBeExcludedNChunks(bit);
+    cachedAmendedChunkRanking[bit].codes = {};
+    codesNeededToExclude.forEach((c) => {
+      cachedAmendedChunkRanking[bit].codes[c._id] = true;
+    });
+    cachedAmendedChunkRanking[bit].x = codesNeededToExclude.length;
+  } else {
+    codesAlreadyExcluded.forEach((v) => {
+      if (cachedAmendedChunkRanking[bit].codes[v]) {
+        delete cachedAmendedChunkRanking[bit].codes[v];
+      }
+    });
+  }
 };
 
-const getAmendedChunkRankings = async (rankings) => {
-  const promArray = rankings.map(ranking => getAmendedChunkRanking(ranking));
-  const amendedRankings = await Promise.all(promArray);
+const getAmendedChunkRankings = async (force) => {
+  const promArray = Object.keys(cachedChunkRankings).map(bit => getAmendedChunkRanking(bit, force));
+  await Promise.all(promArray);
+  const amendedRankings = Object.keys(cachedAmendedChunkRanking).map(v =>
+    ({ bit: v, n: cachedAmendedChunkRanking[v].n, x: cachedAmendedChunkRanking[v].x }));
   amendedRankings.sort((a, b) => {
     const left = (b.n - b.x) / (b.x + 1);
     const right = (a.n - a.x) / (a.x + 1);
@@ -243,11 +253,9 @@ const doItAll = async () => {
   getNChunkRankingsOrCache(inc % 25 === 0);
   console.timeEnd('Get chunk rankings');
   fs.writeFileSync(`new_rankings${inc}`, JSON.stringify(cachedChunkRankings, null, 2));
-  const rankings = Object.keys(cachedChunkRankings).map(key =>
-    ({ bit: key, n: cachedChunkRankings[key] }));
   console.time('Get amended chunk rankings');
-  const amendedRankings = await getAmendedChunkRankings(rankings);
-  fs.writeFileSync(`new_amendedRankings${inc}`, JSON.stringify(rankings, null, 2));
+  const amendedRankings = await getAmendedChunkRankings(inc % 25 === 0);
+  fs.writeFileSync(`new_amendedRankings${inc}`, JSON.stringify(amendedRankings, null, 2));
   console.timeEnd('Get amended chunk rankings');
   console.log(amendedRankings[0]);
 
@@ -263,6 +271,7 @@ const doItAll = async () => {
     if (cachedCodeDescriptions[code]) {
       removeFromNChunkRankings(code);
       delete cachedCodeDescriptions[code];
+      delete cachedAmendedChunkRanking[code];
     }
   });
   codesYetToBeMatched = codesYetToBeMatched.filter(code => matchingCodes.indexOf(code) === -1);
