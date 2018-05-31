@@ -461,6 +461,32 @@ const getBestWord = (excludedCodeDescriptions) => {
   return sortedExcludeWords[0];
 };
 
+
+const getSynonymCodes = (codes) => {
+  const codesForQuery = codes.map(v => v.substr(0, 5));
+  const codesForSynonymQuery = codesForQuery.map(v => ({ _id: new RegExp(`^${v}`) }));
+  const query = {
+    $and: [
+      { $or: codesForSynonymQuery },
+      // but doesn't match any of the original codes
+      { _id: { $not: { $in: codes } } },
+    ],
+  };
+  return Code.find(query, { c: 0 }).lean().exec();
+};
+
+const getDescendantCodes = (codes) => {
+  const codesForQuery = codes.map(v => v.substr(0, 5));
+  const query = {
+    $and: [
+      { p: { $in: codesForQuery } },
+      // but doesn't match any of the original codes
+      { _id: { $not: { $in: codes } } },
+    ],
+  };
+  return Code.find(query, { c: 0 }).lean().exec();
+};
+
 const processExclusions = async () => {
   // take list of exclusion codes and find list of terms that
   // identifies them
@@ -468,9 +494,14 @@ const processExclusions = async () => {
   const includedCodeDescriptions = (await getCodeDescriptionsFromMongo(fullCodeSet))
     .map(v => v.t.toLowerCase());
 
+  const synonymCodes = await getSynonymCodes(fullCodeSet);
+  const descendantCodes = await getDescendantCodes(fullCodeSet);
+  const synonymOrDescendantCodes = (synonymCodes.concat(descendantCodes)).map(v => v._id);
+
+  const codesToExclude = codesAlreadyExcluded.concat(synonymOrDescendantCodes);
   // #1: Find any codes in our code set that are matched by the full text
   //     of the excluded term
-  let excludedCodeDescriptions = (await getCodeDescriptionsFromMongo(codesAlreadyExcluded))
+  let excludedCodeDescriptions = (await getCodeDescriptionsFromMongo(codesToExclude))
     .map((description) => {
       const bits = description.t.toLowerCase().split('|');
       return bits[bits.length - 1];
@@ -495,13 +526,13 @@ const processExclusions = async () => {
 
   let bestWord = getBestWord(excludedCodeDescriptions);
 
-  while (bestWord.count > 2) {
+  while (bestWord && bestWord.count > 2) {
     console.log(excludedCodeDescriptions.length);
     // remove all the code descriptions
     excludedCodeDescriptions = excludedCodeDescriptions.filter(v => v.replace(/[^a-zA-Z0-9\/]+/g, ' ').split(' ').indexOf(bestWord.word) < 0);
 
     // add the word instead
-    excludedCodeDescriptions.push(bestWord.word);
+    excludedCodeDescriptions.push(bestWord.word.indexOf(' ') < 0 ? `"${bestWord.word}"` : bestWord.word);
 
     // do it again
     bestWord = getBestWord(excludedCodeDescriptions);
@@ -510,6 +541,14 @@ const processExclusions = async () => {
 };
 
 let lastrun = 1000000;
+
+const finishOff = async () => {
+  const minimalTerms = getMinimalListOfTerms();
+  await processExclusions();
+  fs.writeFileSync(path.join(__dirname, 'output', 'terms.txt'), minimalTerms.join('\n'));
+  fs.writeFileSync(path.join(__dirname, 'output', 'exclusions.txt'), termsForExclusion.join('\n'));
+  process.exit();
+};
 // let inc = 0;
 const main = async () => {
   // if (weAreTiming) console.time('Get code descriptions from mongo');
@@ -533,6 +572,11 @@ const main = async () => {
   await populateAmendedWordCombinationRankings();
   if (weAreTiming) console.timeEnd('Get amended chunk rankings');
   // console.log(amendedRankingOfWordCombinations[0], codesYetToBeMatched.length);
+
+  // sometimes - TODO investigate why - the below might be an empty list
+  if (amendedRankingOfWordCombinations.length === 0) {
+    return finishOff();
+  }
 
   const termToUse = amendedRankingOfWordCombinations[0].wordCombination;
   let isUsingFullTermDescription = false;
@@ -590,11 +634,7 @@ const main = async () => {
   if (weAreTiming) console.timeEnd('Get matching codes');
   if (codesYetToBeMatched.length > 0) main();
   else {
-    const minimalTerms = getMinimalListOfTerms();
-    await processExclusions();
-    fs.writeFileSync(path.join(__dirname, 'output', 'terms.txt'), minimalTerms.join('\n'));
-    fs.writeFileSync(path.join(__dirname, 'output', 'exclusions.txt'), termsForExclusion.join('\n'));
-    process.exit();
+    return finishOff();
   }
 };
 
