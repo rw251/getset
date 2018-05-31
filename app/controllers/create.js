@@ -270,7 +270,13 @@ const refreshExclusion = () => {
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
       const isInExcludedTerms = excludedTerms
-        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1)
+        .filter((a) => {
+          if (a[0] === '"' && a[a.length - 1] === '"') {
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+          }
+          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+
+        })
         .length > 0;
       const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1;
       if (isInExcludedTerms && !isExactInclusionMatch) {
@@ -292,7 +298,14 @@ const refreshExclusion = () => {
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
       const isInExcludedTerms = excludedTerms
-        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0;
+        .filter((a) => {
+          if (a[0] === '"' && a[a.length - 1] === '"') {
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+          }
+          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+
+        })
+        .length > 0;
       if (isInExcludedTerms) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
@@ -499,7 +512,8 @@ const wireup = () => {
         setTimeout(() => {
           isCtrlPressed = false;
         }, 5000);
-      } else if (isCtrlPressed && keyEvent.keyCode === 67) { // c
+      } else if (isCtrlPressed && (keyEvent.keyCode === 67 || keyEvent.keyCode === 99)) { // c
+        console.log(`s: ${Object.keys(s).length}, e: ${Object.keys(e).length}`);
         if (utils.getSelectedText().toString() !== '') {
           // don't want to prevent standard ctrl-c behaviour
           return;
