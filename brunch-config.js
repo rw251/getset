@@ -11,9 +11,7 @@ module.exports = {
         'libraries.js': /^(?!app\/)/,
         'app.js': /^app\//,
       },
-      order: {
-        before: [/jquery/],
-      },
+      order: { before: [/jquery/] },
     },
     stylesheets: {
       joinTo: 'app.css',
@@ -23,19 +21,8 @@ module.exports = {
         ],
       },
     },
-    templates: {
-      joinTo: 'app.js',
-    },
+    templates: { joinTo: 'app.js' },
   },
 
-  plugins: {
-    babel: {
-      // pattern: /sw\.js$/,
-    },
-    sass: {
-      options: {
-        includePaths: ['app/styles'],
-      },
-    },
-  },
+  plugins: { sass: { options: { includePaths: ['app/styles'] } } },
 };
