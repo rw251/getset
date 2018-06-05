@@ -1,0 +1,14 @@
+mixin emptyTable(id)
+  .clusterize
+    table.table.my-table.table-condensed(id='headers-'+id)
+      thead
+        tr
+          th Code
+          th Description(s)
+          th Ancestor code(s)
+          th Parent(s)
+    .clusterize-scroll(id='scroll-'+id)
+      table.table.my-table.table-condensed
+        tbody.clusterize-content(id='content-'+id)
+          tr.clusterize-no-data
+            td Loading...

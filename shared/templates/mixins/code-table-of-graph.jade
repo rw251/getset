@@ -1,17 +1,8 @@
-mixin codeTableOfGraph(graph)
-  table.table.table-condensed
-    thead
+each subgraph in graph
+  each item in subgraph
+    if !item.exclude && !item.excludedByParent
       tr
-        th Code
-        th Description(s)
-        th Ancestor code(s)
-        th Parent(s)
-    tbody
-      each subgraph in graph
-        each item in subgraph
-          if !item.exclude && !item.excludedByParent
-            tr
-              td.disable-select= item.code
-              td= item.description
-              td.disable-select= item.depth
-              td.disable-select= item.p
+        td.disable-select= item.code
+        td= item.description
+        td.disable-select= item.depth
+        td.disable-select= item.p

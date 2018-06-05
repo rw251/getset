@@ -62,6 +62,17 @@ textarea {
   padding: 2px;
 }
 
+.notification {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  padding: 20px;
+  border: 1px black solid;
+  border-radius: 10px;
+  font-size: 2em;
+  background: chartreuse;
+}
+
 // Thumbnails
 // -------------------------
 
@@ -623,4 +634,13 @@ html, body, .viewport {
   margin-top:150px;
   color: white;
   font-size: 4em;
+}
+
+.my-table {
+  margin:0;
+}
+
+.clusterize-scroll {
+  max-height: calc(100vh - 220px);
+  border-bottom: 2px #dddddd solid;
 }

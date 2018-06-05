@@ -1,6 +1,5 @@
-include ./mixins/code-table.jade
-include ./mixins/code-table-of-graph.jade
 include ./mixins/code-freq-table.jade
+include ./mixins/empty-table.jade
 
 .scrollable-parent
   // Nav tabs
@@ -41,13 +40,13 @@ include ./mixins/code-freq-table.jade
               a(href='#') Download all
 
   // Tab panes
-  .tab-content.scrollable
+  .tab-content
     #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
-      +codeTableOfGraph(matched)
+      +emptyTable('matchedTabContent')
     #matchedDescendantButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendantButNotMatchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
-      +codeTableOfGraph(unmatched)
+      +emptyTable('matchedDescendantButNotMatchedTabContent')
     #excludedTabContent.tab-pane(class=selected==='excludedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
-      +codeTable(excluded)
+      +emptyTable('excludedTabContent')
 // Modal
 #saveModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='saveModalLabel')
   .modal-dialog(role='document')

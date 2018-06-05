@@ -2,18 +2,33 @@
 
 const createTemplate = require('../../shared/templates/create.jade');
 const createResultsTemplate = require('../../shared/templates/createResults.jade');
+const rowsForTableFromGraphTemplate = require('../../shared/templates/partials/code-table-of-graph.jade');
+const rowsForTableFromCodesTemplate = require('../../shared/templates/partials/code-table.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const graphUtils = require('../scripts/graph-utils');
 const global = require('../scripts/global');
 const utils = require('../scripts/utils');
+const notification = require('../scripts/notification');
 const defaultController = require('./default');
 const $ = require('jquery');
 const FileSaver = require('file-saver');
 const JSZip = require('jszip');
+const Clusterize = require('clusterize.js');
 
 // Add a case insensitive contains
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+
+let zeroTime;
+const resetProgress = () => {
+  zeroTime = null;
+};
+const progress = (name) => {
+  if (!zeroTime) zeroTime = new Date();
+  const notif = `Progress: ${name}\nElapsed time:${(new Date() - zeroTime)}`;
+  notification.show(notif);
+  console.log(notif);
+};
 
 // jQuery elements
 const $synonym = { include: {}, exclude: {} };
@@ -104,19 +119,107 @@ const wireUpButtonsAndModal = () => {
 
 };
 
+const $scroll = {};
+const $content = {};
+const $headers = {};
+
+/**
+ * Makes header columns equal width to content columns
+ */
+const fitHeaderColumns = (() => {
+  let prevWidth = [];
+  return (table) => {
+    const $firstRow = $content[table].find('tr:not(.clusterize-extra-row):first');
+    const columnsWidth = [];
+    $firstRow.children().each(function () {
+      columnsWidth.push($(this).width());
+    });
+    if (columnsWidth.filter(x => x < 0).length > 0) {
+      prevWidth = columnsWidth;
+      // looks like not rendered yet, try again in a bit
+      return setTimeout(() => {
+        fitHeaderColumns(table);
+      }, 100);
+    }
+    if (columnsWidth.toString() === prevWidth.toString()) return;
+    $headers[table].find('tr').children().each(function (i) {
+      $(this).width(columnsWidth[i]);
+    });
+    prevWidth = columnsWidth;
+  };
+})();
+/**
+ * Keep header equal width to tbody
+ */
+const setHeaderWidth = (table) => {
+  $headers[table].width($content[table].width());
+};
+
+const tableHtml = {};
+let matchedContentForCopying = [];
+const populateTableData = (groups) => {
+  tableHtml.matchedTabContent = groups.matched.map(subgraph => subgraph
+    .filter(item => !item.exclude && !item.excludedByParent)
+    .map(item => `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`));
+  matchedContentForCopying = [].concat(...groups.matched.map(subgraph => subgraph
+    .filter(item => !item.exclude && !item.excludedByParent)
+    .map(item => `${item.code}\t${item.description}`)));
+  tableHtml.matchedDescendantButNotMatchedTabContent = groups.unmatched.map(subgraph => subgraph
+    .filter(item => !item.exclude && !item.excludedByParent)
+    .map(item => `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`));
+  tableHtml.excludedTabContent = groups.excluded.map(code => `<tr><td class='disable-select'>${code._id || code.code}</td><td>${code.t || code.description}</td><td class='disable-select'>${code.a}</td><td class='disable-select'>${code.p}</td></tr>`);
+
+  // flatten array
+  tableHtml.matchedTabContent = [].concat(...tableHtml.matchedTabContent);
+  tableHtml.matchedDescendantButNotMatchedTabContent = []
+    .concat(...tableHtml.matchedDescendantButNotMatchedTabContent);
+
+  // const unmatchingCodesTableHtml = rowsForTableFromGraphTemplate(groups.unmatched);
+  // const excludedCodesTableHtml = rowsForTableFromCodesTemplate(groups.excluded);
+
+  const tabs = ['matchedTabContent', 'matchedDescendantButNotMatchedTabContent', 'excludedTabContent'];
+
+  tabs.forEach((tab) => {
+    $scroll[tab] = $(`#scroll-${tab}`);
+    $content[tab] = $(`#content-${tab}`);
+    $headers[tab] = $(`#headers-${tab}`);
+
+    new Clusterize({
+      rows: tableHtml[tab],
+      scrollId: `scroll-${tab}`,
+      contentId: `content-${tab}`,
+      callbacks: {
+        clusterChanged() {
+          fitHeaderColumns(tab);
+          setHeaderWidth(tab);
+        },
+      },
+    });
+  });
+};
+
 const displayResults = (groups) => {
+  progress('displayResults called');
   if (global.user) groups.user = global.user;
   else delete groups.user;
+
+  // Skeleton html - doesn't have table data
   const html = createResultsTemplate(groups);
+
+  // It was really quick so just show it
   if (new Date() - startedAt < 150) {
     $results.html(html);
+    populateTableData(groups);
     wireUpButtonsAndModal();
   } else {
+    // It's taken a bit of time so do a fadeOut
     $results.fadeOut(500, () => {
       $results.html(html).fadeIn(300);
+      populateTableData(groups);
       wireUpButtonsAndModal();
     });
   }
+  progress('displayResults ended');
 };
 
 const saveToGithub = () => {
@@ -157,6 +260,7 @@ const saveToGithub = () => {
 };
 
 const refreshExclusion = () => {
+  progress('refreshExclusion called');
   const excludedTerms = Object.keys(e);
   const includedTerms = Object.keys(s).map(t => t.toLowerCase());
   currentGroups.excluded = [];
@@ -166,9 +270,16 @@ const refreshExclusion = () => {
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
       const isInExcludedTerms = excludedTerms
-        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1)
+        .filter((a) => {
+          if (a[0] === '"' && a[a.length - 1] === '"') {
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+          }
+          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+
+        })
         .length > 0;
-      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1;
+      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1 || // without quotes
+        includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
       if (isInExcludedTerms && !isExactInclusionMatch) {
         if (!currentGroups.matched[gi][i].exclude) {
           currentGroups.matched[gi][i].exclude = true;
@@ -188,7 +299,14 @@ const refreshExclusion = () => {
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
       const isInExcludedTerms = excludedTerms
-        .filter(a => code.description.toLowerCase().indexOf(a.toLowerCase()) > -1).length > 0;
+        .filter((a) => {
+          if (a[0] === '"' && a[a.length - 1] === '"') {
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+          }
+          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+
+        })
+        .length > 0;
       if (isInExcludedTerms) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
@@ -202,24 +320,28 @@ const refreshExclusion = () => {
     });
   });
 
+  // Cache matched ancestors to increase speed later on
+  const matchedCodes = {};
+  currentGroups.matched.forEach((a) => {
+    a.forEach((b) => {
+      matchedCodes[utils.getCodeForTerminology(b.code, currentTerminology)] = true;
+    });
+  });
+
+  // Cache excluded ancestors to increase speed later on
+  const excludedCodes = {};
+  currentGroups.excluded.forEach((a) => {
+    excludedCodes[utils.getCodeForTerminology(a.code, currentTerminology)] = true;
+  });
+
   // finally, add to the exclude list any unmatched items who have:
   //  - are a descendant of a matched code with an excluded ancestor
   //  - are not a descendant of a matched code AND is a synonym for an excluded code
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      const hasExcludedParent = currentGroups.excluded
-        .filter(a =>
-          code.ancestors.indexOf(utils.getCodeForTerminology(a.code, currentTerminology)) > -1)
-        .length > 0;
-      const hasNoMatchedParent = currentGroups.matched
-        .filter(a => a
-          .filter(b =>
-            code.ancestors.indexOf(utils.getCodeForTerminology(b.code, currentTerminology)) > -1)
-          .length > 0)
-        .length === 0;
-      const isSynonymForExcludedCode = currentGroups.excluded
-        .filter(a => code.code.substr(0, 5) === a.code.substr(0, 5))
-        .length > 0;
+      const hasExcludedParent = code.ancestors.filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
+      const hasNoMatchedParent = code.ancestors.filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
+      const isSynonymForExcludedCode = excludedCodes[code.code.substr(0, 5)]; // IMPROVE 3
       if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
           currentGroups.unmatched[gi][i].excludedByParent = true;
@@ -235,6 +357,7 @@ const refreshExclusion = () => {
 
 
   displayResults(currentGroups);
+  progress('refreshExclusion ended');
 };
 
 const refresh = () => {
@@ -275,9 +398,11 @@ const refreshSynonymUI = () => {
 };
 
 const refreshExclusionUI = () => {
+  progress('refreshExclusionUI called');
   const html = synonymTemplate({ synonyms: Object.keys(e) });
   $synonym.exclude.list.html(html);
   clearInputs();
+  progress('refreshExclusionUI ended');
 };
 
 const syncToLocal = () => {
@@ -335,17 +460,19 @@ const syncFromLocal = () => {
 
 
 const addTerm = (term, isExclusion) => {
+  resetProgress();
+  progress('addTerm called');
   makeDirty();
   const lowerCaseTerm = term.toLowerCase();
   startedAt = new Date();
   if (isExclusion) {
     addExclusion(lowerCaseTerm);
     refreshExclusionUI();
-    refreshExclusion();
+    setTimeout(() => refreshExclusion(), 0);
   } else {
     addInclusion(lowerCaseTerm);
     refreshSynonymUI();
-    refresh();
+    setTimeout(() => refresh(), 0);
   }
 
   $('.alert').alert().on('closed.bs.alert', (evt) => {
@@ -353,6 +480,7 @@ const addTerm = (term, isExclusion) => {
     const termToRemove = $(evt.target).data('value');
     removeTerm(termToRemove);
   });
+  progress('addTerm ended');
 };
 
 const addIfLongEnough = (element) => {
@@ -385,16 +513,14 @@ const wireup = () => {
         setTimeout(() => {
           isCtrlPressed = false;
         }, 5000);
-      } else if (isCtrlPressed && keyEvent.keyCode === 67) { // c
+      } else if (isCtrlPressed && (keyEvent.keyCode === 67 || keyEvent.keyCode === 99)) { // c
+        console.log(`s: ${Object.keys(s).length}, e: ${Object.keys(e).length}`);
         if (utils.getSelectedText().toString() !== '') {
           // don't want to prevent standard ctrl-c behaviour
           return;
         }
         // do copy
-        const dataToCopy = $('#matchedTabContent table tr')
-          .toArray()
-          .map(r => `${r.cells[0].innerText}\t${r.cells[1].innerText}`)
-          .slice(1) // get rid of headers
+        const dataToCopy = matchedContentForCopying
           .sort()
           .join('\n');
         const textarea = document.createElement('textarea');
@@ -403,8 +529,10 @@ const wireup = () => {
         textarea.select();
         try {
           document.execCommand('copy');
+          notification.show('Copied!');
           // console.log(`Copying was ${`${successful ? '' : 'un'}successful`}`);
         } catch (err) {
+          notification.show('Copy failed!');
           console.error('Unable to copy');
           console.error(err);
         }
@@ -468,6 +596,7 @@ const wireup = () => {
     })
     .on('shown.bs.tab', 'a[data-toggle="tab"]', (evt) => {
       [, currentGroups.selected] = evt.target.href.split('#');
+      fitHeaderColumns(currentGroups.selected);
     })
     .on('mouseup', 'td', (evt) => {
       const selection = utils.getSelectedText();
