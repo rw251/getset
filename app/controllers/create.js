@@ -278,7 +278,8 @@ const refreshExclusion = () => {
 
         })
         .length > 0;
-      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1;
+      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1 || // without quotes
+        includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
       if (isInExcludedTerms && !isExactInclusionMatch) {
         if (!currentGroups.matched[gi][i].exclude) {
           currentGroups.matched[gi][i].exclude = true;
