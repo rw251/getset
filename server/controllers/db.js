@@ -147,7 +147,8 @@ const getResults = async (terminology, searchterm) => {
       return item;
     });
     // Get all synonym codes - but not those already matched.
-    const synonymCodes = await getSynonymCodes(terminology, codes);
+    let synonymCodes = [];
+    if (terminology === 'Readv2') synonymCodes = await getSynonymCodes(terminology, codes);
     synonymCodes.map((v) => {
       const item = v;
       item.synonym = true;

@@ -23,12 +23,14 @@ const addDepth = (graph) => {
       const edges = G[u].c;
       for (i = 0; i < edges.length; i += 1) {
         v = edges[i];
-        if (G[v].visited < G[v].p.length - 1) {
-          G[v].visited += 1;
-        } else if (G[v].visited === G[v].p.length - 1) {
-          delete G[v].visited;
-          G[v].depth = G[u].depth + 1;
-          Q.push(v);
+        if (G[v]) {
+          if (G[v].visited < G[v].p.length - 1) {
+            G[v].visited += 1;
+          } else if (G[v].visited === G[v].p.length - 1) {
+            delete G[v].visited;
+            G[v].depth = G[u].depth + 1;
+            Q.push(v);
+          }
         }
       }
     }
@@ -140,7 +142,8 @@ module.exports = {
           p: parents,
           a: ancestors,
           c: [],
-          codes: [{ code: v._id, t: v.t }] };
+          codes: [{ code: v._id, t: v.t }],
+        };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
         codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
         codeDic[codeForTerminology].p = parents;
