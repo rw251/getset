@@ -1,9 +1,5 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
-
 const createTemplate = require('../../shared/templates/create.jade');
 const createResultsTemplate = require('../../shared/templates/createResults.jade');
-const rowsForTableFromGraphTemplate = require('../../shared/templates/partials/code-table-of-graph.jade');
-const rowsForTableFromCodesTemplate = require('../../shared/templates/partials/code-table.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
 const synonymTemplate = require('../../shared/templates/partials/synonyms.jade');
 const graphUtils = require('../scripts/graph-utils');
@@ -27,7 +23,6 @@ const progress = (name) => {
   if (!zeroTime) zeroTime = new Date();
   const notif = `Progress: ${name}\nElapsed time:${(new Date() - zeroTime)}`;
   notification.show(notif);
-  console.log(notif);
 };
 
 // jQuery elements
@@ -82,7 +77,7 @@ const getCodeSetFileContent = () => {
   const currentCodeSet = [];
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      if (!currentGroups.matched[gi][i].exclude) currentCodeSet.push(code.code || code._id);
+      if (!currentGroups.matched[gi][i].exclude) currentCodeSet.push(code.code || code.clinicalCode);
     });
   });
   return currentCodeSet;
@@ -131,7 +126,7 @@ const fitHeaderColumns = (() => {
   return (table) => {
     const $firstRow = $content[table].find('tr:not(.clusterize-extra-row):first');
     const columnsWidth = [];
-    $firstRow.children().each(function () {
+    $firstRow.children().each(function childEach() {
       columnsWidth.push($(this).width());
     });
     if (columnsWidth.filter(x => x < 0).length > 0) {
@@ -167,7 +162,7 @@ const populateTableData = (groups) => {
   tableHtml.matchedDescendantButNotMatchedTabContent = groups.unmatched.map(subgraph => subgraph
     .filter(item => !item.exclude && !item.excludedByParent)
     .map(item => `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`));
-  tableHtml.excludedTabContent = groups.excluded.map(code => `<tr><td class='disable-select'>${code._id || code.code}</td><td>${code.t || code.description}</td><td class='disable-select'>${code.a}</td><td class='disable-select'>${code.p}</td></tr>`);
+  tableHtml.excludedTabContent = groups.excluded.map(code => `<tr><td class='disable-select'>${code.clinicalCode || code.code}</td><td>${code.t || code.description}</td><td class='disable-select'>${code.a}</td><td class='disable-select'>${code.p}</td></tr>`);
 
   // flatten array
   tableHtml.matchedTabContent = [].concat(...tableHtml.matchedTabContent);
@@ -275,10 +270,10 @@ const refreshExclusion = () => {
             return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
           }
           return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-
         })
         .length > 0;
-      const isExactInclusionMatch = includedTerms.indexOf(code.description.toLowerCase()) > -1 || // without quotes
+      const isExactInclusionMatch = includedTerms
+        .indexOf(code.description.toLowerCase()) > -1 || // without quotes
         includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
       if (isInExcludedTerms && !isExactInclusionMatch) {
         if (!currentGroups.matched[gi][i].exclude) {
@@ -304,7 +299,6 @@ const refreshExclusion = () => {
             return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
           }
           return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-
         })
         .length > 0;
       if (isInExcludedTerms) {
@@ -339,8 +333,10 @@ const refreshExclusion = () => {
   //  - are not a descendant of a matched code AND is a synonym for an excluded code
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      const hasExcludedParent = code.ancestors.filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
-      const hasNoMatchedParent = code.ancestors.filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
+      const hasExcludedParent = code.ancestors
+        .filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
+      const hasNoMatchedParent = code.ancestors
+        .filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
       const isSynonymForExcludedCode = excludedCodes[code.code.substr(0, 5)]; // IMPROVE 3
       if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
@@ -514,7 +510,7 @@ const wireup = () => {
           isCtrlPressed = false;
         }, 5000);
       } else if (isCtrlPressed && (keyEvent.keyCode === 67 || keyEvent.keyCode === 99)) { // c
-        console.log(`s: ${Object.keys(s).length}, e: ${Object.keys(e).length}`);
+        // console.log(`s: ${Object.keys(s).length}, e: ${Object.keys(e).length}`);
         if (utils.getSelectedText().toString() !== '') {
           // don't want to prevent standard ctrl-c behaviour
           return;

@@ -1,4 +1,3 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const utils = require('./utils');
 
 const addDepth = (graph) => {
@@ -23,12 +22,14 @@ const addDepth = (graph) => {
       const edges = G[u].c;
       for (i = 0; i < edges.length; i += 1) {
         v = edges[i];
-        if (G[v].visited < G[v].p.length - 1) {
-          G[v].visited += 1;
-        } else if (G[v].visited === G[v].p.length - 1) {
-          delete G[v].visited;
-          G[v].depth = G[u].depth + 1;
-          Q.push(v);
+        if (G[v]) {
+          if (G[v].visited < G[v].p.length - 1) {
+            G[v].visited += 1;
+          } else if (G[v].visited === G[v].p.length - 1) {
+            delete G[v].visited;
+            G[v].depth = G[u].depth + 1;
+            Q.push(v);
+          }
         }
       }
     }
@@ -134,19 +135,20 @@ module.exports = {
       }
       const parents = v.p;
       const ancestors = v.a;
-      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
+      const codeForTerminology = utils.getCodeForTerminology(v.clinicalCode, currentTerminology);
       if (!codeDic[codeForTerminology]) {
         codeDic[codeForTerminology] = {
           p: parents,
           a: ancestors,
           c: [],
-          codes: [{ code: v._id, t: v.t }] };
+          codes: [{ code: v.clinicalCode, t: v.t }],
+        };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
-        codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
+        codeDic[codeForTerminology].codes = [{ code: v.clinicalCode, t: v.t }];
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       } else {
-        codeDic[codeForTerminology].codes = [{ code: v._id, t: v.t }];
+        codeDic[codeForTerminology].codes = [{ code: v.clinicalCode, t: v.t }];
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       }
@@ -263,20 +265,20 @@ module.exports = {
       }
       const parents = v.p;
       const ancestors = v.a;
-      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
+      const codeForTerminology = utils.getCodeForTerminology(v.clinicalCode, currentTerminology);
       if (!codeDic[codeForTerminology]) {
         codeDic[codeForTerminology] = {
           p: parents,
           a: ancestors,
           c: [],
-          codes: [{ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym }],
+          codes: [{ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym }],
         };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym });
+        codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       } else {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t, descendant: v.descendant, synonym: v.synonym });
+        codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym });
         codeDic[codeForTerminology].p = parents;
         codeDic[codeForTerminology].a = ancestors;
       }
@@ -349,14 +351,14 @@ module.exports = {
     const codeDic = {};
     codes.forEach((v) => {
       const parents = v.p;
-      const codeForTerminology = utils.getCodeForTerminology(v._id, currentTerminology);
+      const codeForTerminology = utils.getCodeForTerminology(v.clinicalCode, currentTerminology);
       if (!codeDic[codeForTerminology]) {
-        codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v._id, t: v.t }] };
+        codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v.clinicalCode, t: v.t }] };
       } else if (codeDic[codeForTerminology].codes.length === 0) {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t });
         codeDic[codeForTerminology].p = parents;
       } else {
-        codeDic[codeForTerminology].codes.push({ code: v._id, t: v.t });
+        codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t });
         codeDic[codeForTerminology].p = parents;
       }
       if (parents.length > 1) {

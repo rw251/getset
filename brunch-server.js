@@ -22,7 +22,7 @@ module.exports = function brunchServer(PORT, PATH, CALLBACK) {
 
   mongoose.set('debug', DEBUG);
   mongoose.Promise = global.Promise;
-  mongoose.connect(process.env.MONGODB_URI);
+  mongoose.connect(process.env.MONGODB_URI, { useMongoClient: true });
   // add connection to other terminologies if they exist
   if (config.MONGO_URL_EMIS) mongoose.createConnection(config.MONGO_URL_EMIS);
   mongoose.connection.on('error', (err) => {

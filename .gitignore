@@ -3,3 +3,7 @@ node_modules/
 
 # API keys and secrets
 .env
+
+# temp code files
+server/automation/input/
+server/automation/output/
