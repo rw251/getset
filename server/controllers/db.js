@@ -1,4 +1,3 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const Code = require('../models/Code')();
 
 const BIT_LENGTH = 6;
@@ -26,21 +25,21 @@ const getSearchTermFromRegex = (regex) => {
 //  */
 // const getRegexForTermsPreservingOrder = terms => terms.map(getRegexForTerm).join('.*');
 
-const getSearchQueryForSingleTerm = (regex) => {
+const getSearchQueryForSingleTerm = (regex, terminology) => {
   const searchTerm = getSearchTermFromRegex(regex);
   const bit = searchTerm.substr(0, BIT_LENGTH).toLowerCase();
-  let match = { c: bit };
+  const match = { c: bit, '_id.d': terminology };
   if (bit.length < BIT_LENGTH) {
     const reg = new RegExp(`^${bit}`);
-    match = { c: { $regex: reg } };
+    match.c = { $regex: reg };
   }
   match.t = { $regex: new RegExp(`${regex}`, 'i') };
   return match;
 };
 
-const searchForSingleTerm = (regex) => {
-  const searchQuery = getSearchQueryForSingleTerm(regex);
-  return Code.find(searchQuery, { c: 0 }).lean().exec();
+const searchForSingleTerm = (regex, terminology) => {
+  const searchQuery = getSearchQueryForSingleTerm(regex, terminology);
+  return Code.find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 // const searchForMultipleTermsPreservingOrder = async (terms) => {
@@ -57,18 +56,18 @@ const searchForSingleTerm = (regex) => {
 //   return Code.find(searchQuery, { c: 0 }).lean().exec();
 // };
 
-const searchForMultipleTermsWithoutPreservingOrder = async (regexes) => {
+const searchForMultipleTermsWithoutPreservingOrder = async (regexes, terminology) => {
   const longestRegex = regexes.reduce((prev, curr) => {
     if (curr.length > prev.length) return curr;
     return prev;
   });
 
-  const searchQuery = getSearchQueryForSingleTerm(longestRegex);
+  const searchQuery = getSearchQueryForSingleTerm(longestRegex, terminology);
   delete searchQuery.t;
 
   searchQuery.$and = regexes.map(regexTerm => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } }));
 
-  return Code.find(searchQuery, { c: 0 }).lean().exec();
+  return Code.find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const searchForTerm = (terminology, term) => {
@@ -77,9 +76,9 @@ const searchForTerm = (terminology, term) => {
     // if (term.preserveOrder) {
     //   return searchForMultipleTermsPreservingOrder(term.regexes);
     // }
-    return searchForMultipleTermsWithoutPreservingOrder(term.regexes);
+    return searchForMultipleTermsWithoutPreservingOrder(term.regexes, terminology);
   }
-  return searchForSingleTerm(term.regexes[0]);
+  return searchForSingleTerm(term.regexes[0], terminology);
 };
 
 const unique = arr => arr.filter((item, i, ar) => ar.indexOf(item) === i);
@@ -87,41 +86,43 @@ const unique = arr => arr.filter((item, i, ar) => ar.indexOf(item) === i);
 const getSynonymCodes = (terminology, codes) => {
   const codesForQuery = unique(codes.map((v) => {
     if (terminology === 'Readv2') {
-      return v._id.substr(0, 5);
+      return v._id.c.substr(0, 5);
     }
-    return v._id;
+    return v._id.c;
   }));
   let codesForSynonymQuery = [];
   if (terminology === 'Readv2') {
-    codesForSynonymQuery = codesForQuery.map(v => ({ _id: new RegExp(`^${v}`) }));
+    codesForSynonymQuery = codesForQuery.map(v => ({ '_id.c': new RegExp(`^${v}`), '_id.d': terminology }));
   }
-  const codesForNotQuery = codes.map(v => v._id);
+  const codesForNotQuery = codes.map(v => v._id.c);
   const query = {
     $and: [
       { $or: codesForSynonymQuery },
       // but doesn't match any of the original codes
-      { _id: { $not: { $in: codesForNotQuery } } },
+      {
+        '_id.c': { $not: { $in: codesForNotQuery } },
+        '_id.d': terminology,
+      },
     ],
   };
-  return Code.find(query, { c: 0 }).lean().exec();
+  return Code.find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const getDescendantCodes = (terminology, codes) => {
   const codesForQuery = unique(codes.map((v) => {
     if (terminology === 'Readv2') {
-      return v._id.substr(0, 5);
+      return v._id.c.substr(0, 5);
     }
-    return v._id;
+    return v._id.c;
   }));
-  const codesForNotQuery = codes.map(v => v._id);
+  const codesForNotQuery = codes.map(v => v._id.c);
   const query = {
-    $and: [
-      { p: { $in: codesForQuery } },
-      // but doesn't match any of the original codes
-      { _id: { $not: { $in: codesForNotQuery } } },
-    ],
+    p: { $in: codesForQuery },
+    // but doesn't match any of the original codes
+    '_id.c': { $not: { $in: codesForNotQuery } },
+    '_id.d': terminology,
   };
-  return Code.find(query, { c: 0 }).lean().exec();
+  return Code.find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const getResults = async (terminology, searchterm) => {
@@ -141,7 +142,7 @@ const getResults = async (terminology, searchterm) => {
     descendantCodes.map((v) => {
       const item = v;
       // Keep track of the descendants by id
-      descendantCodeIds[v._id] = true;
+      descendantCodeIds[v._id.c] = true;
       // Mark the codes as being a descendant so we can easily tell it wasn't matched
       item.descendant = true;
       return item;
@@ -152,10 +153,10 @@ const getResults = async (terminology, searchterm) => {
     synonymCodes.map((v) => {
       const item = v;
       item.synonym = true;
-      if (descendantCodeIds[v._id]) {
+      if (descendantCodeIds[v._id.c]) {
         // mark as descendant as well
         item.descendant = true;
-        descendantCodeIds[v._id] = false;
+        descendantCodeIds[v._id.c] = false;
       }
       return item;
     });
@@ -163,7 +164,7 @@ const getResults = async (terminology, searchterm) => {
     // using the synonymCodes as the master - later we'll add the descendants
     const allCodes = synonymCodes.concat(codes);
     descendantCodes.forEach((v) => {
-      if (descendantCodeIds[v._id]) {
+      if (descendantCodeIds[v._id.c]) {
         // not also a synonym so we can add it to the list
         allCodes.push(v);
       }
@@ -198,8 +199,8 @@ exports.searchMultiple = async (terminology, inclusions) => {
   const results = await Promise.all(inclusions.map(t => getResults(terminology, t)));
   results.forEach((result) => {
     result.forEach((v) => { // merge the results
-      if (!toReturn[v._id] || toReturn[v._id].descendant || toReturn[v._id].synonym) {
-        toReturn[v._id] = v;
+      if (!toReturn[v._id.c] || toReturn[v._id.c].descendant || toReturn[v._id.c].synonym) {
+        toReturn[v._id.c] = v;
       }
     });
   });

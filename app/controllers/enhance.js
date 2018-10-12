@@ -1,4 +1,3 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 const enhanceTemplate = require('../../shared/templates/enhance.jade');
 const enhanceResultsTemplate = require('../../shared/templates/enhanceResultsAlt.jade');
 const ajaxLoaderTemplate = require('../../shared/templates/ajaxLoader.jade');
@@ -347,7 +346,7 @@ const updateFromCodeSet = (codeSet) => {
       currentGroups.codeSet = data.codes;
       currentGroups.codeLookup = {};
       data.codes.forEach((code) => {
-        currentGroups.codeLookup[utils.getCodeForTerminology(code._id, currentTerminology)] = code;
+        currentGroups.codeLookup[utils.getCodeForTerminology(code.clinicalCode, currentTerminology)] = code;
       });
       currentGroups.numUnmatchedCodesOriginal = data.unmatchedCodes.length;
       const unmatchedCodesReformatted = {};
@@ -367,8 +366,8 @@ const updateFromCodeSet = (codeSet) => {
           description: currentGroups
             .codeLookup[utils.getCodeForTerminology(umc, currentTerminology)].t,
           codes: unmatchedCodesReformatted[umc].sort((a, b) => {
-            if (a._id < b._id) return -1;
-            else if (a._id > b._id) { return 1; }
+            if (a.clinicalCode < b.clinicalCode) return -1;
+            else if (a.clinicalCode > b.clinicalCode) { return 1; }
             return 0;
           }),
         }));
