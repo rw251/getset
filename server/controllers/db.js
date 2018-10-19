@@ -90,14 +90,15 @@ const getSynonymCodes = (terminology, codes) => {
     }
     return v._id.c;
   }));
-  let codesForSynonymQuery = [];
+  let regexForSynonymQuery = new RegExp();
   if (terminology === 'Readv2') {
-    codesForSynonymQuery = codesForQuery.map(v => ({ '_id.c': new RegExp(`^${v}`), '_id.d': terminology }));
+    // codesForSynonymQuery = codesForQuery.map(v => ({ '_id.c': new RegExp(`^${v}`), '_id.d': terminology }));
+    regexForSynonymQuery = new RegExp(codesForQuery.map(v => `(^${v})`).join('|'));
   }
   const codesForNotQuery = codes.map(v => v._id.c);
   const query = {
     $and: [
-      { $or: codesForSynonymQuery },
+      { '_id.c': regexForSynonymQuery },
       // but doesn't match any of the original codes
       {
         '_id.c': { $not: { $in: codesForNotQuery } },
