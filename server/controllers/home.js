@@ -17,6 +17,13 @@ exports.create = (req, res) => {
   });
 };
 
+exports.convert = (req, res) => {
+  res.render('home', {
+    title: 'Convert',
+    user: req.user,
+  });
+};
+
 exports.search = (req, res) => {
   res.render('home', {
     title: 'Search',

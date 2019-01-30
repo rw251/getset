@@ -1,129 +1,81 @@
-const Code = require('../models/Code')();
+const modelGenerator = require('../models/Code');
+const { terminologies } = require('../services/terminology');
 
-const BIT_LENGTH = 6;
+const Model = terminologies.reduce((prev, terminology) => {
+  prev[terminology] = modelGenerator(terminology);
+  return prev;
+}, {});
 
 // This will need optimising at some point
 // but while small scale it is a good optimisation
 const cache = {};
 
-// Assumes the only regex characters are \b for word boundary and .* for wildcard
-const getSearchTermFromRegex = (regex) => {
-  const terms = regex
-    .replace(/\\b/g, '') // get rid of the \b characters
-    .replace(/\\-/g, '-') // convert escaped hypens back to hypens
-    .split('.*') // split into multiple terms if wildcard exists
-    .map(v => v.replace(/^ +/, '').replace(/ +$/, '')) // trim white space
-    .sort((a, b) => b.length - a.length); // sort by length descending
-
-  return terms[0];
-};
-
-// /**
-//  *  For a list of terms preserving order returns the regex
-//  * @param {Array} terms List of terms to get regex for.
-//  * @returns {String} the regexed string.
-//  */
-// const getRegexForTermsPreservingOrder = terms => terms.map(getRegexForTerm).join('.*');
-
-const getSearchQueryForSingleTerm = (regex, terminology) => {
-  const searchTerm = getSearchTermFromRegex(regex);
-  const bit = searchTerm.substr(0, BIT_LENGTH).toLowerCase();
-  const match = { c: bit, '_id.d': terminology };
-  if (bit.length < BIT_LENGTH) {
-    const reg = new RegExp(`^${bit}`);
-    match.c = { $regex: reg };
-  }
-  match.t = { $regex: new RegExp(`${regex}`, 'i') };
-  return match;
-};
-
-const searchForSingleTerm = (regex, terminology) => {
-  const searchQuery = getSearchQueryForSingleTerm(regex, terminology);
-  return Code.find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
-};
-
-// const searchForMultipleTermsPreservingOrder = async (terms) => {
-//   const longestTerm = terms.reduce((prev, curr) => {
-//     if (curr.term.length > prev.term.length) return curr;
-//     return prev;
-//   });
-
-//   const searchQuery = getSearchQueryForSingleTerm(longestTerm);
-
-//   const regexTerm = getRegexForTermsPreservingOrder(terms);
-//   searchQuery.t = { $regex: new RegExp(`${regexTerm}`, 'i') };
-
-//   return Code.find(searchQuery, { c: 0 }).lean().exec();
-// };
-
-const searchForMultipleTermsWithoutPreservingOrder = async (regexes, terminology) => {
-  const longestRegex = regexes.reduce((prev, curr) => {
-    if (curr.length > prev.length) return curr;
-    return prev;
-  });
-
-  const searchQuery = getSearchQueryForSingleTerm(longestRegex, terminology);
-  delete searchQuery.t;
-
-  searchQuery.$and = regexes.map(regexTerm => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } }));
-
-  return Code.find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
+const doSearch = (terminology, term, regexes) => {
+  // 1. Get rid of "s as they have a special meaning in the search
+  // 2. Split on ' '
+  // 3. Don't want terms with a wildcard as that's not how the mongo db
+  //    is setup. Need whole words. Instead these get picked up by the
+  //    regexes
+  // 4. Trim off any non alphanumeric characters from start and finish
+  // 5. Make lowercase as that is what is in the db
+  const searchQuery = {
+    w: {
+      $all: term.replace(/"/g, '')
+        .split(' ')
+        .filter(x => x.indexOf('*') < 0)
+        .map(x => x.replace(/(^[^\w\d]*|[^\w\d]*$)/g, '').toLowerCase()),
+    },
+    $and: regexes.map(regexTerm => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } })),
+  };
+  if (searchQuery.w.$all.length === 0) delete searchQuery.w;
+  return Model[terminology].find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const searchForTerm = (terminology, term) => {
   if (!term.regexes) return []; // maybe throw error
-  if (term.regexes.length > 1) {
-    // if (term.preserveOrder) {
-    //   return searchForMultipleTermsPreservingOrder(term.regexes);
-    // }
-    return searchForMultipleTermsWithoutPreservingOrder(term.regexes, terminology);
-  }
-  return searchForSingleTerm(term.regexes[0], terminology);
+  return doSearch(terminology, term.original, term.regexes);
 };
 
 const unique = arr => arr.filter((item, i, ar) => ar.indexOf(item) === i);
 
 const getSynonymCodes = (terminology, codes) => {
+  console.log('USAGE: controllers/db.js getSynonymCodes');
   const codesForQuery = unique(codes.map((v) => {
     if (terminology === 'Readv2') {
-      return v._id.c.substr(0, 5);
+      return v._id.substr(0, 5);
     }
-    return v._id.c;
+    return v._id;
   }));
   let regexForSynonymQuery = new RegExp();
   if (terminology === 'Readv2') {
-    // codesForSynonymQuery = codesForQuery.map(v => ({ '_id.c': new RegExp(`^${v}`), '_id.d': terminology }));
     regexForSynonymQuery = new RegExp(codesForQuery.map(v => `(^${v})`).join('|'));
   }
-  const codesForNotQuery = codes.map(v => v._id.c);
+  const codesForNotQuery = codes.map(v => v._id);
   const query = {
     $and: [
-      { '_id.c': regexForSynonymQuery },
+      { _id: regexForSynonymQuery },
       // but doesn't match any of the original codes
-      {
-        '_id.c': { $not: { $in: codesForNotQuery } },
-        '_id.d': terminology,
-      },
+      { _id: { $not: { $in: codesForNotQuery } } },
     ],
   };
-  return Code.find(query, { c: 0 }).lean({ virtuals: true }).exec();
+  return Model[terminology].find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const getDescendantCodes = (terminology, codes) => {
+  console.log('USAGE: controllers/db.js getDescendantCodes');
   const codesForQuery = unique(codes.map((v) => {
     if (terminology === 'Readv2') {
-      return v._id.c.substr(0, 5);
+      return v._id.substr(0, 5);
     }
-    return v._id.c;
+    return v._id;
   }));
-  const codesForNotQuery = codes.map(v => v._id.c);
+  const codesForNotQuery = codes.map(v => v._id);
   const query = {
     p: { $in: codesForQuery },
     // but doesn't match any of the original codes
-    '_id.c': { $not: { $in: codesForNotQuery } },
-    '_id.d': terminology,
+    _id: { $not: { $in: codesForNotQuery } },
   };
-  return Code.find(query, { c: 0 }).lean({ virtuals: true }).exec();
+  return Model[terminology].find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
 const getResults = async (terminology, searchterm) => {
@@ -143,7 +95,7 @@ const getResults = async (terminology, searchterm) => {
     descendantCodes.map((v) => {
       const item = v;
       // Keep track of the descendants by id
-      descendantCodeIds[v._id.c] = true;
+      descendantCodeIds[v._id] = true;
       // Mark the codes as being a descendant so we can easily tell it wasn't matched
       item.descendant = true;
       return item;
@@ -154,10 +106,10 @@ const getResults = async (terminology, searchterm) => {
     synonymCodes.map((v) => {
       const item = v;
       item.synonym = true;
-      if (descendantCodeIds[v._id.c]) {
+      if (descendantCodeIds[v._id]) {
         // mark as descendant as well
         item.descendant = true;
-        descendantCodeIds[v._id.c] = false;
+        descendantCodeIds[v._id] = false;
       }
       return item;
     });
@@ -165,7 +117,7 @@ const getResults = async (terminology, searchterm) => {
     // using the synonymCodes as the master - later we'll add the descendants
     const allCodes = synonymCodes.concat(codes);
     descendantCodes.forEach((v) => {
-      if (descendantCodeIds[v._id.c]) {
+      if (descendantCodeIds[v._id]) {
         // not also a synonym so we can add it to the list
         allCodes.push(v);
       }
@@ -200,8 +152,8 @@ exports.searchMultiple = async (terminology, inclusions) => {
   const results = await Promise.all(inclusions.map(t => getResults(terminology, t)));
   results.forEach((result) => {
     result.forEach((v) => { // merge the results
-      if (!toReturn[v._id.c] || toReturn[v._id.c].descendant || toReturn[v._id.c].synonym) {
-        toReturn[v._id.c] = v;
+      if (!toReturn[v._id] || toReturn[v._id].descendant || toReturn[v._id].synonym) {
+        toReturn[v._id] = v;
       }
     });
   });
@@ -213,6 +165,9 @@ exports.searchMultiple = async (terminology, inclusions) => {
   return rtn;
 };
 
-exports.search = (terminology, term) => getResults(terminology, term);
+exports.search = (terminology, term) => {
+  console.log('USAGE: controllers/db.js search');
+  getResults(terminology, term);
+};
 
 exports.searchForTerm = searchForTerm;

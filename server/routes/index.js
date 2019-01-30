@@ -67,10 +67,10 @@ module.exports = function routeIndex(passport) {
 
   router.get('/code/search/:terminology/for/:searchterm', codeController.search);
   router.get('/code/search/:terminology/forlist', codeController.searchMultiple);
-  router.post('/code/search', codeController.newSearchMultiple);
+  router.post('/code/search', codeController.newSearchMultiple); // /
 
   router.post('/code/enhance', codeController.enhance);
-  router.post('/code/unmatchedChildren', codeController.unmatchedChildren);
+  router.post('/code/unmatchedChildren', codeController.unmatchedChildren); // /
   router.get('/code/freq/:term', codeController.freq);
   router.post('/code/freqMult', codeController.freqMult);
 

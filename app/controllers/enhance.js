@@ -351,7 +351,7 @@ const updateFromCodeSet = (codeSet) => {
       currentGroups.numUnmatchedCodesOriginal = data.unmatchedCodes.length;
       const unmatchedCodesReformatted = {};
       data.unmatchedCodes.forEach((umc) => {
-        umc.a.split(',').forEach((ancestor) => {
+        umc.a.forEach((ancestor) => {
           if (!unmatchedCodesReformatted[ancestor]) unmatchedCodesReformatted[ancestor] = [umc];
           else unmatchedCodesReformatted[ancestor].push(umc);
         });

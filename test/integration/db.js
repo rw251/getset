@@ -1,7 +1,7 @@
 // requires mongo running
 const mongoose = require('mongoose');
 const data = require('../db/test.db');
-const Code = require('../../server/models/Code')();
+const Code = require('../../server/models/Code')('Readv2');
 const db = require('../../server/controllers/db');
 const { assert } = require('chai');
 require('../../server/config');

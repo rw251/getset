@@ -80,3 +80,5 @@ exports.getObject = (inclusionTerm) => {
   }
   return getObject(inclusionTerm);
 };
+
+exports.terminologies = ['Readv2', 'SNOMED CT'];
