@@ -1,6 +1,6 @@
 import { triggerDownload, zipFiles, getCodeSetFile, getMetaDataFile } from './files';
 import { saveToGithub } from './github';
-import { initialHtml, wireUp } from './code-graph';
+import { initialHtml, refreshIt, wireUp } from './code-graph';
 
 const createTemplate = require('../../shared/templates/create.jade');
 const createResultsTemplate = require('../../shared/templates/createResults.jade');
@@ -174,6 +174,8 @@ const refreshExclusion = () => {
   const includedTerms = Object.keys(s).map(t => t.toLowerCase());
   currentGroups.excluded = [];
 
+  refreshIt(includedTerms, excludedTerms);
+
   // update the excluded codes for the set of matched codes
   // unless the term is matched exactly by an inclusion term
   currentGroups.matched.forEach((g, gi) => {
@@ -284,7 +286,7 @@ const refresh = () => {
         contentType: 'application/json',
       })
       .done((data) => {
-        initialTreeHtml = initialHtml(data.codes, data.searchTerm, [], currentTerminology);
+        initialTreeHtml = initialHtml(data.codes, data.searchTerm, Object.keys(e), currentTerminology);
 
         $status.text(`Result! (n=${data.codes.length})`);
         const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
@@ -616,6 +618,8 @@ const wireup = () => {
       nextIndent = nextLine.length > 0 ? nextLine.find('.code-padding').length : indent;
     }
   });
+
+  $('input[name=terminology]').on('change', refresh);
 };
 
 module.exports = {

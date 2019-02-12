@@ -4,6 +4,9 @@ const utils = require('../scripts/utils');
 
 let includeTerms = ['diabetes'];
 let excludeTerms = ['history of', 'assessment'];
+let isEventListenersAdded = false;
+let codes;
+let terminology;
 
 const graph = {
   counts: {},
@@ -45,7 +48,7 @@ const graph = {
     };
   },
 
-  initializeGraph(codes, terminology) {
+  initializeGraph() {
     const codeLookup = {};
     codes.forEach((code, i) => {
       code.id = code._id;
@@ -58,7 +61,7 @@ const graph = {
     graph.nodes = codes.map((x, i) => ({
       id: i,
       terms: x.t.split('|'),
-      label: x.t.split('|')[0],
+      label: x.t.split('|').sort((a, b) => b.length - a.length)[0],
       // descendants: Math.floor(Math.random() * 100),
       included: x.included,
       excluded: x.excluded,
@@ -335,23 +338,54 @@ function setupItemClick() {
     startingPosition = [];
   }
   // Need to make sure the click is not part of a drag gesture
-  document.removeEventListener('mousedown', startDragging);
-  document.removeEventListener('mousemove', doDragging);
-  document.removeEventListener('click', toggleExpand);
-  document.addEventListener('mousedown', startDragging);
-  document.addEventListener('mousemove', doDragging);
-  document.addEventListener('click', toggleExpand);
+  if (!isEventListenersAdded) {
+    document.addEventListener('mousedown', startDragging);
+    document.addEventListener('mousemove', doDragging);
+    document.addEventListener('click', toggleExpand);
+    isEventListenersAdded = true;
+  }
 }
 
-const initialHtml = (codes, include, exclude, terminology) => {
+const updateExcludeFlags = () => codes.forEach((code) => {
+  const isInExcludedTerms = excludeTerms
+    .filter((a) => {
+      if (a[0] === '"' && a[a.length - 1] === '"') {
+        return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.t.toLowerCase());
+      }
+      return code.t.toLowerCase().indexOf(a.toLowerCase()) > -1;
+    })
+    .length > 0;
+  const isExactInclusionMatch =
+    includeTerms.indexOf(code.t.toLowerCase()) > -1 || // without quotes
+    includeTerms.indexOf(`"${code.t.toLowerCase()}"`) > -1; // with quotes
+  if (isInExcludedTerms && !isExactInclusionMatch) {
+    code.excluded = true;
+  } else if (code.excluded) {
+    delete code.excluded;
+  }
+});
+
+const initialHtml = (codeList, include, exclude, currentTerminology) => {
   includeTerms = include;
   excludeTerms = exclude;
+  codes = codeList;
+  terminology = currentTerminology;
+
+  updateExcludeFlags();
 
   console.time('initializeGraph');
   graph.initializeGraph(codes, terminology);
   console.timeEnd('initializeGraph');
 
   return html.getRootHTML();
+};
+
+const refreshIt = (include, exclude) => {
+  excludeTerms = exclude;
+  updateExcludeFlags();
+  console.time('initializeGraph');
+  graph.initializeGraph(codes, terminology);
+  console.timeEnd('initializeGraph');
 };
 
 const wireUp = () => {
@@ -369,4 +403,4 @@ const wireUp = () => {
   tippy('[data-tippy-content]');
 };
 
-export { initialHtml, wireUp };
+export { initialHtml, wireUp, refreshIt };
