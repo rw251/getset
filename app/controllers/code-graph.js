@@ -304,6 +304,23 @@ const checkForShallowElementsAndExpand = () => {
   }
 };
 
+const startAddingTooltips = () => {
+  console.time('finding untooltipped tooltips');
+  const tooltips = document.querySelectorAll(':not(.tooltip-added)[data-tippy-content]');
+  console.timeEnd('finding untooltipped tooltips');
+  if (tooltips && tooltips.length) {
+    console.log(tooltips.length);
+    console.time('adding tooltips');
+    for (let i = 0; i < Math.min(10, tooltips.length); i += 1) {
+      const tooltip = tooltips[i];
+      tippy(tooltip);
+      tooltip.classList.add('tooltip-added');
+    }
+    console.timeEnd('adding tooltips');
+    requestIdleCallback(startAddingTooltips);
+  }
+};
+
 function setupItemClick() {
   let isDragging = false;
   let startingPosition = [0, 0];
@@ -347,8 +364,7 @@ function setupItemClick() {
         if (node.classList) node.classList.remove('shallow');
       }
     });
-    tippy('[data-tippy-content]');
-
+    requestIdleCallback(startAddingTooltips);
     requestIdleCallback(checkForShallowElementsAndExpand);
   }
 
@@ -480,23 +496,6 @@ const startSecretlyMakingHtml = () => {
   requestIdleCallback(findHiddenShallowNodeAndExpandIt);
 };
 
-const startAddingTooltips = () => {
-  console.time('finding untooltipped tooltips');
-  const tooltips = document.querySelectorAll(':not(.tooltip-added)[data-tippy-content]');
-  console.timeEnd('finding untooltipped tooltips');
-  if (tooltips && tooltips.length) {
-    console.log(tooltips.length);
-    console.time('adding tooltips');
-    for (let i = 0; i < 10; i += 1) {
-      const tooltip = tooltips[i];
-      tippy(tooltip);
-      tooltip.classList.add('tooltip-added');
-    }
-    console.timeEnd('adding tooltips');
-    requestIdleCallback(startAddingTooltips);
-  }
-};
-
 const wireUp = () => {
   setupItemClick();
   // Tooltip setup
@@ -505,7 +504,7 @@ const wireUp = () => {
     followCursor: 'initial',
     animateFill: false,
     animation: 'fade',
-    trigger: 'click',
+    trigger: 'mouseenter focus click',
     theme: 'my',
     maxWidth: 600,
   });
