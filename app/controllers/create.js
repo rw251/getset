@@ -1,6 +1,6 @@
 import { triggerDownload, zipFiles, getCodeSetFile, getMetaDataFile } from './files';
 import { saveToGithub } from './github';
-import { initialHtml, refreshIt, wireUp } from './code-graph';
+import { initialHtml, refreshIt, wireUp, startSecretlyMakingHtml } from './code-graph';
 
 const createTemplate = require('../../shared/templates/create.jade');
 const createResultsTemplate = require('../../shared/templates/createResults.jade');
@@ -12,7 +12,6 @@ const utils = require('../scripts/utils');
 const notification = require('../scripts/notification');
 const defaultController = require('./default');
 const $ = require('jquery');
-const Clusterize = require('clusterize.js');
 
 let initialTreeHtml;
 
@@ -65,38 +64,6 @@ const $scroll = {};
 const $content = {};
 const $headers = {};
 
-/**
- * Makes header columns equal width to content columns
- */
-const fitHeaderColumns = (() => {
-  let prevWidth = [];
-  return (table) => {
-    const $firstRow = $content[table].find('tr:not(.clusterize-extra-row):first');
-    const columnsWidth = [];
-    $firstRow.children().each(function childEach() {
-      columnsWidth.push($(this).width());
-    });
-    if (columnsWidth.filter(x => x < 0).length > 0) {
-      prevWidth = columnsWidth;
-      // looks like not rendered yet, try again in a bit
-      setTimeout(() => {
-        fitHeaderColumns(table);
-      }, 100);
-    } else if (columnsWidth.toString() !== prevWidth.toString()) {
-      $headers[table].find('tr').children().each(function setRowWidth(i) {
-        $(this).width(columnsWidth[i]);
-      });
-      prevWidth = columnsWidth;
-    }
-  };
-})();
-/**
- * Keep header equal width to tbody
- */
-const setHeaderWidth = (table) => {
-  $headers[table].width($content[table].width());
-};
-
 const tableHtml = {};
 let matchedContentForCopying = [];
 const populateTableData = (groups) => {
@@ -115,29 +82,6 @@ const populateTableData = (groups) => {
   tableHtml.matchedTabContent = [].concat(...tableHtml.matchedTabContent);
   tableHtml.matchedDescendantButNotMatchedTabContent = []
     .concat(...tableHtml.matchedDescendantButNotMatchedTabContent);
-
-  // const unmatchingCodesTableHtml = rowsForTableFromGraphTemplate(groups.unmatched);
-  // const excludedCodesTableHtml = rowsForTableFromCodesTemplate(groups.excluded);
-
-  const tabs = ['matchedTabContent', 'matchedDescendantButNotMatchedTabContent', 'excludedTabContent'];
-
-  tabs.forEach((tab) => {
-    $scroll[tab] = $(`#scroll-${tab}`);
-    $content[tab] = $(`#content-${tab}`);
-    $headers[tab] = $(`#headers-${tab}`);
-
-    new Clusterize({
-      rows: tableHtml[tab],
-      scrollId: `scroll-${tab}`,
-      contentId: `content-${tab}`,
-      callbacks: {
-        clusterChanged() {
-          fitHeaderColumns(tab);
-          setHeaderWidth(tab);
-        },
-      },
-    });
-  });
 };
 
 const displayResults = (groups) => {
@@ -153,16 +97,18 @@ const displayResults = (groups) => {
     $results.html(html);
     document.getElementById('tree').innerHTML = initialTreeHtml;
     wireUp();
-    populateTableData(groups);
-    wireUpButtonsAndModal();
+    startSecretlyMakingHtml();
+    // populateTableData(groups);
+    // wireUpButtonsAndModal();
   } else {
     // It's taken a bit of time so do a fadeOut
     $results.fadeOut(500, () => {
       $results.html(html).fadeIn(300);
       document.getElementById('tree').innerHTML = initialTreeHtml;
       wireUp();
-      populateTableData(groups);
-      wireUpButtonsAndModal();
+      startSecretlyMakingHtml();
+      // populateTableData(groups);
+      // wireUpButtonsAndModal();
     });
   }
   progress('displayResults ended');
@@ -178,94 +124,94 @@ const refreshExclusion = () => {
 
   // update the excluded codes for the set of matched codes
   // unless the term is matched exactly by an inclusion term
-  currentGroups.matched.forEach((g, gi) => {
-    g.forEach((code, i) => {
-      const isInExcludedTerms = excludedTerms
-        .filter((a) => {
-          if (a[0] === '"' && a[a.length - 1] === '"') {
-            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
-          }
-          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-        })
-        .length > 0;
-      const isExactInclusionMatch = includedTerms
-        .indexOf(code.description.toLowerCase()) > -1 || // without quotes
-        includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
-      if (isInExcludedTerms && !isExactInclusionMatch) {
-        if (!currentGroups.matched[gi][i].exclude) {
-          currentGroups.matched[gi][i].exclude = true;
-          currentGroups.numMatched -= 1;
-        }
-        currentGroups.excluded.push(currentGroups.matched[gi][i]);
-      } else if (currentGroups.matched[gi][i].exclude) {
-        currentGroups.numMatched += 1;
-        delete currentGroups.matched[gi][i].exclude;
-      }
-    });
-  });
+  // currentGroups.matched.forEach((g, gi) => {
+  //   g.forEach((code, i) => {
+  //     const isInExcludedTerms = excludedTerms
+  //       .filter((a) => {
+  //         if (a[0] === '"' && a[a.length - 1] === '"') {
+  //           return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+  //         }
+  //         return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+  //       })
+  //       .length > 0;
+  //     const isExactInclusionMatch = includedTerms
+  //       .indexOf(code.description.toLowerCase()) > -1 || // without quotes
+  //       includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
+  //     if (isInExcludedTerms && !isExactInclusionMatch) {
+  //       if (!currentGroups.matched[gi][i].exclude) {
+  //         currentGroups.matched[gi][i].exclude = true;
+  //         currentGroups.numMatched -= 1;
+  //       }
+  //       currentGroups.excluded.push(currentGroups.matched[gi][i]);
+  //     } else if (currentGroups.matched[gi][i].exclude) {
+  //       currentGroups.numMatched += 1;
+  //       delete currentGroups.matched[gi][i].exclude;
+  //     }
+  //   });
+  // });
 
-  // update the excluded codes for the set of unmatched codes
-  // exclude if:
-  //  - matches an exclusion term
-  currentGroups.unmatched.forEach((g, gi) => {
-    g.forEach((code, i) => {
-      const isInExcludedTerms = excludedTerms
-        .filter((a) => {
-          if (a[0] === '"' && a[a.length - 1] === '"') {
-            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
-          }
-          return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-        })
-        .length > 0;
-      if (isInExcludedTerms) {
-        if (!currentGroups.unmatched[gi][i].exclude) {
-          currentGroups.unmatched[gi][i].exclude = true;
-          currentGroups.numUnmatched -= 1;
-        }
-        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
-      } else if (currentGroups.unmatched[gi][i].exclude) {
-        currentGroups.numUnmatched += 1;
-        delete currentGroups.unmatched[gi][i].exclude;
-      }
-    });
-  });
+  // // update the excluded codes for the set of unmatched codes
+  // // exclude if:
+  // //  - matches an exclusion term
+  // currentGroups.unmatched.forEach((g, gi) => {
+  //   g.forEach((code, i) => {
+  //     const isInExcludedTerms = excludedTerms
+  //       .filter((a) => {
+  //         if (a[0] === '"' && a[a.length - 1] === '"') {
+  //           return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+  //         }
+  //         return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
+  //       })
+  //       .length > 0;
+  //     if (isInExcludedTerms) {
+  //       if (!currentGroups.unmatched[gi][i].exclude) {
+  //         currentGroups.unmatched[gi][i].exclude = true;
+  //         currentGroups.numUnmatched -= 1;
+  //       }
+  //       currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+  //     } else if (currentGroups.unmatched[gi][i].exclude) {
+  //       currentGroups.numUnmatched += 1;
+  //       delete currentGroups.unmatched[gi][i].exclude;
+  //     }
+  //   });
+  // });
 
-  // Cache matched ancestors to increase speed later on
-  const matchedCodes = {};
-  currentGroups.matched.forEach((a) => {
-    a.forEach((b) => {
-      matchedCodes[utils.getCodeForTerminology(b.code, currentTerminology)] = true;
-    });
-  });
+  // // Cache matched ancestors to increase speed later on
+  // const matchedCodes = {};
+  // currentGroups.matched.forEach((a) => {
+  //   a.forEach((b) => {
+  //     matchedCodes[utils.getCodeForTerminology(b.code, currentTerminology)] = true;
+  //   });
+  // });
 
-  // Cache excluded ancestors to increase speed later on
-  const excludedCodes = {};
-  currentGroups.excluded.forEach((a) => {
-    excludedCodes[utils.getCodeForTerminology(a.code, currentTerminology)] = true;
-  });
+  // // Cache excluded ancestors to increase speed later on
+  // const excludedCodes = {};
+  // currentGroups.excluded.forEach((a) => {
+  //   excludedCodes[utils.getCodeForTerminology(a.code, currentTerminology)] = true;
+  // });
 
-  // finally, add to the exclude list any unmatched items who have:
-  //  - are a descendant of a matched code with an excluded ancestor
-  //  - are not a descendant of a matched code AND is a synonym for an excluded code
-  currentGroups.unmatched.forEach((g, gi) => {
-    g.forEach((code, i) => {
-      const hasExcludedParent = code.ancestors
-        .filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
-      const hasNoMatchedParent = code.ancestors
-        .filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
-      const isSynonymForExcludedCode = excludedCodes[code.code.substr(0, 5)]; // IMPROVE 3
-      if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
-        if (!currentGroups.unmatched[gi][i].excludedByParent) {
-          currentGroups.unmatched[gi][i].excludedByParent = true;
-          currentGroups.numUnmatched -= 1;
-        }
-        currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
-      } else if (currentGroups.unmatched[gi][i].excludedByParent) {
-        currentGroups.numUnmatched += 1;
-        delete currentGroups.unmatched[gi][i].excludedByParent;
-      }
-    });
-  });
+  // // finally, add to the exclude list any unmatched items who have:
+  // //  - are a descendant of a matched code with an excluded ancestor
+  // //  - are not a descendant of a matched code AND is a synonym for an excluded code
+  // currentGroups.unmatched.forEach((g, gi) => {
+  //   g.forEach((code, i) => {
+  //     const hasExcludedParent = code.ancestors
+  //       .filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
+  //     const hasNoMatchedParent = code.ancestors
+  //       .filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
+  //     const isSynonymForExcludedCode = excludedCodes[code.code.substr(0, 5)]; // IMPROVE 3
+  //     if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
+  //       if (!currentGroups.unmatched[gi][i].excludedByParent) {
+  //         currentGroups.unmatched[gi][i].excludedByParent = true;
+  //         currentGroups.numUnmatched -= 1;
+  //       }
+  //       currentGroups.excluded.push(currentGroups.unmatched[gi][i]);
+  //     } else if (currentGroups.unmatched[gi][i].excludedByParent) {
+  //       currentGroups.numUnmatched += 1;
+  //       delete currentGroups.unmatched[gi][i].excludedByParent;
+  //     }
+  //   });
+  // });
 
   displayResults(currentGroups);
   progress('refreshExclusion ended');
@@ -289,11 +235,11 @@ const refresh = () => {
         initialTreeHtml = initialHtml(data.codes, data.searchTerm, Object.keys(e), currentTerminology);
 
         $status.text(`Result! (n=${data.codes.length})`);
-        const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
-        currentGroups.matched = hierarchies.matched;
-        currentGroups.unmatched = hierarchies.unmatched;
-        currentGroups.numMatched = hierarchies.numMatched;
-        currentGroups.numUnmatched = hierarchies.numUnmatched;
+        // const hierarchies = graphUtils.getHierarchies(data.codes, currentTerminology, terms);
+        // currentGroups.matched = hierarchies.matched;
+        // currentGroups.unmatched = hierarchies.unmatched;
+        // currentGroups.numMatched = hierarchies.numMatched;
+        // currentGroups.numUnmatched = hierarchies.numUnmatched;
         refreshExclusion();
       });
   }, 1);

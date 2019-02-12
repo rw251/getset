@@ -8,6 +8,28 @@ let isEventListenersAdded = false;
 let codes;
 let terminology;
 
+// polyfill requestidlecallback
+window.requestIdleCallback =
+  window.requestIdleCallback ||
+  function (cb) {
+    const start = Date.now();
+    return setTimeout(() => {
+      cb({
+        didTimeout: false,
+        timeRemaining() {
+          return Math.max(0, 50 - (Date.now() - start));
+        },
+      });
+    }, 1);
+  };
+
+window.cancelIdleCallback =
+  window.cancelIdleCallback ||
+  function (id) {
+    clearTimeout(id);
+  };
+
+
 const graph = {
   counts: {},
 
@@ -250,6 +272,38 @@ const html = {
   },
 };
 
+const checkForShallowElementsAndExpand = () => {
+  console.time('Finding shallow nodes');
+  const shallowNodes = document.querySelectorAll('.children:not(.closed) > .node > .children.closed > .shallow');
+  console.timeEnd('Finding shallow nodes');
+  if (shallowNodes && shallowNodes.length > 0) {
+    const n = 25;
+    console.time(`Doing ${n} shallow nodes`);
+    for (let i = 0; i < shallowNodes.length; i += 1) {
+      if (i >= n) {
+        break;
+      }
+      const shallowNode = shallowNodes[i];
+      const nodeId = shallowNode.dataset.id;
+
+      shallowNode.parentNode.replaceChild(
+        html.createElementFromHTML(html.getNodeHTML({
+          id: nodeId,
+          label: graph.nodes[nodeId].label,
+          descendants: graph.nodes[nodeId].descendants,
+          children: graph.getShallowChildren(nodeId),
+        })),
+        shallowNode
+      );
+      if (shallowNode.classList) shallowNode.classList.remove('shallow');
+    }
+
+    console.timeEnd(`Doing ${n} shallow nodes`);
+
+    requestIdleCallback(checkForShallowElementsAndExpand);
+  }
+};
+
 function setupItemClick() {
   let isDragging = false;
   let startingPosition = [0, 0];
@@ -291,9 +345,11 @@ function setupItemClick() {
           node
         );
         if (node.classList) node.classList.remove('shallow');
-        tippy('[data-tippy-content]');
       }
     });
+    tippy('[data-tippy-content]');
+
+    requestIdleCallback(checkForShallowElementsAndExpand);
   }
 
   function collapseChildren(e) {
@@ -388,6 +444,59 @@ const refreshIt = (include, exclude) => {
   console.timeEnd('initializeGraph');
 };
 
+const findHiddenShallowNodeAndExpandIt = () => {
+  console.time('Finding immediate nodes');
+  const immediateShallowNodes = document.querySelectorAll('#tree > .node > .children > .shallow');
+  console.timeEnd('Finding immediate nodes');
+  if (immediateShallowNodes && immediateShallowNodes.length > 0) {
+    const n = 25;
+    console.time(`Doing ${n} shallow nodes`);
+    for (let i = 0; i < immediateShallowNodes.length; i += 1) {
+      if (i >= n) {
+        break;
+      }
+      const shallowNode = immediateShallowNodes[i];
+      const nodeId = shallowNode.dataset.id;
+
+      shallowNode.parentNode.replaceChild(
+        html.createElementFromHTML(html.getNodeHTML({
+          id: nodeId,
+          label: graph.nodes[nodeId].label,
+          descendants: graph.nodes[nodeId].descendants,
+          children: graph.getShallowChildren(nodeId),
+        })),
+        shallowNode
+      );
+      if (shallowNode.classList) shallowNode.classList.remove('shallow');
+    }
+
+    console.timeEnd(`Doing ${n} shallow nodes`);
+
+    requestIdleCallback(findHiddenShallowNodeAndExpandIt);
+  }
+};
+
+const startSecretlyMakingHtml = () => {
+  requestIdleCallback(findHiddenShallowNodeAndExpandIt);
+};
+
+const startAddingTooltips = () => {
+  console.time('finding untooltipped tooltips');
+  const tooltips = document.querySelectorAll(':not(.tooltip-added)[data-tippy-content]');
+  console.timeEnd('finding untooltipped tooltips');
+  if (tooltips && tooltips.length) {
+    console.log(tooltips.length);
+    console.time('adding tooltips');
+    for (let i = 0; i < 10; i += 1) {
+      const tooltip = tooltips[i];
+      tippy(tooltip);
+      tooltip.classList.add('tooltip-added');
+    }
+    console.timeEnd('adding tooltips');
+    requestIdleCallback(startAddingTooltips);
+  }
+};
+
 const wireUp = () => {
   setupItemClick();
   // Tooltip setup
@@ -396,11 +505,11 @@ const wireUp = () => {
     followCursor: 'initial',
     animateFill: false,
     animation: 'fade',
-    trigger: 'mouseenter focus click',
+    trigger: 'click',
     theme: 'my',
     maxWidth: 600,
   });
-  tippy('[data-tippy-content]');
+  requestIdleCallback(startAddingTooltips);// tippy('[data-tippy-content]');
 };
 
-export { initialHtml, wireUp, refreshIt };
+export { initialHtml, wireUp, refreshIt, startSecretlyMakingHtml };
