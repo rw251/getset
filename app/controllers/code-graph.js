@@ -49,6 +49,7 @@ const graph = {
     const codeLookup = {};
     codes.forEach((code, i) => {
       code.id = code._id;
+      code.included = !code.descendant && !code.synonym;
       codeLookup[utils.getCodeForTerminology(code.id, terminology)] = i;
     });
     graph.counts.included = codes.map(() => 0);
@@ -173,7 +174,7 @@ const html = {
       <div class="node item">
         <i class="fas no-click ${className} fa-shrink fa-fw fa-lg"></i>
         <span class="count"></span>
-        <span class="label">${processLabelForMatches(label)}</span>
+        <span class="tree-node-label">${processLabelForMatches(label)}</span>
         <i 
           class="fas ml-10 fa-info-circle" 
           data-tippy-content="${html.getTooltipHTML(id)}"
@@ -210,7 +211,7 @@ const html = {
             <i class="fas fa-question-circle fa-fw"></i>
             <span class="count">${unknownDescendantCount}</span>
           </span>
-          <span class="label">${processLabelForMatches(label)}</span>
+          <span class="tree-node-label">${processLabelForMatches(label)}</span>
           <i 
             class="fas ml-10 fa-info-circle" 
             data-tippy-content="${html.getTooltipHTML(id, descendants)}"
@@ -334,6 +335,9 @@ function setupItemClick() {
     startingPosition = [];
   }
   // Need to make sure the click is not part of a drag gesture
+  document.removeEventListener('mousedown', startDragging);
+  document.removeEventListener('mousemove', doDragging);
+  document.removeEventListener('click', toggleExpand);
   document.addEventListener('mousedown', startDragging);
   document.addEventListener('mousemove', doDragging);
   document.addEventListener('click', toggleExpand);
