@@ -4,7 +4,9 @@ include ./mixins/empty-table.jade
 .scrollable-parent
   // Nav tabs
   ul.nav.nav-tabs(role='tablist')
-    li(class=!selected || selected==='matchedTabContent' ? 'active' : '', role='presentation')
+    li(class=!selected || selected==='newTabContent' ? 'active' : '', role='presentation')
+      a(href='#newTabContent', aria-controls='newTabContent', role='tab', data-toggle='tab')= 'Matching codes (' + numMatched + ')'
+    li(class=selected==='matchedTabContent' ? 'active' : '', role='presentation')
       a(href='#matchedTabContent', aria-controls='matchedTabContent', role='tab', data-toggle='tab')= 'Matching codes (' + numMatched + ')'
     li(class=selected==='matchedDescendantButNotMatchedTabContent' ? 'active' : '', role='presentation')
       a(href='#matchedDescendantButNotMatchedTabContent', aria-controls='matchedDescendantButNotMatchedTabContent', role='tab', data-toggle='tab')= 'Unmatched descendants (' + numUnmatched + ')'
@@ -41,7 +43,9 @@ include ./mixins/empty-table.jade
 
   // Tab panes
   .tab-content
-    #matchedTabContent.tab-pane(class=!selected || selected==='matchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
+    #newTabContent.tab-pane(class=!selected || selected==='newTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
+      #tree
+    #matchedTabContent.tab-pane(class=selected==='matchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +emptyTable('matchedTabContent')
     #matchedDescendantButNotMatchedTabContent.tab-pane(class=selected==='matchedDescendantButNotMatchedTabContent' ? 'active in' : '', role='tabpanel',style='margin-bottom:20px')
       +emptyTable('matchedDescendantButNotMatchedTabContent')

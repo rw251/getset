@@ -648,3 +648,190 @@ html, body, .viewport {
   max-height: calc(100vh - 220px);
   border-bottom: 2px #dddddd solid;
 }
+
+/* New code tree view */
+html, body {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.treeWrapper {
+  width:100%;
+  height: 100%;
+}
+
+.node, .children {
+  overflow-y: hidden;
+	transition: max-height .5s cubic-bezier(0, 1, 0.5, 1);
+}
+
+.children {  
+  margin-left: calc(1px + 0.725em);
+  padding-left: calc(1px + 0.431em);
+  background: linear-gradient(to bottom, #888 0%, #888 calc(100% - 10px), transparent calc(100% - 10px)) 0 0 / 1px 100% no-repeat;
+}
+
+.closed {
+  max-height: 0;
+}
+
+.item span {
+  pointer-events: none;
+}
+
+span.label {
+  margin-left: 5px; /* --span-margin */
+  line-height: 22px;
+}
+
+i.fa-shrink {
+  transform: scale(0.5);
+  transform-origin: 50% 50%;
+}
+i.fa-shrink-more {
+  transform: scale(0.2);
+}
+i.fa-caret-down {
+  transition: all 0.25s linear;
+}
+i.fa-caret-down.rotated {
+  transform: rotate3d(0,0,1,180deg);
+}
+i.fas {
+  color: #555;
+  flex-shrink: 0;
+}
+
+.no-click {
+  pointer-events: none;
+}
+
+
+.statusCount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size:0.7em;
+}
+
+.statusCount.included {
+  margin-left: 6px;
+}
+
+.statusCount.included,
+.statusCount.included i.fas {
+  color:green;
+}
+
+.statusCount.excluded,
+.statusCount.excluded i.fas {
+  color:red;
+}
+
+.statusCount.unknown,
+.statusCount.unknown i.fas {
+  color:orange;
+}
+
+.statusCount.noChildren,
+.statusCount.noChildren i.fas {
+  color:#999;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  font-size: 16px;
+  font-family: sans-serif;
+  min-height: 28px;
+  cursor: pointer;
+/*   padding-top: 3px; */
+}
+
+.item:hover {
+  background-color: #e1e5e1;
+}
+
+.item:hover .statusCount {
+  display: flex;
+}
+
+.node.item {
+  cursor: default;
+}
+.node.item:hover {
+  background-color: #fff;
+}
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+
+.included-reason {
+  color: green;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.excluded-reason {
+  color: red;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.tippy-tooltip.my-theme {
+  text-align:left;
+  border: 1px solid black;
+  background: white;
+  color: black;
+  font-size: 16px;
+  font-family: sans-serif;
+}
+
+.tippy-tooltip.my-theme[data-animatefill] {
+/*   background-color: transparent; */
+}
+
+.tippy-tooltip.my-theme .tippy-backdrop {
+/*   background-color: tomato; */
+}
+
+.pl-10 {
+  padding-left: 10px;
+}
+
+.ml-10 {
+  margin-left: 10px;
+}
+
+i.fa-info-circle {
+  color: #428bca;
+  cursor: pointer;
+}
+
+span.pill {
+  border-radius: 3px;
+  padding: 3px 6px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+span.pill.included {
+  background-color: green;
+  color: white;
+}
+
+span.pill.unknown {
+  background-color: orange;
+  color: white;
+}
+
+span.pill.excluded {
+  background-color: red;
+  color: white;
+}
