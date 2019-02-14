@@ -17,12 +17,12 @@ $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUp
 
 let zeroTime;
 const resetProgress = () => {
-  zeroTime = null;
+  // zeroTime = null;
 };
 const progress = (name) => {
-  if (!zeroTime) zeroTime = new Date();
-  const notif = `Progress: ${name}\nElapsed time:${(new Date() - zeroTime)}`;
-  notification.show(notif);
+  // if (!zeroTime) zeroTime = new Date();
+  // const notif = `Progress: ${name}\nElapsed time:${(new Date() - zeroTime)}`;
+  // notification.show(notif);
 };
 
 // jQuery elements

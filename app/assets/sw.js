@@ -1,4 +1,4 @@
-// Change this to force update v1.0.4
+// Change this to force update v1.0.5
 var CACHE = 'cache-update-and-refresh';
 
 var cachedLocalItems = [
@@ -17,14 +17,14 @@ allCachedItems.push('/offline.html');
 
 self.addEventListener('install', function (e) {
   // Add the following assets on install
-  console.log('sw.js -> Install');
+  // console.log('sw.js -> Install');
   e.waitUntil(caches.open(CACHE).then(function (cache) {
     cache.addAll(allCachedItems)
   }));
 });
 
 self.addEventListener('fetch', function (evt) {
-  console.log('sw.js -> Fetch ' +evt.request.url);
+  // console.log('sw.js -> Fetch ' +evt.request.url);
   // On fetch immediately return from cache if it is something
   // we currently cache
   if(cachedLocalItems.indexOf(evt.request.url.replace(/^https?:\/\/[^/]+\//,"/")) > -1 ||
@@ -36,14 +36,14 @@ self.addEventListener('fetch', function (evt) {
     evt.waitUntil(update(evt.request).then(refresh));
   } else {
     evt.respondWith(fetch(evt.request).catch(function () {
-      console.log("Error caught - offline.html returned");
+      // console.log("Error caught - offline.html returned");
       return caches.match('/offline.html');
     }));
   }
 });
 
 function fromCache(request) {
-  console.log('sw.js -> Fetch ' + request.url + ' from cache.');
+  // console.log('sw.js -> Fetch ' + request.url + ' from cache.');
   return caches.open(CACHE).then(function (cache) {
     return cache.match(request);
   });
@@ -63,8 +63,8 @@ function update(request) {
 
 function refresh(response) {
   if(!response) return;
-  console.log('sw.js -> Response url ' + response.url);
-  console.log('sw.js -> Response headers ' + Array.from(response.headers.keys()));
+  // console.log('sw.js -> Response url ' + response.url);
+  // console.log('sw.js -> Response headers ' + Array.from(response.headers.keys()));
   return self.clients.matchAll().then(function (clients) {
     clients.forEach(function (client) {
  
