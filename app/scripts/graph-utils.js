@@ -131,7 +131,7 @@ module.exports = {
     const combinedCodes = codes.concat(existingCodeSet);
     combinedCodes.forEach((v) => {
       if (!v.p) {
-        console.log(v);
+       // console.log(v);
       }
       const parents = v.p;
       const ancestors = v.a;
@@ -154,7 +154,7 @@ module.exports = {
       }
       if (parents.length > 1) {
         isTree = false;
-        console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
+        // console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
       }
       parents.forEach((vv) => {
         if (codeDic[vv]) {
@@ -261,7 +261,7 @@ module.exports = {
     const codeDic = {};
     codes.forEach((v) => {
       if (!v.p) {
-        console.log(v);
+        // console.log(v);
       }
       const parents = v.p;
       const ancestors = v.a;
@@ -284,7 +284,7 @@ module.exports = {
       }
       if (parents.length > 1) {
         isTree = false;
-        console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
+        // console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
       }
       parents.forEach((vv) => {
         if (codeDic[vv]) {
@@ -363,7 +363,7 @@ module.exports = {
       }
       if (parents.length > 1) {
         isTree = false;
-        console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
+        // console.log('Elements found with multiple parents i.e. this is a DAG not a tree');
       }
       parents.forEach((vv) => {
         if (codeDic[vv]) {
