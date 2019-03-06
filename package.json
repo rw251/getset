@@ -7,7 +7,6 @@
     "start": "brunch watch --server",
     "build": "rm -rf public/ && brunch build --production",
     "build:dev": "brunch build",
-    "postinstall": "npm run build",
     "predebug": "npm run build:dev",
     "debug": "node --inspect-brk server.js",
     "pretestbak": "eslint --ignore-path .eslintignore --ext .js app server",
@@ -82,5 +81,6 @@
     "request-promise": "^4.2.1",
     "serve-favicon": "^2.5.0",
     "tippy.js": "^4.0.1"
-  }
+  },
+  "heroku-run-build-script": true
 }
