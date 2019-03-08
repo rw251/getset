@@ -18,12 +18,14 @@ const doSearch = (terminology, term, regexes) => {
   //    regexes
   // 4. Trim off any non alphanumeric characters from start and finish
   // 5. Make lowercase as that is what is in the db
+  // 6. Remove words shorter than 3 characters
   const searchQuery = {
     w: {
       $all: term.replace(/"/g, '')
         .split(' ')
         .filter(x => x.indexOf('*') < 0)
-        .map(x => x.replace(/(^[^\w\d]*|[^\w\d]*$)/g, '').toLowerCase()),
+        .map(x => x.replace(/(^[^\w\d]*|[^\w\d]*$)/g, '').toLowerCase())
+        .filter(x => x.length > 2),
     },
     $and: regexes.map(regexTerm => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } })),
   };
