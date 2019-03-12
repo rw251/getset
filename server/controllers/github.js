@@ -64,12 +64,17 @@ const getFileFromGithub = (user, path, callback) => {
     console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
     console.log(`BODY: ${JSON.stringify(body)}`);
     if (err) return callback(err);
+    if (res.statusCode !== 200) return callback(new Error('No 200 from github'));
     return callback(null, body);
   });
 };
 
 const updateFileOnGithub = (user, path, content, message, callback) => {
   getFileFromGithub(user, path, (errGET, bodyGET) => {
+    if (errGET) {
+      console.log(errGET);
+      return callback(errGET);
+    }
     const urlPUT = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
     console.log(urlPUT);
     const optionsPUT = {
@@ -90,7 +95,7 @@ const updateFileOnGithub = (user, path, content, message, callback) => {
       },
     };
 
-    request(optionsPUT, (errPUT, resPUT, bodyPUT) => {
+    return request(optionsPUT, (errPUT, resPUT, bodyPUT) => {
       console.log(`STATUS: ${resPUT.statusCode}`);
       console.log(`HEADERS: ${JSON.stringify(resPUT.headers)}`);
       console.log(`BODY: ${JSON.stringify(bodyPUT)}`);
