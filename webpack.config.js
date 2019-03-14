@@ -11,8 +11,7 @@ const { execSync } = require('child_process');
 const { version } = require('./package.json');
 const { rollbar } = require('./src/server/config');
 
-const rollbarClientToken = rollbar.postClientToken;
-const rollbarServerToken = rollbar.postServerToken;
+const { rollbarClientToken, rollbarServerToken } = rollbar;
 const publicPath = '/';
 
 const SOURCE_VERSION = process.env.SOURCE_VERSION || execSync('git rev-parse --short HEAD').toString();
