@@ -1,9 +1,9 @@
-/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }]*/
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id"] }] */
 
 // requires mongo running
-const terminologySvc = require('../../server/services/terminology');
-const assert = require('chai').assert;
-require('../../server/config');
+const terminologySvc = require('../../src/server/services/terminology');
+const { assert } = require('chai');
+require('../../src/server/config');
 
 describe('Terminology parsing tests', () => {
   it('plain', async () => {
