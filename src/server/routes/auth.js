@@ -1,6 +1,8 @@
 const express = require('express');
 const authController = require('../controllers/auth');
+const userController = require('../controllers/user');
 const passport = require('passport');
+const utils = require('./utils');
 const CONFIG = require('../config');
 // The middleware to set up the parameters for the authenticate middleware.
 const checkReturnTo = function checkReturnTo(req, res, next) {
@@ -17,12 +19,10 @@ const router = express.Router();
 router.get('/isLoggedIn', authController.isLoggedIn);
 router.get('/user', authController.getUser);
 
-router.post('/login', authController.postLogin);
+// router.post('/login', authController.postLogin);
 router.get('/logout', authController.logout);
-router.post('/forgot', authController.postForgot);
-router.get('/reset/:token', authController.getReset);
-router.post('/reset/:token', authController.postReset);
-router.post('/signup', authController.postSignup);
+
+router.post('/account/delete', utils.isAuthenticated, userController.postDeleteAccount);
 
 router.get('/github', checkReturnTo, passport.authenticate('github'));
 router.get('/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {

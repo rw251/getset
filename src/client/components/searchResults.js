@@ -43,11 +43,6 @@ export default ({ user, list }) => `
                   <i class="fa fa-download fa-fw"></i>Download
                 </a>
               </li>
-              <li>
-                <a class="btn-validate" href="#" data-id="${item._id}" data-path="${item.name}">
-                  <i class="fa fa-check fa-fw"></i>Validate
-                </a>
-              </li>
               ${user.email === item.user.email
     ? `
               <li>

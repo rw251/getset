@@ -26,7 +26,7 @@ export default ({ selected, numMatched, numUnmatched, excluded, user, githubSet,
         </span>`
         : `${
           isDirty
-            ? '<button class="btn btn-warning" id="updateGit" type="button" data-toggle="modal" data-target="#saveModal">Save</button>'
+            ? '<button class="btn btn-warning" id="updateGit" type="button" data-toggle="modal" data-target="#saveModal">Save changes</button>'
             : '<button class="btn btn-warning" id="saveToGit" type="button" data-toggle="modal" data-target="#saveModal">Save to GitHub</button>'
         }`
     }`}
@@ -55,18 +55,28 @@ export default ({ selected, numMatched, numUnmatched, excluded, user, githubSet,
       <form action="">
         <div class="modal-header">
           <button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-          <h4 class="modal-title" id="saveModalLabel">Save code set to GitHub</h4>
+          <h4 class="modal-title" id="saveModalLabel">Save code set ${githubSet ? 'changes ' : ''}to GitHub</h4>
         </div>
         <div class="modal-body">
           <p>This allows you to publish and share your code sets with other researchers</p>
           <div class="form-group">
             <label for="name">Name</label>
-            <input class="form-control" id="firstInput" type="text" placeholder="A name for your code set - try to make it descriptive!" name="name" />
+            ${githubSet
+    ? `<input class="form-control" id="firstInput" type="text" value="${githubSet.name.split(' | ')[0]}" name="name" readonly/>`
+    : '<input class="form-control" id="firstInput" type="text" placeholder="A name for your code set - try to make it descriptive!" name="name" />'}
+            
           </div>
           <div class="form-group">
             <label for="description">Description</label>
-            <textarea class="form-control" rows="3" placeholder="Tell us a bit more about what the code set is." name="description"></textarea>
+            <textarea class="form-control" rows="3" placeholder="Tell us a bit more about what the code set is." name="description">${githubSet ? githubSet.description : ''}</textarea>
           </div>
+          ${githubSet
+    ? `
+            <div class="form-group">
+              <label for="message">What's changed?</label>
+              <textarea class="form-control" rows="3" placeholder="Tell us a bit more about what changes you've made and why" name="message"></textarea>
+            </div>`
+    : ''}
         </div>
         <div class="modal-footer">
           <button class="btn btn-default hide-on-submit" type="button" data-dismiss="modal">Cancel</button>

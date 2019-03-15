@@ -1,12 +1,20 @@
-export default () => `
+export default ({ user }) => `
 <div class="container">
   <div class="page-header">
-    <h3>Sign in</h3>
+    <h3>Profile Information (retrieved from github)</h3>
   </div>
-  <form class="form-horizontal" method="POST">
-    <input type="hidden" name="_csrf" />
+  <p>Email: ${user.email}</p>
+  <p>Name: ${user.profile.name}</p>
+  <div class="page-header">
+    <h3>Delete Account</h3>
+  </div>
+  <form class="form-horizontal" action="/auth/account/delete" method="POST">
     <div class="form-group">
-      <div class="col-sm-offset-3 col-sm-7"><a class="btn btn-block btn-github btn-social" href="/auth/github"><i class="fab fa-github"></i>Sign in with GitHub</a></div>
+      <p class="col-sm-offset-3 col-sm-4">You can delete your account, but keep in mind this action is irreversible.</p>
+      <input type="hidden" name="_csrf" value="_csrf" />
+      <div class="col-sm-offset-3 col-sm-4">
+        <button class="btn btn-danger" type="submit"><i class="fa fa-trash"></i>Delete my account</button>
+      </div>
     </div>
   </form>
 </div>

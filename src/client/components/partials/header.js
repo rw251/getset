@@ -11,16 +11,7 @@ export default user => `
       <li><a href="/create">Create</a></li>
     </ul>
     <ul class="nav navbar-nav">
-      <li><a href="/convert">Convert</a></li>
-    </ul>
-    <ul class="nav navbar-nav">
-      <li><a href="/validate">Validate</a></li>
-    </ul>
-    <ul class="nav navbar-nav">
       <li><a href="/search">Search</a></li>
-    </ul>
-    <ul class="nav navbar-nav">
-      <li><a href="/enhance">Enhance</a></li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
     ${user && user.profile
@@ -39,7 +30,12 @@ export default user => `
         <li><a href="/auth/logout">Logout</a></li>
       </ul>
     </li>`
-    : '<li><a href="/login">Login</a></li>'}    
+    : `
+    <li>
+      <div style="padding:8px 0">
+        <a class="btn btn-block btn-github btn-social" href="/auth/github"><i class="fab fa-github"></i>Sign in with GitHub</a>
+      </div>
+    </li>`}    
     </ul>
   </div>
 </div>

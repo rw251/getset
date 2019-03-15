@@ -5,6 +5,7 @@ import validate from '../controllers/validate';
 import convert from '../controllers/convert';
 import search from '../controllers/search';
 import enhance from '../controllers/enhance';
+import account from '../controllers/account';
 import login from '../controllers/login';
 
 const updateSelectedTab = (ctx, next) => {
@@ -20,5 +21,6 @@ page('/convert', updateSelectedTab, convert);
 page('/validate', updateSelectedTab, validate);
 page('/search', updateSelectedTab, search);
 page('/enhance', updateSelectedTab, enhance);
+page('/account', updateSelectedTab, account);
 
 export { page as default };
