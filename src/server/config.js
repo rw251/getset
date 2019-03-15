@@ -12,27 +12,11 @@ const mustExist = function mustExist(name) {
   return process.env[name];
 };
 
-const ENV = {
-  // mongo url
-  MONGO_URL: mustExist('MONGODB_URI'),
-
-  // other mongo urls
-  MONGO_URL_EMIS: process.env.MONGODB_URI_EMIS,
-
-  // passport secret for expressjs authentication
-  PASSPORT_SECRET: mustExist('GETSET_PASSPORT_SECRET'),
-
-  // server details
-  SERVER_PORT: process.env.GETSET_SERVER_PORT,
-  // SERVER_URL: mustExist('PINGR_SERVER_URL'),
-
-};
-
 module.exports = {
-  // user auth
-  passport: { secret: ENV.PASSPORT_SECRET },
+  mongoUrl: mustExist('MONGODB_URI'),
+  passport: { secret: mustExist('GETSET_PASSPORT_SECRET') },
   client: { url: mustExist('GETSET_URL') },
-  server: { port: ENV.SERVER_PORT },
+  server: { port: process.env.GETSET_SERVER_PORT || process.env.PORT },
   mode: process.env.MODE || 'development',
   rollbar: {
     rollbarClientToken: mustExist('GETSET_ROLLBAR_POST_CLIENT_TOKEN'),

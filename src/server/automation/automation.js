@@ -40,7 +40,7 @@ const connectToMongo = () => {
   console.log('Connecting to mongo');
   mongoose.set('debug', DEBUG);
   mongoose.Promise = global.Promise;
-  mongoose.connect(process.env.MONGODB_URI);
+  mongoose.connect(config.mongoUrl);
   // add connection to other terminologies if they exist
   if (config.MONGO_URL_EMIS) mongoose.createConnection(config.MONGO_URL_EMIS);
   mongoose.connection.on('error', (err) => {

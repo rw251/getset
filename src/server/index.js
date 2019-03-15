@@ -27,7 +27,7 @@ app.use(compression()); // enable gzip compression
 
 mongoose.set('debug', DEBUG);
 mongoose.Promise = global.Promise;
-mongoose.connect(process.env.MONGODB_URI, { useMongoClient: true });
+mongoose.connect(CONFIG.mongoUrl, { useMongoClient: true });
 // add connection to other terminologies if they exist
 if (CONFIG.MONGO_URL_EMIS) mongoose.createConnection(CONFIG.MONGO_URL_EMIS);
 mongoose.connection.on('error', (err) => {
