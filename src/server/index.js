@@ -68,12 +68,27 @@ initializeRoutes(app);
 
 app.use(express.static(path.join(__dirname, '..', '..', 'dist')));
 
-// catch 404 and forward to error handler
-app.use((req, res, next) => {
+// catch 404 and respond accordingly
+app.use((req, res) => {
+  pino.info('A 404 request');
   pino.info(req.headers);
-  const err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+  res.status(404);
+
+  // respond with html page
+  if (req.accepts('html')) {
+    // if a html request then treat the url as a client side route
+    // and we return the main index.html page which will then do
+    // the client side routing
+    return res.status(200).sendFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
+  }
+
+  // respond with json
+  if (req.accepts('json')) {
+    return res.send({ error: 'Not found' });
+  }
+
+  // default to plain-text. send()
+  return res.type('txt').send('Not found');
 });
 
 // error handlers
