@@ -18,7 +18,6 @@ const SOURCE_VERSION = process.env.SOURCE_VERSION || execSync('git rev-parse --s
 const USER = execSync('whoami').toString();
 console.log('SOURCE_VERSION', SOURCE_VERSION);
 console.log('USER', USER);
-console.log('rollbarClientToken', rollbarClientToken);
 console.log('version', version);
 
 module.exports = (env, argv) => {
