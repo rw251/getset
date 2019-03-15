@@ -36,7 +36,7 @@ export default user => `
       <ul class="dropdown-menu">
         <li><a href="/account">My Account</a></li>
         <li class="divider"></li>
-        <li><a href="/logout">Logout</a></li>
+        <li><a href="/auth/logout">Logout</a></li>
       </ul>
     </li>`
     : '<li><a href="/login">Login</a></li>'}    
