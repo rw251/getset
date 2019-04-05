@@ -1,6 +1,6 @@
 {
   "name": "getset",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.herokuapp.com",
   "main": "index.js",
   "scripts": {
