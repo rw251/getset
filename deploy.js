@@ -1,12 +1,16 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const inquirer = require('inquirer');
-const { exec } = require('child_process');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 const versions = {
   major: 'major',
   minor: 'minor',
   patch: 'patch',
 };
+
+const incrementVersion = ({ versionType, message }) => exec(`npm version ${versionType} -m "Upgrade to %s. ${message}"`);
+const pushTagsToGit = () => exec('git push --follow-tags');
 
 inquirer
   .prompt([{
@@ -21,14 +25,7 @@ inquirer
     message: 'Enter a message for the tag',
     validate: input => (input.length > 0 ? true : 'Must leave a message - think of your future self!!'),
   }])
-  .then(({ versionType, message }) => {
-    console.log(versionType, message);
-    exec(
-      `npm version ${versionType} -m "Upgrade to %s. ${message}"`,
-      (err, stdout) => {
-        if (err) throw err;
-        else console.log(stdout);
-      }
-    );
-  });
+  .then(incrementVersion)
+  .then(pushTagsToGit)
+  .catch(err => console.log(err));
 
