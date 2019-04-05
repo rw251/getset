@@ -14,7 +14,8 @@
     "heroku-postbuild": "npm run build-prod-server",
     "predebug": "npm run build:dev",
     "test": "mocha --recursive test",
-    "test-debug": "mocha --recursive --inspect-brk test"
+    "test-debug": "mocha --recursive --inspect-brk test",
+    "deploy": "node deploy.js"
   },
   "repository": {
     "type": "git",
