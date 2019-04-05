@@ -126,7 +126,7 @@ module.exports = (env, argv) => {
       !isDev && new RollbarSourceMapPlugin({
         accessToken: rollbarServerToken,
         version,
-        publicPath: '//meds.cf',
+        publicPath: '//getset.herokuapp.com',
       }),
       !isDev && new RollbarDeployPlugin({
         accessToken: rollbarServerToken,
