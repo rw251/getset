@@ -5,7 +5,7 @@ const syncToLocal = (o, callback) => {
 };
 const syncFromLocal = (callback) => {
   localforage.getItem('o').then((o) => {
-    callback(o);
+    callback(o || { e: {}, s: {} });
   });
 };
 
