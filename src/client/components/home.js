@@ -8,7 +8,6 @@ export default () => `
       <p style="font-size: 1.2em">Welcome to GetSet!</p>
       <p style="font-size: 1.2em">Here you will find a suite of tools for creating, searching, validating, and reusing clinical code sets.</p>
       <p style="font-size: 1.2em">For more information on why we built this tool please check out the following papers:</p>
-      <p style="font-size: 1.2em">To get involved in the site's development, or to report bugs, please see the links in the footer below to the GitHub project and the issue tracker.</p>
       <ul>
         <li>
           Williams R, Brown B, Kontopantelis E, van Staa T, Peek N. 
@@ -25,6 +24,7 @@ export default () => `
           <a href="https://doi.org/10.1016/j.jbi.2017.04.010" target="_blank" rel="noopener noreferrer">10.1016/j.jbi.2017.04.010</a>
         </li>
       </ul>
+      <p style="font-size: 1.2em">To get involved in the site's development, or to report bugs, please see the links in the footer below to the GitHub project and the issue tracker.</p>
       <p style="font-size: 0.8em">This site was developed by <a href="https://www.research.manchester.ac.uk/portal/richard.williams.html" target="_blank" rel="noopener noreferrer">Richard Williams</a> as part of the <a href="http://www.patientsafety.manchester.ac.uk/"  target="_blank" rel="noopener noreferrer">NIHR Greater Manchester Patient Safety Translational Research Centre (GM PSTRC)</a>.</p>
       <p style="font-size: 0.7em">This work was funded by the National Institute for Health Research (NIHR) Greater Manchester Patient Safety Translational Research Centre (NIHR Greater Manchester PSTRC). The views expressed are those of the authors and not necessarily those of the NHS, the NIHR or the Department of Health and Social Care.</p>
     </div>
