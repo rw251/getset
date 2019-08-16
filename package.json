@@ -1,7 +1,7 @@
 {
   "name": "getset",
   "version": "1.1.0",
-  "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.herokuapp.com",
+  "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.ml",
   "main": "index.js",
   "scripts": {
     "start": "concurrently -kill-others-on-fail \"npm run server\" \"npm run client\"",
@@ -30,7 +30,7 @@
     "npm": "5.x.x",
     "node": "8.x.x"
   },
-  "homepage": "https://getset.herokuapp.com",
+  "homepage": "https://getset.ml",
   "devDependencies": {
     "@babel/core": "^7.3.4",
     "@babel/preset-env": "^7.3.4",

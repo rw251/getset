@@ -126,7 +126,7 @@ module.exports = (env, argv) => {
       !isDev && new RollbarSourceMapPlugin({
         accessToken: rollbarServerToken,
         version,
-        publicPath: '//getset.herokuapp.com',
+        publicPath: '//getset.ml',
       }),
       !isDev && new RollbarDeployPlugin({
         accessToken: rollbarServerToken,
