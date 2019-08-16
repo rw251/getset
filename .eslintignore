@@ -2,3 +2,4 @@
 
 # Ignore service worker
 sw.js
+sw-self-destruct.js

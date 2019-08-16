@@ -69,7 +69,10 @@ app.enable('trust proxy');
 app.use((req, res, next) => {
   const host = req.get('Host');
   if (host === 'getset.herokuapp.com') {
-    return res.redirect(301, `https://getset.ml${req.originalUrl}`);
+    // Special logic if it is the service worker request
+    return req.originalUrl === '/sw.js'
+      ? res.sendFile(path.join(__dirname, '..', '..', 'dist', 'sw-self-destruct.js'))
+      : res.redirect(301, `https://getset.ml${req.originalUrl}`);
   }
   return next();
 });
