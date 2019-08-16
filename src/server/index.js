@@ -69,7 +69,7 @@ app.enable('trust proxy');
 app.use((req, res, next) => {
   const host = req.get('Host');
   if (host === 'getset.herokuapp.com') {
-    return res.redirect(301, `https://getset.ml/${req.originalUrl}`);
+    return res.redirect(301, `https://getset.ml${req.originalUrl}`);
   }
   return next();
 });
