@@ -65,6 +65,15 @@ app.use(flash());
 // So that on heroku it recognises requests as https rather than http
 app.enable('trust proxy');
 
+// Ensure 301 redirects added to requests to herokuapp.com requests
+app.use((req, res, next) => {
+  const host = req.get('Host');
+  if (host === 'getset.herokuapp.com') {
+    return res.redirect(301, `https://getset.ml/${req.originalUrl}`);
+  }
+  return next();
+});
+
 initializeRoutes(app);
 
 app.use(express.static(path.join(__dirname, '..', '..', 'dist')));
