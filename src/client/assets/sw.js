@@ -1,4 +1,4 @@
-// Change this to force update v1.0.4
+// Change this to force update v1.0.5
 var CACHE = 'cache-update-and-refresh';
 
 var cachedLocalItems = [
