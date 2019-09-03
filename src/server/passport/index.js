@@ -5,6 +5,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github').Strategy;
 const github = require('../controllers/github');
+const CONFIG = require('../config');
 
 const User = require('../models/User');
 
@@ -58,7 +59,7 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_ID,
   clientSecret: process.env.GITHUB_SECRET,
-  callbackURL: '/auth/github/callback',
+  callbackURL: `${CONFIG.client.url}/auth/github/callback`,
   passReqToCallback: true,
   scope: ['user:email', 'public_repo'],
 }, (req, accessToken, refreshToken, profile, done) => {

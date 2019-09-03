@@ -14,6 +14,10 @@ const updateSelectedTab = (ctx, next) => {
   next();
 };
 
+const notFound = () => {
+  page('/');
+};
+
 page('/', updateSelectedTab, home);
 page('/login', updateSelectedTab, login);
 page('/create', updateSelectedTab, create);
@@ -22,5 +26,6 @@ page('/validate', updateSelectedTab, validate);
 page('/search', updateSelectedTab, search);
 page('/enhance', updateSelectedTab, enhance);
 page('/account', updateSelectedTab, account);
+page('*', notFound);
 
 export { page as default };
