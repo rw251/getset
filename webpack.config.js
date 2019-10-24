@@ -126,7 +126,7 @@ module.exports = (env, argv) => {
       !isDev && new RollbarSourceMapPlugin({
         accessToken: rollbarServerToken,
         version,
-        publicPath: '//getset.ml',
+        publicPath: '//getset.ga',
       }),
       !isDev && new RollbarDeployPlugin({
         accessToken: rollbarServerToken,

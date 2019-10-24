@@ -72,7 +72,7 @@ app.use((req, res, next) => {
     // Special logic if it is the service worker request
     return req.originalUrl === '/sw.js'
       ? res.sendFile(path.join(__dirname, '..', '..', 'dist', 'sw-self-destruct.js'))
-      : res.redirect(301, `https://getset.ml${req.originalUrl}`);
+      : res.redirect(301, `https://getset.ga${req.originalUrl}`);
   }
   return next();
 });
