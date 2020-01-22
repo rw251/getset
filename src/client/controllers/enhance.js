@@ -446,6 +446,7 @@ const wireUp = () => {
           selector: evt.target,
           html: true,
           placement: 'right',
+          sanitize: false,
         });
         setTimeout(() => {
           // console.log((selectionCoords.right + 25) - $('#results').offset().left);

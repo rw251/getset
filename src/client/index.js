@@ -1,3 +1,4 @@
+import './scripts/jquery-global.js';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-social/bootstrap-social.css';

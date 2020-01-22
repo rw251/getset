@@ -1,5 +1,4 @@
 import page from 'page';
-import { globalAgent } from 'https';
 
 // credentials: 'same-origin' is usually the default but not in some
 // older browsers

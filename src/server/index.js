@@ -15,7 +15,7 @@ const http = require('http');
 const initializeRoutes = require('./routes');
 
 const rollbar = new Rollbar({
-  accessToken: CONFIG.rollbar.postServerToken,
+  accessToken: CONFIG.rollbarServerToken,
   captureUncaught: true,
   captureUnhandledRejections: true,
 });

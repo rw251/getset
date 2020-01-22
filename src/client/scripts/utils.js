@@ -23,16 +23,15 @@ const momentFromNow = (date) => {
 const debounce = (func, wait, immediate) => {
   let timeout;
   return () => {
-    const context = this;
     const args = arguments;
     const later = () => {
       timeout = null;
-      if (!immediate) func.apply(context, args);
+      if (!immediate) func(...args);
     };
     const callNow = immediate && !timeout;
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
-    if (callNow) func.apply(context, args);
+    if (callNow) func(...args);
   };
 };
 
@@ -171,7 +170,7 @@ const getSelectionCoords = (win = window) => {
         //   rect = rects[1];
         // } else
         if (rects.length > 0) {
-          [rect] = rects;
+          rect = rects[0];
         }
         // console.log(rect);
         x = rect.left;

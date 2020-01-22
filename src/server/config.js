@@ -18,8 +18,6 @@ module.exports = {
   client: { url: mustExist('GETSET_URL') },
   server: { port: process.env.GETSET_SERVER_PORT || process.env.PORT },
   mode: process.env.MODE || 'development',
-  rollbar: {
-    rollbarClientToken: mustExist('GETSET_ROLLBAR_POST_CLIENT_TOKEN'),
-    rollbarServerToken: mustExist('GETSET_ROLLBAR_POST_SERVER_TOKEN'),
-  },
+  rollbarClientToken: mustExist('GETSET_ROLLBAR_POST_CLIENT_TOKEN'),
+  rollbarServerToken: mustExist('GETSET_ROLLBAR_POST_SERVER_TOKEN'),
 };

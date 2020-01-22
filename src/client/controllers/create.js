@@ -1,7 +1,6 @@
-import FileSaver from 'file-saver';
+import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import Clusterize from 'clusterize.js';
-
 import api from '../scripts/api';
 import createComponent from '../components/create';
 import createResultsComponent from '../components/createResults';
@@ -92,7 +91,7 @@ const getCodeSetFile = () => {
   return blob;
 };
 const triggerDownload = (file, name) => {
-  FileSaver.saveAs(file, name);
+  saveAs(file, name);
 };
 const zipFiles = (files) => {
   const zip = new JSZip();
@@ -605,6 +604,7 @@ const wireup = () => {
           container: '#results',
           html: true,
           placement: 'right',
+          sanitize: false,
         });
         setTimeout(() => {
           $('.popover').css('left', (selectionCoords.right + 25) - $results.offset().left);
