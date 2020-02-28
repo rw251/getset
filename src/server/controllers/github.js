@@ -11,8 +11,11 @@ const getSetRepoSeparator = ' | ';
 
 // const getUsersGetSetRepo = (user, callback) => {
 //   const options = {
-//     url: `https://api.github.com/repos/${user.github.username}/${getSetRepo}?access_token=${user.tokens.github}`,
-//     headers: { 'User-Agent': 'getset' },
+//     url: `https://api.github.com/repos/${user.github.username}/${getSetRepo}`,
+//     headers: {
+//       Authorization: `token ${user.tokens.github}`,
+//       'User-Agent': 'getset',
+//     },
 //   };
 
 //   request(options, (err, res, body) => {
@@ -24,11 +27,14 @@ const getSetRepoSeparator = ' | ';
 // };
 
 const createFileOnGithub = (user, path, content, message, callback) => {
-  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
   console.log(url);
   const options = {
     url,
-    headers: { 'User-Agent': 'getset' },
+    headers: {
+      Authorization: `token ${user.tokens.github}`,
+      'User-Agent': 'getset',
+    },
     json: true,
     method: 'PUT',
     body: {
@@ -52,10 +58,13 @@ const createFileOnGithub = (user, path, content, message, callback) => {
 };
 
 const getFileFromGithub = (user, path, callback) => {
-  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
   const options = {
     url,
-    headers: { 'User-Agent': 'getset' },
+    headers: {
+      Authorization: `token ${user.tokens.github}`,
+      'User-Agent': 'getset',
+    },
     json: true,
   };
 
@@ -75,11 +84,14 @@ const updateFileOnGithub = (user, path, content, message, callback) => {
       console.log(errGET);
       return callback(errGET);
     }
-    const urlPUT = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+    const urlPUT = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
     console.log(urlPUT);
     const optionsPUT = {
       url: urlPUT,
-      headers: { 'User-Agent': 'getset' },
+      headers: {
+        Authorization: `token ${user.tokens.github}`,
+        'User-Agent': 'getset',
+      },
       json: true,
       method: 'PUT',
       body: {
@@ -105,11 +117,14 @@ const updateFileOnGithub = (user, path, content, message, callback) => {
 };
 
 const deleteFileFromGithub = (user, path, sha, callback) => {
-  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
   console.log(url);
   const options = {
     url,
-    headers: { 'User-Agent': 'getset' },
+    headers: {
+      Authorization: `token ${user.tokens.github}`,
+      'User-Agent': 'getset',
+    },
     json: true,
     method: 'DELETE',
     body: {
@@ -143,10 +158,13 @@ const deleteFilesFromGithub = (user, files, callback) => {
 
 const deleteRepo = (user, path, callback) => {
   // first find all files
-  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}?access_token=${user.tokens.github}`;
+  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
   const options = {
     url,
-    headers: { 'User-Agent': 'getset' },
+    headers: {
+      Authorization: `token ${user.tokens.github}`,
+      'User-Agent': 'getset',
+    },
     json: true,
   };
 
@@ -193,8 +211,11 @@ exports.get = (req, name, callback) => {
 
 exports.createUsersGetSetRepo = (user, callback) => {
   const options = {
-    url: `https://api.github.com/user/repos?access_token=${user.tokens.github}`,
-    headers: { 'User-Agent': 'getset' },
+    url: 'https://api.github.com/user/repos',
+    headers: {
+      Authorization: `token ${user.tokens.github}`,
+      'User-Agent': 'getset',
+    },
     json: true,
     method: 'POST',
     body: {
@@ -215,12 +236,19 @@ exports.createUsersGetSetRepo = (user, callback) => {
 exports.search = (req, res, next) => {
   userController.githubUsers((err, users) => {
     if (err) return next(err);
-    const urls = users.map(user => `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents?access_token=${user.tokens.github}`);
+    const urlsAndHeaders = users.map(user => ({
+      url: `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents`,
+      headers: {
+        Authorization: `token ${user.tokens.github}`,
+        'User-Agent': 'getset',
+      },
+    }));
     const lookup = {};
     users.forEach((user) => {
       lookup[user.github.username] = user;
     });
-    const promises = urls.map(url => requestPromise({ url, headers: { 'User-Agent': 'getset' }, json: true }));
+    const promises = urlsAndHeaders
+      .map(urlAndHeader => requestPromise({ json: true, ...urlAndHeader }));
     return Promise
       .all(promises)
       .then((results) => {
