@@ -4,6 +4,7 @@
   "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.ga",
   "main": "index.js",
   "scripts": {
+    "start": "npm run serve",
     "serve": "concurrently -kill-others-on-fail \"npm run build\" \"nodemon src/server/index.js\"",
     "build": "rollup -c -w",
     "debug": "concurrently -kill-others-on-fail \"npm run build\" \"nodemon --inspect-brk src/server/index.js\"",
