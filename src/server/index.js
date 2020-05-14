@@ -175,6 +175,7 @@ const onListening = function onListening() {
   pino.info('listening');
 };
 
+pino.info(`Starting on port ${port}`);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

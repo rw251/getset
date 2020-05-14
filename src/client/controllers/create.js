@@ -85,9 +85,25 @@ const getCodeSetFileContent = () => {
   });
   return currentCodeSet;
 };
+const getCodeSetFileContentWithDefinitions = () => {
+  const currentCodeSet = [];
+  currentGroups.matched.forEach((g, gi) => {
+    g.forEach((code, i) => {
+      if (!currentGroups.matched[gi][i].exclude) {
+        currentCodeSet.push({ code: code.code || code.clinicalCode, definition: code.description });
+      }
+    });
+  });
+  return currentCodeSet;
+};
 const getCodeSetFile = () => {
   const currentCodeSet = getCodeSetFileContent();
   const blob = new Blob([currentCodeSet.join('\r\n')], { type: 'text/plain;charset=utf-8' });
+  return blob;
+};
+const getCodeSetFileWithDefinitions = () => {
+  const currentCodeSet = getCodeSetFileContentWithDefinitions();
+  const blob = new Blob([currentCodeSet.map(x => `${x.code}\t${x.definition}`).join('\r\n')], { type: 'text/plain;charset=utf-8' });
   return blob;
 };
 const triggerDownload = (file, name) => {
@@ -626,10 +642,12 @@ const wireup = () => {
       evt.preventDefault();
       const metadata = getMetaDataFile();
       const codeSet = getCodeSetFile();
+      const codeSetWithDefinitions = getCodeSetFileWithDefinitions();
       const timestamp = new Date().toISOString().replace(/[^0-9]/g, '');
 
       zipFiles([
         { content: codeSet, name: `codeset.${timestamp}.txt` },
+        { content: codeSetWithDefinitions, name: `codeset.with.definitions.${timestamp}.txt` },
         { content: metadata, name: `codeset.metadata.${timestamp}.json` },
       ]).then((file) => {
         // console.log(file);
@@ -642,6 +660,11 @@ const wireup = () => {
       evt.preventDefault();
       const codeSet = getCodeSetFile();
       triggerDownload(codeSet, `codeset.${new Date().toISOString().replace(/[^0-9]/g, '')}.txt`);
+    })
+    .on('click', '#downloadCodesWithDefinitions', (evt) => {
+      evt.preventDefault();
+      const codeSet = getCodeSetFileWithDefinitions();
+      triggerDownload(codeSet, `codeset.with.definitions.${new Date().toISOString().replace(/[^0-9]/g, '')}.txt`);
     })
     .on('click', '#downloadMeta', (evt) => {
       evt.preventDefault();

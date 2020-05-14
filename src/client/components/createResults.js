@@ -33,8 +33,9 @@ export default ({ selected, numMatched, numUnmatched, excluded, user, githubSet,
         <div class="btn-group">
           <button class="btn btn-success" id="downloadCodeSet">Download code set</button>
           <button class="btn btn-success dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button>
-          <ul class="dropdown-menu">
+          <ul class="dropdown-menu dropdown-menu-right">
             <li id="downloadCodes"><a href="#">Download codes</a></li>
+            <li id="downloadCodesWithDefinitions"><a href="#">Download codes with definitions</a></li>
             <li id="downloadMeta"><a href="#">Download meta</a></li>
             <li class="divider" role="separator"></li>
             <li id="downloadAll"><a href="#">Download all</a></li>
