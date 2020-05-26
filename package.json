@@ -1,6 +1,6 @@
 {
   "name": "getset",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.ga",
   "main": "index.js",
   "scripts": {
