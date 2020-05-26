@@ -113,7 +113,7 @@ exports.delete = (req, res, next) => {
 
 exports.get = (req, res, next) => {
   get(req.params.id, (err, codeset) => {
-    github.get(req, codeset.name, (errGitGet, codesetFiles) => {
+    github.get(req.user, codeset.user.githubUsername, codeset.name, (errGitGet, codesetFiles) => {
       if (err || errGitGet) return next(err || errGitGet);
       codesetFiles.githubSet.repoUrl = codeset.repoUrl;
       codesetFiles.githubSet.codeSetId = codeset._id;

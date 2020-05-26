@@ -57,8 +57,8 @@ const createFileOnGithub = (user, path, content, message, callback) => {
   });
 };
 
-const getFileFromGithub = (user, path, callback) => {
-  const url = `https://api.github.com/repos/${user.github.username}/${getSetRepo}/contents/${path}`;
+const getFileFromGithub = (user, repoUsername, path, callback) => {
+  const url = `https://api.github.com/repos/${repoUsername}/${getSetRepo}/contents/${path}`;
   const options = {
     url,
     headers: {
@@ -79,7 +79,7 @@ const getFileFromGithub = (user, path, callback) => {
 };
 
 const updateFileOnGithub = (user, path, content, message, callback) => {
-  getFileFromGithub(user, path, (errGET, bodyGET) => {
+  getFileFromGithub(user, user.github.username, path, (errGET, bodyGET) => {
     if (errGET) {
       console.log(errGET);
       return callback(errGET);
@@ -191,9 +191,9 @@ exports.update = (req, name, commitMessage, callback) => {
   });
 };
 
-exports.get = (req, name, callback) => {
-  getFileFromGithub(req.user, `${name}/meta.json`, (errMeta, metadataFile) => {
-    getFileFromGithub(req.user, `${name}/codes.txt`, (errCodes, codesetFile) => {
+exports.get = (user, repoUsername, name, callback) => {
+  getFileFromGithub(user, repoUsername, `${name}/meta.json`, (errMeta, metadataFile) => {
+    getFileFromGithub(user, repoUsername, `${name}/codes.txt`, (errCodes, codesetFile) => {
       if (errMeta || errCodes) return callback(errMeta || errCodes);
       const metadata = JSON.parse(atob(metadataFile.content));
       return callback(null, {
