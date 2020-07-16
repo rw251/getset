@@ -1,23 +1,20 @@
-export default ({ loading }) => `
-  ${!loading
-    ? ''
-    : `
+import terminologySelect from './partials/terminologySelect';
+
+export default ({ loading, terminologies }) => `
+  ${
+    !loading
+      ? ''
+      : `
     <div class="loading-overlay">
       <div class="loading-content"><i class="fa fa-sync-alt fa-spin fa-fw"> </i>Loading...</div>
-    </div>`}
+    </div>`
+  }
     <div class="container-fluid scrollable-parent">
     <div class="row scrollable-parent">
       <div class="col-lg-4 col-md-3 scrollable" style="padding-bottom:25px;">
         <h1>Create</h1>
         <form id="createForm">
-          <div class="form-group">
-            <label class="radio-inline">
-              <input type="radio" name="terminology" id="terminology1" value="Readv2" checked="true" />Read v2
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="terminology" id="terminology2" value="SNOMED CT" />SNOMED CT
-            </label>
-          </div>
+          ${terminologySelect(terminologies)}
           <div class="row">
             <div class="col-lg-6">
               <button class="btn btn-danger btn-remove-all" data-which="inclusion">X Remove all terms</button>

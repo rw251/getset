@@ -13,7 +13,6 @@ import { getCodeForTerminology, getSelectedText, getSelectionCoords } from '../s
 import notification from '../scripts/notification';
 import defaultController from './default';
 
-
 // Add a case insensitive contains
 $.expr[':'].icontains = (a, i, m) => $(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 
@@ -23,7 +22,7 @@ const resetProgress = () => {
 };
 const progress = (name) => {
   if (!zeroTime) zeroTime = new Date();
-  const notif = `Progress: ${name}\nElapsed time:${(new Date() - zeroTime)}`;
+  const notif = `Progress: ${name}\nElapsed time:${new Date() - zeroTime}`;
   notification(notif);
 };
 
@@ -35,6 +34,7 @@ let startedAt;
 let currentGroups = { excluded: [] };
 
 let currentTerminology = '';
+let currentVersion = '';
 
 let s = {};
 let e = {};
@@ -43,6 +43,7 @@ const reset = () => {
   currentGroups = { excluded: [] };
 
   currentTerminology = '';
+  currentVersion = '';
 
   s = {};
   e = {};
@@ -54,10 +55,12 @@ const getMetaDataFileContent = (propArray) => {
     includeTerms: Object.keys(s),
     excludeTerms: Object.keys(e),
     terminology: currentTerminology,
+    version: currentVersion,
   };
   if (state.user) {
     metadata.createdBy = {};
-    if (state.user.profile && state.user.profile.name) metadata.createdBy.name = state.user.profile.name;
+    if (state.user.profile && state.user.profile.name)
+      metadata.createdBy.name = state.user.profile.name;
     if (state.user.email) metadata.createdBy.email = state.user.email;
   }
   if (propArray && propArray.length > 0) {
@@ -71,7 +74,9 @@ const getMetaDataFileContent = (propArray) => {
 };
 const getMetaDataFile = (propArray) => {
   const metadata = getMetaDataFileContent(propArray);
-  const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json;charset=utf-8' });
+  const blob = new Blob([JSON.stringify(metadata, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
   return blob;
 };
 const getCodeSetFileContent = () => {
@@ -103,7 +108,9 @@ const getCodeSetFile = () => {
 };
 const getCodeSetFileWithDefinitions = () => {
   const currentCodeSet = getCodeSetFileContentWithDefinitions();
-  const blob = new Blob([currentCodeSet.map(x => `${x.code}\t${x.definition}`).join('\r\n')], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([currentCodeSet.map((x) => `${x.code}\t${x.definition}`).join('\r\n')], {
+    type: 'text/plain;charset=utf-8',
+  });
   return blob;
 };
 const triggerDownload = (file, name) => {
@@ -126,12 +133,12 @@ const zipFiles = (files) => {
 const makeDirty = () => {
   if (!currentGroups.githubSet) return;
   currentGroups.isDirty = true;
-  $('#savedToGithub').replaceWith('<button class="btn btn-warning" id="updateGit" type="button">Save</button>');
+  $('#savedToGithub').replaceWith(
+    '<button class="btn btn-warning" id="updateGit" type="button">Save</button>'
+  );
 };
 
-const wireUpButtonsAndModal = () => {
-
-};
+const wireUpButtonsAndModal = () => {};
 
 const $scroll = {};
 const $content = {};
@@ -148,7 +155,7 @@ const fitHeaderColumns = (() => {
     $firstRow.children().each(function childEach() {
       columnsWidth.push($(this).width());
     });
-    if (columnsWidth.filter(x => x < 0).length > 0) {
+    if (columnsWidth.filter((x) => x < 0).length > 0) {
       prevWidth = columnsWidth;
       // looks like not rendered yet, try again in a bit
       return setTimeout(() => {
@@ -156,9 +163,12 @@ const fitHeaderColumns = (() => {
       }, 100);
     }
     if (columnsWidth.toString() !== prevWidth.toString()) {
-      $headers[table].find('tr').children().each(function (i) {
-        $(this).width(columnsWidth[i]);
-      });
+      $headers[table]
+        .find('tr')
+        .children()
+        .each(function (i) {
+          $(this).width(columnsWidth[i]);
+        });
       prevWidth = columnsWidth;
     }
   };
@@ -173,26 +183,50 @@ const setHeaderWidth = (table) => {
 const tableHtml = {};
 let matchedContentForCopying = [];
 const populateTableData = (groups) => {
-  tableHtml.matchedTabContent = groups.matched.map(subgraph => subgraph
-    .filter(item => !item.exclude && !item.excludedByParent)
-    .map(item => `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`));
-  matchedContentForCopying = [].concat(...groups.matched.map(subgraph => subgraph
-    .filter(item => !item.exclude && !item.excludedByParent)
-    .map(item => `${item.code}\t${item.description}`)));
-  tableHtml.matchedDescendantButNotMatchedTabContent = groups.unmatched.map(subgraph => subgraph
-    .filter(item => !item.exclude && !item.excludedByParent)
-    .map(item => `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`));
-  tableHtml.excludedTabContent = groups.excluded.map(code => `<tr><td class='disable-select'>${code.clinicalCode || code.code}</td><td>${code.t || code.description}</td><td class='disable-select'>${code.a}</td><td class='disable-select'>${code.p}</td></tr>`);
+  tableHtml.matchedTabContent = groups.matched.map((subgraph) =>
+    subgraph
+      .filter((item) => !item.exclude && !item.excludedByParent)
+      .map(
+        (item) =>
+          `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`
+      )
+  );
+  matchedContentForCopying = [].concat(
+    ...groups.matched.map((subgraph) =>
+      subgraph
+        .filter((item) => !item.exclude && !item.excludedByParent)
+        .map((item) => `${item.code}\t${item.description}`)
+    )
+  );
+  tableHtml.matchedDescendantButNotMatchedTabContent = groups.unmatched.map((subgraph) =>
+    subgraph
+      .filter((item) => !item.exclude && !item.excludedByParent)
+      .map(
+        (item) =>
+          `<tr><td class='disable-select'>${item.code}</td><td>${item.description}</td><td class='disable-select'>${item.depth}</td><td class='disable-select'></td></tr>`
+      )
+  );
+  tableHtml.excludedTabContent = groups.excluded.map(
+    (code) =>
+      `<tr><td class='disable-select'>${code.clinicalCode || code.code}</td><td>${
+        code.t || code.description
+      }</td><td class='disable-select'>${code.a}</td><td class='disable-select'>${code.p}</td></tr>`
+  );
 
   // flatten array
   tableHtml.matchedTabContent = [].concat(...tableHtml.matchedTabContent);
-  tableHtml.matchedDescendantButNotMatchedTabContent = []
-    .concat(...tableHtml.matchedDescendantButNotMatchedTabContent);
+  tableHtml.matchedDescendantButNotMatchedTabContent = [].concat(
+    ...tableHtml.matchedDescendantButNotMatchedTabContent
+  );
 
   // const unmatchingCodesTableHtml = rowsForTableFromGraphTemplate(groups.unmatched);
   // const excludedCodesTableHtml = rowsForTableFromCodesTemplate(groups.excluded);
 
-  const tabs = ['matchedTabContent', 'matchedDescendantButNotMatchedTabContent', 'excludedTabContent'];
+  const tabs = [
+    'matchedTabContent',
+    'matchedDescendantButNotMatchedTabContent',
+    'excludedTabContent',
+  ];
 
   tabs.forEach((tab) => {
     $scroll[tab] = $(`#scroll-${tab}`);
@@ -255,7 +289,8 @@ const saveToGithub = () => {
     dataToSend.codeSet = currentGroups.githubSet;
     dataToSend.message = commitMessage;
   }
-  api.saveToGithub(dataToSend)
+  api
+    .saveToGithub(dataToSend)
     .then((set) => {
       currentGroups.githubSet = set;
       currentGroups.isDirty = false;
@@ -263,30 +298,33 @@ const saveToGithub = () => {
       displayResults(currentGroups);
     })
     .catch(() => {
-      alert('Something went wrong and your code set is not saved. Feel free to try again but I\'m not very hopeful.');
+      alert(
+        "Something went wrong and your code set is not saved. Feel free to try again but I'm not very hopeful."
+      );
     });
 };
 
 const refreshExclusion = () => {
   progress('refreshExclusion called');
   const excludedTerms = Object.keys(e);
-  const includedTerms = Object.keys(s).map(t => t.toLowerCase());
+  const includedTerms = Object.keys(s).map((t) => t.toLowerCase());
   currentGroups.excluded = [];
 
   // update the excluded codes for the set of matched codes
   // unless the term is matched exactly by an inclusion term
   currentGroups.matched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      const isInExcludedTerms = excludedTerms
-        .filter((a) => {
+      const isInExcludedTerms =
+        excludedTerms.filter((a) => {
           if (a[0] === '"' && a[a.length - 1] === '"') {
-            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(
+              code.description.toLowerCase()
+            );
           }
           return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-        })
-        .length > 0;
-      const isExactInclusionMatch = includedTerms
-        .indexOf(code.description.toLowerCase()) > -1 || // without quotes
+        }).length > 0;
+      const isExactInclusionMatch =
+        includedTerms.indexOf(code.description.toLowerCase()) > -1 || // without quotes
         includedTerms.indexOf(`"${code.description.toLowerCase()}"`) > -1; // with quotes
       if (isInExcludedTerms && !isExactInclusionMatch) {
         if (!currentGroups.matched[gi][i].exclude) {
@@ -306,14 +344,15 @@ const refreshExclusion = () => {
   //  - matches an exclusion term
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      const isInExcludedTerms = excludedTerms
-        .filter((a) => {
+      const isInExcludedTerms =
+        excludedTerms.filter((a) => {
           if (a[0] === '"' && a[a.length - 1] === '"') {
-            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(code.description.toLowerCase());
+            return new RegExp(`\\b${a.substr(1, a.length - 2).toLowerCase()}\\b`).test(
+              code.description.toLowerCase()
+            );
           }
           return code.description.toLowerCase().indexOf(a.toLowerCase()) > -1;
-        })
-        .length > 0;
+        }).length > 0;
       if (isInExcludedTerms) {
         if (!currentGroups.unmatched[gi][i].exclude) {
           currentGroups.unmatched[gi][i].exclude = true;
@@ -346,10 +385,8 @@ const refreshExclusion = () => {
   //  - are not a descendant of a matched code AND is a synonym for an excluded code
   currentGroups.unmatched.forEach((g, gi) => {
     g.forEach((code, i) => {
-      const hasExcludedParent = code.ancestors
-        .filter(a => excludedCodes[a]).length > 0; // / IMPROVE 2
-      const hasNoMatchedParent = code.ancestors
-        .filter(a => matchedCodes[a]).length === 0; // / IMPROVE 1
+      const hasExcludedParent = code.ancestors.filter((a) => excludedCodes[a]).length > 0; // / IMPROVE 2
+      const hasNoMatchedParent = code.ancestors.filter((a) => matchedCodes[a]).length === 0; // / IMPROVE 1
       const isSynonymForExcludedCode = excludedCodes[code.code.substr(0, 5)]; // IMPROVE 3
       if (hasExcludedParent || (hasNoMatchedParent && isSynonymForExcludedCode)) {
         if (!currentGroups.unmatched[gi][i].excludedByParent) {
@@ -364,7 +401,6 @@ const refreshExclusion = () => {
     });
   });
 
-
   displayResults(currentGroups);
   progress('refreshExclusion ended');
 };
@@ -372,19 +408,20 @@ const refreshExclusion = () => {
 const refresh = () => {
   $status.text('Refreshing list...');
   $results.html(ajaxLoaderComponent());
-  currentTerminology = $('input[name=terminology]:checked').val();
+  const [id, version] = document.querySelector('select[name=terminology]').value.split('-');
+  currentTerminology = id;
+  currentVersion = version;
   setTimeout(() => {
     const terms = Object.keys(s);
-    api.codeSearch(terms, currentTerminology)
-      .then((data) => {
-        $status.text(`Result! (n=${data.codes.length})`);
-        const hierarchies = getHierarchies(data.codes, currentTerminology, terms);
-        currentGroups.matched = hierarchies.matched;
-        currentGroups.unmatched = hierarchies.unmatched;
-        currentGroups.numMatched = hierarchies.numMatched;
-        currentGroups.numUnmatched = hierarchies.numUnmatched;
-        refreshExclusion();
-      });
+    api.codeSearch(terms, currentTerminology, currentVersion).then((data) => {
+      $status.text(`Result! (n=${data.codes.length})`);
+      const hierarchies = getHierarchies(data.codes, currentTerminology, terms);
+      currentGroups.matched = hierarchies.matched;
+      currentGroups.unmatched = hierarchies.unmatched;
+      currentGroups.numMatched = hierarchies.numMatched;
+      currentGroups.numUnmatched = hierarchies.numUnmatched;
+      refreshExclusion();
+    });
   }, 1);
 };
 
@@ -446,11 +483,13 @@ const updateUI = () => {
   refreshSynonymUI();
   refresh();
 
-  $('.alert').alert().on('closed.bs.alert', (evt) => {
-    makeDirty();
-    const termToRemove = $(evt.target).data('value');
-    removeTerm(termToRemove);
-  });
+  $('.alert')
+    .alert()
+    .on('closed.bs.alert', (evt) => {
+      makeDirty();
+      const termToRemove = $(evt.target).data('value');
+      removeTerm(termToRemove);
+    });
 };
 
 const localSyncFromLocal = () => {
@@ -459,7 +498,6 @@ const localSyncFromLocal = () => {
     if (Object.keys(e).length + Object.keys(s).length > 0) updateUI();
   });
 };
-
 
 const addTerm = (term, isExclusion) => {
   resetProgress();
@@ -477,11 +515,13 @@ const addTerm = (term, isExclusion) => {
     setTimeout(() => refresh(), 0);
   }
 
-  $('.alert').alert().on('closed.bs.alert', (evt) => {
-    makeDirty();
-    const termToRemove = $(evt.target).data('value');
-    removeTerm(termToRemove);
-  });
+  $('.alert')
+    .alert()
+    .on('closed.bs.alert', (evt) => {
+      makeDirty();
+      const termToRemove = $(evt.target).data('value');
+      removeTerm(termToRemove);
+    });
   progress('addTerm ended');
 };
 
@@ -508,23 +548,23 @@ const wireup = () => {
   let isCtrlPressed = false;
   $(document)
     .on('keydown', (keyEvent) => {
-      if (keyEvent.keyCode === 17) { // ctrl
+      if (keyEvent.keyCode === 17) {
+        // ctrl
         isCtrlPressed = true;
         // situations where the ctrl keyup event isn't fired, so
         // also remove the ctrl after a few seconds
         setTimeout(() => {
           isCtrlPressed = false;
         }, 5000);
-      } else if (isCtrlPressed && (keyEvent.keyCode === 67 || keyEvent.keyCode === 99)) { // c
+      } else if (isCtrlPressed && (keyEvent.keyCode === 67 || keyEvent.keyCode === 99)) {
+        // c
         // console.log(`s: ${Object.keys(s).length}, e: ${Object.keys(e).length}`);
         if (getSelectedText().toString() !== '') {
           // don't want to prevent standard ctrl-c behaviour
           return;
         }
         // do copy
-        const dataToCopy = matchedContentForCopying
-          .sort()
-          .join('\n');
+        const dataToCopy = matchedContentForCopying.sort().join('\n');
         const textarea = document.createElement('textarea');
         textarea.value = dataToCopy;
         document.body.appendChild(textarea);
@@ -542,7 +582,8 @@ const wireup = () => {
       }
     })
     .on('keyup', (keyEvent) => {
-      if (keyEvent.keyCode === 17) { // ctrl
+      if (keyEvent.keyCode === 17) {
+        // ctrl
         isCtrlPressed = false;
       }
     });
@@ -563,14 +604,16 @@ const wireup = () => {
   });
 
   $synonym.include.input.on('keypress', (evt) => {
-    if (evt.which === 13) { // ENTER key
+    if (evt.which === 13) {
+      // ENTER key
       addIfLongEnough($synonym.include.input);
       evt.preventDefault();
     }
   });
 
   $synonym.exclude.input.on('keypress', (evt) => {
-    if (evt.which === 13) { // ENTER key
+    if (evt.which === 13) {
+      // ENTER key
       addIfLongEnough($synonym.exclude.input);
       evt.preventDefault();
     }
@@ -580,8 +623,12 @@ const wireup = () => {
     evt.preventDefault();
   });
 
-  $synonym.include.add.on('click', () => { addIfLongEnough($synonym.include.input); });
-  $synonym.exclude.add.on('click', () => { addIfLongEnough($synonym.exclude.input); });
+  $synonym.include.add.on('click', () => {
+    addIfLongEnough($synonym.include.input);
+  });
+  $synonym.exclude.add.on('click', () => {
+    addIfLongEnough($synonym.exclude.input);
+  });
 
   let lastPopOverElements;
   let lastSelectedText = '';
@@ -612,7 +659,8 @@ const wireup = () => {
           lastPopOverElements.popover('hide');
           lastPopOverElements = null;
         }
-        const popupElement = '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
+        const popupElement =
+          '<div class="btn-group"><button class="btn btn-sm btn-success btn-include">Include</button><button class="btn btn-sm btn-danger btn-exclude">Exclude</button></div>';
         const selectionCoords = getSelectionCoords();
         $(evt.target).popover({
           animation: true,
@@ -623,7 +671,7 @@ const wireup = () => {
           sanitize: false,
         });
         setTimeout(() => {
-          $('.popover').css('left', (selectionCoords.right + 25) - $results.offset().left);
+          $('.popover').css('left', selectionCoords.right + 25 - $results.offset().left);
         }, 1);
         if (!lastPopOverElements) lastPopOverElements = $(evt.target);
         else lastPopOverElements = lastPopOverElements.add($(evt.target));
@@ -649,12 +697,17 @@ const wireup = () => {
         { content: codeSet, name: `codeset.${timestamp}.txt` },
         { content: codeSetWithDefinitions, name: `codeset.with.definitions.${timestamp}.txt` },
         { content: metadata, name: `codeset.metadata.${timestamp}.json` },
-      ]).then((file) => {
-        // console.log(file);
-        triggerDownload(new Blob([file], { type: 'application/zip' }), `codeset.${timestamp}.zip`);
-      }).catch((err) => {
-        console.error(`whoops ${err}`);
-      });
+      ])
+        .then((file) => {
+          // console.log(file);
+          triggerDownload(
+            new Blob([file], { type: 'application/zip' }),
+            `codeset.${timestamp}.zip`
+          );
+        })
+        .catch((err) => {
+          console.error(`whoops ${err}`);
+        });
     })
     .on('click', '#downloadCodes', (evt) => {
       evt.preventDefault();
@@ -664,12 +717,18 @@ const wireup = () => {
     .on('click', '#downloadCodesWithDefinitions', (evt) => {
       evt.preventDefault();
       const codeSet = getCodeSetFileWithDefinitions();
-      triggerDownload(codeSet, `codeset.with.definitions.${new Date().toISOString().replace(/[^0-9]/g, '')}.txt`);
+      triggerDownload(
+        codeSet,
+        `codeset.with.definitions.${new Date().toISOString().replace(/[^0-9]/g, '')}.txt`
+      );
     })
     .on('click', '#downloadMeta', (evt) => {
       evt.preventDefault();
       const metadata = getMetaDataFile();
-      triggerDownload(metadata, `codeset.metadata.${new Date().toISOString().replace(/[^0-9]/g, '')}.json`);
+      triggerDownload(
+        metadata,
+        `codeset.metadata.${new Date().toISOString().replace(/[^0-9]/g, '')}.json`
+      );
     });
 
   $('.code-list').on('click', '.code-line', (evt) => {
@@ -702,12 +761,16 @@ const wireup = () => {
 
 const show = () => {
   reset();
-  defaultController(createComponent, { loading: state.codeSetId && !state.currentSet });
-  wireup();
 
-  if (state.codeSetId && !state.currentSet) {
-    api.getCodeSet(state.codeSetId)
-      .then((codeset) => {
+  api.getTerminologies().then((terminologies) => {
+    defaultController(createComponent, {
+      loading: state.codeSetId && !state.currentSet,
+      terminologies,
+    });
+    wireup();
+
+    if (state.codeSetId && !state.currentSet) {
+      api.getCodeSet(state.codeSetId).then((codeset) => {
         // save to state
         state.currentSet = codeset;
         // launch create page
@@ -721,18 +784,19 @@ const show = () => {
         updateUI();
         $('.loading-overlay').fadeOut(500);
       });
-  } else if (state.currentSet) {
-    state.currentSet.metadata.includeTerms.forEach((term) => {
-      addInclusion(term);
-    });
-    state.currentSet.metadata.excludeTerms.forEach((term) => {
-      addExclusion(term);
-    });
-    currentGroups.githubSet = state.currentSet.githubSet;
-    updateUI();
-  } else {
-    localSyncFromLocal();
-  }
+    } else if (state.currentSet) {
+      state.currentSet.metadata.includeTerms.forEach((term) => {
+        addInclusion(term);
+      });
+      state.currentSet.metadata.excludeTerms.forEach((term) => {
+        addExclusion(term);
+      });
+      currentGroups.githubSet = state.currentSet.githubSet;
+      updateUI();
+    } else {
+      localSyncFromLocal();
+    }
+  });
 };
 
 export { show as default };

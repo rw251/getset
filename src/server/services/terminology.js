@@ -9,7 +9,7 @@
  * @param {String} str The string to escape for regex
  * @returns {String} The escaped string
  */
-const escapeRegExp = str => str.replace(/[-[\]/{}()+?.\\^$|]/g, '\\$&');
+const escapeRegExp = (str) => str.replace(/[-[\]/{}()+?.\\^$|]/g, '\\$&');
 
 /**
  * Takes into account the wildcards at start or end to determine whether to
@@ -50,7 +50,9 @@ const getObject = (inclusionTerm) => {
   inclusionTerm.split('').forEach((c) => {
     switch (c) {
       case '"':
-        if (currentTerm.length > 0) term.regexes.push(getRegexForTerm(currentTerm));
+        if (currentTerm.length > 0) {
+          term.regexes.push(getRegexForTerm(currentTerm));
+        }
         isInsideQuotes = !isInsideQuotes;
         currentTerm = '';
         break;
@@ -80,5 +82,3 @@ exports.getObject = (inclusionTerm) => {
   }
   return getObject(inclusionTerm);
 };
-
-exports.terminologies = ['Readv2', 'SNOMED CT', 'EMIS'];

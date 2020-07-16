@@ -3,24 +3,31 @@ const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
 
 const modelCache = {};
 
-const createModel = (terminologyName) => {
-  const CodeSchema = new mongoose.Schema({
-    _id: String, // The clinical code
-    t: String, // A | separated list of
-    p: [String],
-    a: [String],
-    w: [String],
-  }, { collection: `codes-${terminologyName}` });
+const createModel = ({ id, version }) => {
+  const CodeSchema = new mongoose.Schema(
+    {
+      _id: String, // The clinical code
+      t: String, // A | separated list of
+      p: [String],
+      a: [String],
+      w: [String],
+    },
+    { collection: `codes-${id}-${version}` }
+  );
 
-  CodeSchema.virtual('terminology').get(() => terminologyName);
+  CodeSchema.virtual('terminology').get(() => id);
+  CodeSchema.virtual('version').get(() => version);
   CodeSchema.virtual('clinicalCode').get(function getCode() {
     return this._id;
   });
 
   CodeSchema.plugin(mongooseLeanVirtuals);
 
-  modelCache[terminologyName] = mongoose.model(`Code${terminologyName}`, CodeSchema);
-  return modelCache[terminologyName];
+  modelCache[id][version] = mongoose.model(`Code${id}${version}`, CodeSchema);
+  return modelCache[id][version];
 };
 
-module.exports = terminologyName => modelCache[terminologyName] || createModel(terminologyName);
+module.exports = ({ id, version }) => {
+  if (!modelCache[id]) modelCache[id] = {};
+  return modelCache[id][version] || createModel({ id, version });
+};

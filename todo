@@ -4,6 +4,7 @@ DONE - Hide things that you can't do
 - do fixes to make sure it all works
 - revisit the new graph based view of the results
 DONE - SWITCH TO ROLLUP
+- terms in quotes e.g. "care home" don't disappear if you remove them then refresh the page
 
 - button to create new (can just refresh the page)
 - sign in should be for a while

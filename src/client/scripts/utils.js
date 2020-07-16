@@ -9,9 +9,11 @@ const momentFromNow = (date) => {
   if (diffInSeconds < 90 * 60) return 'an hour ago';
   if (diffInSeconds < 21 * 60 * 60) return `${Math.round(diffInSeconds / (60 * 60))} hours ago`;
   if (diffInSeconds < 36 * 60 * 60) return 'a day ago';
-  if (diffInSeconds < 25 * 24 * 60 * 60) return `${Math.round(diffInSeconds / (24 * 60 * 60))} days ago`;
+  if (diffInSeconds < 25 * 24 * 60 * 60)
+    return `${Math.round(diffInSeconds / (24 * 60 * 60))} days ago`;
   if (diffInSeconds < 46 * 24 * 60 * 60) return 'a month ago';
-  if (diffInSeconds < 319 * 24 * 60 * 60) return `${Math.round(diffInSeconds / (30.5 * 24 * 60 * 60))} months ago`;
+  if (diffInSeconds < 319 * 24 * 60 * 60)
+    return `${Math.round(diffInSeconds / (30.5 * 24 * 60 * 60))} months ago`;
   if (diffInSeconds < 549 * 24 * 60 * 60) return 'a year ago';
   return `${Math.round(diffInSeconds / (365.25 * 24 * 60 * 60))} years ago`;
 };
@@ -71,19 +73,23 @@ const parseDescriptionMultipleTerms = (description, searchTerms) => {
   let n = descArr.length - 1;
   let left = '';
 
-  let searchTermsInDescription = searchTerms
-    .filter(t => description.toLowerCase().indexOf(t) >= 0);
+  let searchTermsInDescription = searchTerms.filter(
+    (t) => description.toLowerCase().indexOf(t) >= 0
+  );
 
   if (searchTermsInDescription.length === 0) {
     descriptionBits.push({ text: descArr[n] });
   } else {
-    while (searchTermsInDescription.filter(t => descArr[n].toLowerCase().indexOf(t) >= 0).length === 0) {
+    while (
+      searchTermsInDescription.filter((t) => descArr[n].toLowerCase().indexOf(t) >= 0).length === 0
+    ) {
       n -= 1;
     }
     left = descArr[n];
-    searchTermsInDescription = searchTerms.filter(t => left.toLowerCase().indexOf(t) >= 0);
+    searchTermsInDescription = searchTerms.filter((t) => left.toLowerCase().indexOf(t) >= 0);
     let firstTerm = searchTermsInDescription
-      .map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
+      .map((t) => ({ idx: left.toLowerCase().indexOf(t), t }))
+      .reduce((minItem, cur) => {
         if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
         return cur;
       });
@@ -92,15 +98,14 @@ const parseDescriptionMultipleTerms = (description, searchTerms) => {
         descriptionBits.push({ text: left.substr(0, firstTerm.t.length), isSyn: true });
       } else {
         descriptionBits.push({ text: left.substr(0, firstTerm.idx) });
-        descriptionBits
-          .push({ text: left.substr(firstTerm.idx, firstTerm.t.length), isSyn: true });
+        descriptionBits.push({ text: left.substr(firstTerm.idx, firstTerm.t.length), isSyn: true });
       }
       left = left.substr(firstTerm.idx + firstTerm.t.length);
-      searchTermsInDescription = searchTerms
-        .filter(t => left.toLowerCase().indexOf(t) >= 0);
+      searchTermsInDescription = searchTerms.filter((t) => left.toLowerCase().indexOf(t) >= 0);
       if (searchTermsInDescription.length === 0) break;
       firstTerm = searchTermsInDescription
-        .map(t => ({ idx: left.toLowerCase().indexOf(t), t })).reduce((minItem, cur) => {
+        .map((t) => ({ idx: left.toLowerCase().indexOf(t), t }))
+        .reduce((minItem, cur) => {
           if (cur.idx === -1 || cur.idx >= minItem.idx) return minItem;
           return cur;
         });
@@ -217,7 +222,7 @@ const findPos = (obj) => {
   if (obj.offsetParent) {
     do {
       curtop += obj.offsetTop;
-    } while (obj = obj.offsetParent);
+    } while ((obj = obj.offsetParent));
   }
   return [curtop];
 };

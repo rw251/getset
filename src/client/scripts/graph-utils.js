@@ -50,10 +50,9 @@ const getConnectedSubtrees = (graph) => {
   const Q = [];
   const G = graph;
 
-
   Object.keys(G).forEach((node) => {
     G[node].unvisited = true;
-    if (G[node].p.filter(vv => G[vv]).length === 0) {
+    if (G[node].p.filter((vv) => G[vv]).length === 0) {
       G[node].root = true;
     }
   });
@@ -90,7 +89,6 @@ const getConnectedSubgraphs = (graph) => {
   const rtn = [];
   const Q = [];
   const G = graph;
-
 
   Object.keys(G).forEach((node) => {
     G[node].unvisited = true;
@@ -189,7 +187,10 @@ const getHierarchiesWithExistingCodeList = (
         // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
       } else {
         graph[node].codes.forEach((code) => {
-          const descriptionBits = parseDescriptionMultipleTermsNEW(code.t, code.descendant || code.synonym);
+          const descriptionBits = parseDescriptionMultipleTermsNEW(
+            code.t,
+            code.descendant || code.synonym
+          );
           const item = {
             code: code.code,
             ancestors: codeDic[getCodeForTerminology(code.code, currentTerminology)].a,
@@ -215,9 +216,7 @@ const getHierarchiesWithExistingCodeList = (
             inCodeSetAndUnmatchedGraphToReturn.push(item);
             numInCodeSetAndUnmatched += 1;
             // delete existingCodeSet[code.code];
-          } else if (
-            existingCodeSetObject[getCodeForTerminology(code.code, currentTerminology)]
-          ) {
+          } else if (existingCodeSetObject[getCodeForTerminology(code.code, currentTerminology)]) {
             inCodeSetAndUnmatchedGraphToReturn.push(item);
             numInCodeSetAndUnmatched += 1;
             // delete existingCodeSet[getCodeForTerminology(code.code)];
@@ -276,11 +275,21 @@ const getHierarchies = (codes, currentTerminology) => {
         codes: [{ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym }],
       };
     } else if (codeDic[codeForTerminology].codes.length === 0) {
-      codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym });
+      codeDic[codeForTerminology].codes.push({
+        code: v.clinicalCode,
+        t: v.t,
+        descendant: v.descendant,
+        synonym: v.synonym,
+      });
       codeDic[codeForTerminology].p = parents;
       codeDic[codeForTerminology].a = ancestors;
     } else {
-      codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t, descendant: v.descendant, synonym: v.synonym });
+      codeDic[codeForTerminology].codes.push({
+        code: v.clinicalCode,
+        t: v.t,
+        descendant: v.descendant,
+        synonym: v.synonym,
+      });
       codeDic[codeForTerminology].p = parents;
       codeDic[codeForTerminology].a = ancestors;
     }
@@ -313,7 +322,10 @@ const getHierarchies = (codes, currentTerminology) => {
         // graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
       } else {
         graph[node].codes.forEach((code) => {
-          const descriptionBits = parseDescriptionMultipleTermsNEW(code.t, code.descendant || code.synonym);
+          const descriptionBits = parseDescriptionMultipleTermsNEW(
+            code.t,
+            code.descendant || code.synonym
+          );
           const item = {
             code: code.code,
             ancestors: codeDic[getCodeForTerminology(code.code, currentTerminology)].a,
@@ -355,7 +367,11 @@ const getHierarchy = (codes, currentTerminology, searchTerm) => {
     const parents = v.p;
     const codeForTerminology = getCodeForTerminology(v.clinicalCode, currentTerminology);
     if (!codeDic[codeForTerminology]) {
-      codeDic[codeForTerminology] = { p: parents, c: [], codes: [{ code: v.clinicalCode, t: v.t }] };
+      codeDic[codeForTerminology] = {
+        p: parents,
+        c: [],
+        codes: [{ code: v.clinicalCode, t: v.t }],
+      };
     } else if (codeDic[codeForTerminology].codes.length === 0) {
       codeDic[codeForTerminology].codes.push({ code: v.clinicalCode, t: v.t });
       codeDic[codeForTerminology].p = parents;
@@ -376,33 +392,29 @@ const getHierarchy = (codes, currentTerminology, searchTerm) => {
     });
   });
 
-  let connectedSubgraphs = isTree
-    ? getConnectedSubtrees(codeDic)
-    : getConnectedSubgraphs(codeDic);
-  connectedSubgraphs = connectedSubgraphs.map((graph) => {
-    const graphToReturn = [];
+  let connectedSubgraphs = isTree ? getConnectedSubtrees(codeDic) : getConnectedSubgraphs(codeDic);
+  connectedSubgraphs = connectedSubgraphs
+    .map((graph) => {
+      const graphToReturn = [];
 
-    Object.keys(graph).forEach((node) => {
-      if (graph[node].codes.length === 0) {
-        graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
-      } else {
-        graph[node].codes.forEach((code) => {
-          graphToReturn.push({
-            code: code.code,
-            description: parseDescriptionMultipleTerms(code.t, searchTerm),
-            depth: graph[node].depth,
+      Object.keys(graph).forEach((node) => {
+        if (graph[node].codes.length === 0) {
+          graphToReturn.push({ code: node, description: '', depth: graph[node].depth });
+        } else {
+          graph[node].codes.forEach((code) => {
+            graphToReturn.push({
+              code: code.code,
+              description: parseDescriptionMultipleTerms(code.t, searchTerm),
+              depth: graph[node].depth,
+            });
           });
-        });
-      }
-    });
+        }
+      });
 
-    return graphToReturn;
-  }).sort((b, a) => a.length - b.length);
+      return graphToReturn;
+    })
+    .sort((b, a) => a.length - b.length);
   return connectedSubgraphs;
 };
 
-export {
-  getHierarchiesWithExistingCodeList,
-  getHierarchies,
-  getHierarchy,
-};
+export { getHierarchiesWithExistingCodeList, getHierarchies, getHierarchy };

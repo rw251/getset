@@ -1,6 +1,7 @@
 const express = require('express');
 const codeController = require('../controllers/code');
 const codeSetController = require('../controllers/codeSet');
+const terminologyController = require('../controllers/terminology');
 
 const router = express.Router();
 
@@ -17,5 +18,7 @@ router.get('/codesetlist', codeSetController.search);
 
 router.get('/codeset/:id', codeSetController.get);
 router.delete('/codeset/:id', codeSetController.delete);
+
+router.get('/terminologies', terminologyController.getTerminologies);
 
 module.exports = router;

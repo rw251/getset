@@ -1,16 +1,19 @@
 const modelGenerator = require('../models/Code');
-const { terminologies } = require('../services/terminology');
 
-const Model = terminologies.reduce((prev, terminology) => {
-  prev[terminology] = modelGenerator(terminology);
-  return prev;
-}, {});
+const Model = {};
+
+const getModel = (id, version) => {
+  if (!Model[id]) Model[id] = {};
+  if (Model[id][version]) return Model[id][version];
+  Model[id][version] = modelGenerator({ id, version });
+  return Model[id][version];
+};
 
 // This will need optimising at some point
 // but while small scale it is a good optimisation
 const cache = {};
 
-const doSearch = (terminology, term, regexes) => {
+const doSearch = (terminology, version, term, regexes) => {
   // 1. Get rid of "s as they have a special meaning in the search
   // 2. Split on ' '
   // 3. Don't want terms with a wildcard as that's not how the mongo db
@@ -21,38 +24,42 @@ const doSearch = (terminology, term, regexes) => {
   // 6. Remove words shorter than 3 characters
   const searchQuery = {
     w: {
-      $all: term.replace(/"/g, '')
+      $all: term
+        .replace(/"/g, '')
         .split(' ')
-        .filter(x => x.indexOf('*') < 0)
-        .map(x => x.replace(/(^[^\w\d]*|[^\w\d]*$)/g, '').toLowerCase())
-        .filter(x => x.length > 2),
+        .filter((x) => x.indexOf('*') < 0)
+        .map((x) => x.replace(/(^[^\w\d]*|[^\w\d]*$)/g, '').toLowerCase())
+        .filter((x) => x.length > 2),
     },
-    $and: regexes.map(regexTerm => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } })),
+    $and: regexes.map((regexTerm) => ({ t: { $regex: new RegExp(`${regexTerm}`, 'i') } })),
   };
   if (searchQuery.w.$all.length === 0) delete searchQuery.w;
-  return Model[terminology].find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
+  console.log(terminology, version);
+  return getModel(terminology, version).find(searchQuery, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
-const searchForTerm = (terminology, term) => {
+const searchForTerm = (terminology, version, term) => {
   if (!term.regexes) return []; // maybe throw error
-  return doSearch(terminology, term.original, term.regexes);
+  return doSearch(terminology, version, term.original, term.regexes);
 };
 
-const unique = arr => arr.filter((item, i, ar) => ar.indexOf(item) === i);
+const unique = (arr) => arr.filter((item, i, ar) => ar.indexOf(item) === i);
 
-const getSynonymCodes = (terminology, codes) => {
+const getSynonymCodes = (terminology, version, codes) => {
   console.log('USAGE: controllers/db.js getSynonymCodes');
-  const codesForQuery = unique(codes.map((v) => {
-    if (terminology === 'Readv2') {
-      return v._id.substr(0, 5);
-    }
-    return v._id;
-  }));
+  const codesForQuery = unique(
+    codes.map((v) => {
+      if (terminology === 'Readv2') {
+        return v._id.substr(0, 5);
+      }
+      return v._id;
+    })
+  );
   let regexForSynonymQuery = new RegExp();
   if (terminology === 'Readv2') {
-    regexForSynonymQuery = new RegExp(codesForQuery.map(v => `(^${v})`).join('|'));
+    regexForSynonymQuery = new RegExp(codesForQuery.map((v) => `(^${v})`).join('|'));
   }
-  const codesForNotQuery = codes.map(v => v._id);
+  const codesForNotQuery = codes.map((v) => v._id);
   const query = {
     $and: [
       { _id: regexForSynonymQuery },
@@ -60,39 +67,42 @@ const getSynonymCodes = (terminology, codes) => {
       { _id: { $not: { $in: codesForNotQuery } } },
     ],
   };
-  return Model[terminology].find(query, { c: 0 }).lean({ virtuals: true }).exec();
+  return getModel(terminology, version).find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
-const getDescendantCodes = (terminology, codes) => {
+const getDescendantCodes = (terminology, version, codes) => {
   console.log('USAGE: controllers/db.js getDescendantCodes');
-  const codesForQuery = unique(codes.map((v) => {
-    if (terminology === 'Readv2') {
-      return v._id.substr(0, 5);
-    }
-    return v._id;
-  }));
-  const codesForNotQuery = codes.map(v => v._id);
+  const codesForQuery = unique(
+    codes.map((v) => {
+      if (terminology === 'Readv2') {
+        return v._id.substr(0, 5);
+      }
+      return v._id;
+    })
+  );
+  const codesForNotQuery = codes.map((v) => v._id);
   const query = {
     p: { $in: codesForQuery },
     // but doesn't match any of the original codes
     _id: { $not: { $in: codesForNotQuery } },
   };
-  return Model[terminology].find(query, { c: 0 }).lean({ virtuals: true }).exec();
+  return getModel(terminology, version).find(query, { c: 0 }).lean({ virtuals: true }).exec();
 };
 
-const getResults = async (terminology, searchterm) => {
+const getResults = async (terminology, version, searchterm) => {
   if (!cache[terminology]) cache[terminology] = {};
-  if (!cache[terminology][searchterm.original]) {
+  if (!cache[terminology][version]) cache[terminology][version] = {};
+  if (!cache[terminology][version][searchterm.original]) {
     // Not found, so let's get it and then cache it
-    const codes = await searchForTerm(terminology, searchterm);
+    const codes = await searchForTerm(terminology, version, searchterm);
 
     // in case nothing is matched we can return early
     if (codes.length === 0) {
-      cache[terminology][searchterm.original] = [];
+      cache[terminology][version][searchterm.original] = [];
       return [];
     }
     // Get all descendants of the codes - but not those already matched.
-    const descendantCodes = await getDescendantCodes(terminology, codes);
+    const descendantCodes = await getDescendantCodes(terminology, version, codes);
     const descendantCodeIds = {};
     descendantCodes.map((v) => {
       const item = v;
@@ -104,7 +114,7 @@ const getResults = async (terminology, searchterm) => {
     });
     // Get all synonym codes - but not those already matched.
     let synonymCodes = [];
-    if (terminology === 'Readv2') synonymCodes = await getSynonymCodes(terminology, codes);
+    if (terminology === 'Readv2') synonymCodes = await getSynonymCodes(terminology, version, codes);
     synonymCodes.map((v) => {
       const item = v;
       item.synonym = true;
@@ -124,22 +134,12 @@ const getResults = async (terminology, searchterm) => {
         allCodes.push(v);
       }
     });
-    cache[terminology][searchterm.original] = allCodes;
+    cache[terminology][version][searchterm.original] = allCodes;
     return allCodes;
   }
   // We've already done this so return from cache
-  return cache[terminology][searchterm.original];
+  return cache[terminology][version][searchterm.original];
 };
-
-/**
- * @param {String} terminology The code terminology used
- * @param {Array} inclusions Array of terms to include
- * @param {Array} exclusions Array of terms to exclude
- * @returns {Object} the return
- */
-// exports.search = (terminology, inclusions, exclusions) => {
-//   inclusions.map(term => searchForTerm(terminology, term));
-// };
 
 /**
  * @description Converts an object with key value pairs into an array of values
@@ -147,13 +147,14 @@ const getResults = async (terminology, searchterm) => {
  * @param {object} obj The object to arrayify
  * @returns {array} The array of the object's values
  */
-const toArray = obj => Object.keys(obj).map(v => obj[v]);
+const toArray = (obj) => Object.keys(obj).map((v) => obj[v]);
 
-exports.searchMultiple = async (terminology, inclusions) => {
+exports.searchMultiple = async (terminology, version, inclusions) => {
   const toReturn = {};
-  const results = await Promise.all(inclusions.map(t => getResults(terminology, t)));
+  const results = await Promise.all(inclusions.map((t) => getResults(terminology, version, t)));
   results.forEach((result) => {
-    result.forEach((v) => { // merge the results
+    result.forEach((v) => {
+      // merge the results
       if (!toReturn[v._id] || toReturn[v._id].descendant || toReturn[v._id].synonym) {
         toReturn[v._id] = v;
       }
@@ -162,7 +163,7 @@ exports.searchMultiple = async (terminology, inclusions) => {
   const rtn = {
     codes: toArray(toReturn),
     timestamp: Date.now(),
-    searchTerm: inclusions.map(term => term.original.toLowerCase()),
+    searchTerm: inclusions.map((term) => term.original.toLowerCase()),
   };
   return rtn;
 };
@@ -171,5 +172,3 @@ exports.search = (terminology, term) => {
   console.log('USAGE: controllers/db.js search');
   getResults(terminology, term);
 };
-
-exports.searchForTerm = searchForTerm;
