@@ -623,6 +623,11 @@ const wireup = () => {
     evt.preventDefault();
   });
 
+  document.querySelector('select[name=terminology]').addEventListener('change', () => {
+    console.log('Terminology changed. Refreshing...');
+    refresh();
+  });
+
   $synonym.include.add.on('click', () => {
     addIfLongEnough($synonym.include.input);
   });

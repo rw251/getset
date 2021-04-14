@@ -9,15 +9,15 @@ import { syncToLocal } from '../scripts/global';
 
 const itSupportsDragging = () => {
   const div = document.createElement('div');
-  return ('draggable' in div) || ('ondragstart' in div && 'ondrop' in div);
+  return 'draggable' in div || ('ondragstart' in div && 'ondrop' in div);
 };
 
 const itSupportsFileReader = () => 'FileReader' in window;
 
 const itSupportsFormData = () => 'FormData' in window;
 
-const itSupportsDragDropUpload = () => itSupportsDragging() && itSupportsFileReader()
-  && itSupportsFormData();
+const itSupportsDragDropUpload = () =>
+  itSupportsDragging() && itSupportsFileReader() && itSupportsFormData();
 const currentCodeSet = {};
 const $synonym = { include: {}, exclude: {} };
 const $terminologyRadio = {};
@@ -145,7 +145,7 @@ const wireup = () => {
       const files = droppedFiles;
       const reader = new FileReader();
       reader.onload = function readerOnLoad() {
-        $form.removeClass('is-uploading');// .removeClass('is-error');
+        $form.removeClass('is-uploading'); // .removeClass('is-error');
         const newZip = new JSZip();
         // more files !
         newZip
@@ -153,18 +153,25 @@ const wireup = () => {
           .then((zip) => {
             // you now have every files contained in the loaded zip
             if (!zip) displayError(null, 'No zip file found.');
-            else if (!zip.files || Object.keys(zip.files).length !== 2) displayError(null, 'Zip file should contain two files.');
-            else if (Object.keys(zip.files).filter(v => v.toLowerCase().indexOf('metadata') > -1).length !== 1) {
+            else if (!zip.files || Object.keys(zip.files).length !== 2)
+              displayError(null, 'Zip file should contain two files.');
+            else if (
+              Object.keys(zip.files).filter((v) => v.toLowerCase().indexOf('metadata') > -1)
+                .length !== 1
+            ) {
               displayError(null, "Need precisely one file with 'metadata' in it's name.");
             } else {
-              const metadataFilename = Object.keys(zip.files).filter(v => v.toLowerCase().indexOf('metadata') > -1)[0];
-              const codesetFilename = Object.keys(zip.files).filter(v => v.toLowerCase().indexOf('metadata') === -1)[0];
+              const metadataFilename = Object.keys(zip.files).filter(
+                (v) => v.toLowerCase().indexOf('metadata') > -1
+              )[0];
+              const codesetFilename = Object.keys(zip.files).filter(
+                (v) => v.toLowerCase().indexOf('metadata') === -1
+              )[0];
 
               const metaDataPromise = zip.file(metadataFilename).async('string');
               const codeSetPromise = zip.file(codesetFilename).async('string');
 
-              Promise
-                .all([metaDataPromise, codeSetPromise])
+              Promise.all([metaDataPromise, codeSetPromise])
                 .then((fileContents) => {
                   readMetaDataFile(fileContents[0]);
                   readCodeSetFile(fileContents[1]);
@@ -183,7 +190,6 @@ const wireup = () => {
       };
       return reader.readAsArrayBuffer(files[0]);
     });
-
 
     // restart the form if has a state of error/success
 
@@ -204,8 +210,12 @@ const wireup = () => {
 
     // Firefox focus bug fix for file input
     $input
-      .on('focus', () => { $input.addClass('has-focus'); })
-      .on('blur', () => { $input.removeClass('has-focus'); });
+      .on('focus', () => {
+        $input.addClass('has-focus');
+      })
+      .on('blur', () => {
+        $input.removeClass('has-focus');
+      });
   });
 };
 
@@ -215,4 +225,3 @@ const show = () => {
 };
 // params, state, url
 export { show as default };
-
