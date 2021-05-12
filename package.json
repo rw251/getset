@@ -95,7 +95,7 @@
     "localforage": "^1.7.3",
     "mongoose": "^4.13.20",
     "mongoose-lean-virtuals": "^0.3.5",
-    "nodemailer": "^4.7.0",
+    "nodemailer": "^6.4.16",
     "nosleep.js": "^0.5.1",
     "page": "^1.11.6",
     "passport": "^0.4.1",
