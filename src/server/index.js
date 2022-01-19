@@ -4,9 +4,9 @@ const path = require('path');
 const forceSsl = require('express-force-ssl');
 const pino = require('pino')();
 const expressPino = require('express-pino-logger');
-const bodyParser = require('body-parser');
 const passport = require('passport');
 const expressSession = require('express-session');
+const MongoStore = require('connect-mongo');
 const flash = require('express-flash');
 const Rollbar = require('rollbar');
 const CONFIG = require('./config');
@@ -28,8 +28,6 @@ app.use(compression()); // enable gzip compression
 mongoose.set('debug', DEBUG);
 mongoose.Promise = global.Promise;
 mongoose.connect(CONFIG.mongoUrl, { useMongoClient: true });
-// add connection to other terminologies if they exist
-if (CONFIG.MONGO_URL_EMIS) mongoose.createConnection(CONFIG.MONGO_URL_EMIS);
 mongoose.connection.on('error', (err) => {
   pino.error(err);
   pino.info('MongoDB connection error. Please make sure MongoDB is running.');
@@ -38,29 +36,35 @@ mongoose.connection.on('error', (err) => {
 
 const port = CONFIG.server.port || '8228';
 app.set('port', port);
-// app.use(expressStatusMonitor());
-// app.use(compression());
 
 if (process.env.NODE_ENV === 'production') {
   console.log('ATTEMPTING FORCESSL');
   app.use(forceSsl);
 }
 
-
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(expressPino({ logger: pino }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(expressValidator());
-app.use(expressSession({
-  resave: false,
-  saveUninitialized: false,
-  secret: CONFIG.passport.secret,
-}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(
+  expressSession({
+    resave: false,
+    saveUninitialized: false,
+    secret: CONFIG.passport.secret,
+    store: MongoStore.create({ mongoUrl: CONFIG.mongoUrl }),
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+
+// For IE need to specify this
+app.use((req, res, next) => {
+  res.set('Cache-control', 'no-cache');
+  res.set('Expires', '-1');
+  return next();
+});
 
 // So that on heroku it recognises requests as https rather than http
 app.enable('trust proxy');

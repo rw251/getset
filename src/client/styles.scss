@@ -19,20 +19,6 @@ body {
   width: 100%;
 }
 
-footer {
-  /*position: absolute;
-  bottom: 0;*/
-  width: 100%;
-  height: 25px;
-  line-height: 25px;
-  background-color: #e7e7e7;
-  z-index: 100;
-
-  p, ul {
-    margin-bottom: 0;
-  }
-}
-
 // Input Fields
 // -------------------------
 
@@ -67,7 +53,7 @@ textarea {
 }
 
 .notification {
-  display:none;
+  display: none;
   position: absolute;
   right: 40px;
   bottom: 40px;
@@ -101,7 +87,7 @@ textarea {
 .code-list {
   background-color: black;
   max-height: 50vh;
-  min-height:200px;
+  min-height: 200px;
   overflow-y: auto;
 }
 
@@ -112,7 +98,7 @@ textarea {
 }
 
 .code-description {
-  color: #fff;  
+  color: #fff;
   font-family: 'PT Sans', sans-serif;
 }
 
@@ -140,15 +126,15 @@ textarea {
 }
 
 .code-line:hover .code {
-  color: #0A214C
+  color: #0a214c;
 }
 
 .code-line:hover .code-description {
-  color: #000
+  color: #000;
 }
 
 .code-line:hover .code-description-synonym {
-  color: #5200D0;
+  color: #5200d0;
 }
 
 .code-line:hover .code-description-exclusion {
@@ -189,43 +175,42 @@ textarea {
   color: white;
 }
 
-
 /* Hourglass css loader */
 .lds-css {
-    width: 200px;
-    height: 200px;
-    margin: auto;
-    transform: scale(0.7);
+  width: 200px;
+  height: 200px;
+  margin: auto;
+  transform: scale(0.7);
 }
 
 @keyframes lds-hourglass {
   0% {
     transform: rotate(0);
-    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19)
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
   50% {
     transform: rotate(900deg);
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1)
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
   }
   100% {
-    transform: rotate(1800deg)
+    transform: rotate(1800deg);
   }
 }
 @-webkit-keyframes lds-hourglass {
   0% {
     -webkit-transform: rotate(0);
-    -webkit-animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19)
+    -webkit-animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
   50% {
     -webkit-transform: rotate(900deg);
-    -webkit-animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1)
+    -webkit-animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
   }
   100% {
-    -webkit-transform: rotate(1800deg)
+    -webkit-transform: rotate(1800deg);
   }
 }
 .lds-hourglass:after {
-  content: " ";
+  content: ' ';
   position: absolute;
   margin: auto;
   top: 0;
@@ -250,30 +235,32 @@ textarea {
 .token-container {
   /* We first create a flex layout context */
   display: flex;
-  
+
   /* Then we define the flow direction and if we allow the items to wrap 
    * Remember this is the same as:
    * flex-direction: row;
    * flex-wrap: wrap;
    */
   flex-flow: row wrap;
-  
+
   /* Then we define how is distributed the remaining space */
   justify-content: flex-start;
 }
 
 .token {
   position: relative;
-  margin: .5rem 0.5rem 1rem 0;
+  margin: 0.5rem 0.5rem 1rem 0;
   background-color: #fff;
-  transition: box-shadow .25s;
+  transition: box-shadow 0.25s;
   border-radius: 2px;
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -2px rgba(0, 0, 0, 0.2);
   flex-grow: 1;
 }
 
 .token:hover {
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.28), 0 1px 5px 0 rgba(0,0,0,0.24), 0 3px 1px -2px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.28), 0 1px 5px 0 rgba(0, 0, 0, 0.24),
+    0 3px 1px -2px rgba(0, 0, 0, 0.4);
   //box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
   cursor: pointer;
 }
@@ -298,13 +285,13 @@ textarea {
   font-weight: 300;
 }
 
-$passColour: rgb(43,140,43);
-$warnColour: rgb(162,162,5);
-$failColour: rgb(222,5,5);
+$passColour: rgb(43, 140, 43);
+$warnColour: rgb(162, 162, 5);
+$failColour: rgb(222, 5, 5);
 
-$passBackColour: rgba(43,140,43,0.3);
-$warnBackColour: rgba(222,212,5,0.3);
-$failBackColour: rgba(222,5,5,0.3);
+$passBackColour: rgba(43, 140, 43, 0.3);
+$warnBackColour: rgba(222, 212, 5, 0.3);
+$failBackColour: rgba(222, 5, 5, 0.3);
 
 .token.token-pass {
   background-color: $passBackColour;
@@ -357,15 +344,15 @@ $failBackColour: rgba(222,5,5,0.3);
   outline: 2px dashed #92b0b3;
   outline-offset: -10px;
 
-  -webkit-transition: outline-offset .15s ease-in-out, background-color .15s linear;
-  transition: outline-offset .15s ease-in-out, background-color .15s linear;
+  -webkit-transition: outline-offset 0.15s ease-in-out, background-color 0.15s linear;
+  transition: outline-offset 0.15s ease-in-out, background-color 0.15s linear;
 }
 .box.is-success {
   padding: 20px 20px;
   line-height: initial;
 
-  -webkit-transition: padding .15s ease-in-out;
-  transition: padding .15s ease-in-out;
+  -webkit-transition: padding 0.15s ease-in-out;
+  transition: padding 0.15s ease-in-out;
 }
 .box.is-dragover {
   outline-offset: -20px;
@@ -414,8 +401,8 @@ $failBackColour: rgba(222,5,5,0.3);
   right: 0;
   left: 0;
 
-  -webkit-transform: translateY( -50% );
-  transform: translateY( -50% );
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
 
   font-size: 20px;
   color: #0f3c4b;
@@ -424,18 +411,30 @@ $failBackColour: rgba(222,5,5,0.3);
   font-style: italic;
 }
 .box__success {
-  -webkit-animation: appear-from-inside .25s ease-in-out;
-  animation: appear-from-inside .25s ease-in-out;
+  -webkit-animation: appear-from-inside 0.25s ease-in-out;
+  animation: appear-from-inside 0.25s ease-in-out;
 }
 @-webkit-keyframes appear-from-inside {
-  from	{ -webkit-transform: translateY( -50% ) scale( 0 ); }
-  75%		{ -webkit-transform: translateY( -50% ) scale( 1.1 ); }
-  to		{ -webkit-transform: translateY( -50% ) scale( 1 ); }
+  from {
+    -webkit-transform: translateY(-50%) scale(0);
+  }
+  75% {
+    -webkit-transform: translateY(-50%) scale(1.1);
+  }
+  to {
+    -webkit-transform: translateY(-50%) scale(1);
+  }
 }
 @keyframes appear-from-inside {
-  from	{ transform: translateY( -50% ) scale( 0 ); }
-  75%		{ transform: translateY( -50% ) scale( 1.1 ); }
-  to		{ transform: translateY( -50% ) scale( 1 ); }
+  from {
+    transform: translateY(-50%) scale(0);
+  }
+  75% {
+    transform: translateY(-50%) scale(1.1);
+  }
+  to {
+    transform: translateY(-50%) scale(1);
+  }
 }
 
 .box__restart {
@@ -446,7 +445,7 @@ $failBackColour: rgba(222,5,5,0.3);
   color: #39bfd3;
 }
 
- /* First hide the ugly input button but keep it in the dom*/
+/* First hide the ugly input button but keep it in the dom*/
 .js .box__file {
   width: 0.1px;
   height: 0.1px;
@@ -504,123 +503,18 @@ $failBackColour: rgba(222,5,5,0.3);
   background-color: #0f3c4b;
 }
 
-/*
-  Force full width & height.
-
-  If this block is removed, the layout height/length will be determined by
-  the amount of content in the page. That might result in a page which has
-  a footer only a few inches from the top of the viewport, or one which
-  scrolls beyond the viewport.
-
-  This forces the layout to always be full screen regardless of how much,
-  or how little, content is in place. Neither is "right" or "wrong", there
-  are valid cases for each. I just want to be clear what's controlling the
-  page/viewport height.
-*/
-html, body, .viewport {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* encapsulate the various syntax in helper clases */
-/* inspired by http://infrequently.org/2009/08/css-3-progress/ */
-
-/* items flex/expand vertically */
-.vbox {
-  /* previous syntax */
-  display: -webkit-box;
-  display:    -moz-box;
-  display:         box;
-
-  -webkit-box-orient: vertical;
-      -moz-box-orient: vertical;
-      -ms-box-orient: vertical;
-          box-orient: vertical;
-
-  /* current syntax */
-  display: -webkit-flex;
-  display:    -moz-flex;
-  display:     -ms-flex;
-  display:         flex;
-
-  -webkit-flex-direction: column;
-      -moz-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
-}
-
-/* items flex/expand horizontally */
-.hbox {
-  /* previous syntax */
-  display: -webkit-box;
-  display:    -moz-box;
-  display:     -ms-box;
-  display:         box;
-
-  -webkit-box-orient: horizontal;
-      -moz-box-orient: horizontal;
-      -ms-box-orient: horizontal;
-          box-orient: horizontal;
-
-  /* current syntax */
-  display: -webkit-flex;
-  display:    -moz-flex;
-  display:     -ms-flex;
-  display:         flex;
-
-  -webkit-flex-direction: row;
-      -moz-flex-direction: row;
-      -ms-flex-direction: row;
-          flex-direction: row;
-}
-
-.space-between {
-  /* previous syntax */
-  -webkit-box-pack: justify;
-      -moz-box-pack: justify;
-      -ms-box-pack: justify;
-          box-pack: justify;
-
-  /* current syntax */
-  -webkit-justify-content: space-between;
-      -moz-justify-content: space-between;
-      -ms-justify-content: space-between;
-          justify-content: space-between;
-}
-
-.main {
-  /* previous syntax */
-  -webkit-box-flex: 1;
-      -moz-box-flex: 1;
-      -ms-box-flex: 1;
-          box-flex: 1;
-
-  /* current syntax */
-  -webkit-flex: 1;
-      -moz-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
-  
-  /* for mobile viewing */
-  overflow-y: auto;
-}
-
-
 .scrollable-parent {
   height: 100%;
 }
 .scrollable {
-  height:90%;
-  overflow-y: auto; 
+  height: 90%;
+  overflow-y: auto;
 }
 
-
 .disable-select {
-  -webkit-user-select: none;  
-  -moz-user-select: none;    
-  -ms-user-select: none;      
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
 }
 
@@ -636,13 +530,13 @@ html, body, .viewport {
 }
 
 .loading-content {
-  margin-top:150px;
+  margin-top: 150px;
   color: white;
   font-size: 4em;
 }
 
 .my-table {
-  margin:0;
+  margin: 0;
 }
 
 .clusterize-scroll {

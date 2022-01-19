@@ -4,15 +4,17 @@
   "description": "An application for creating, validating, reusing and extending sets of clinical codes. https://getset.ga",
   "main": "index.js",
   "scripts": {
-    "start": "npm run serve",
-    "serve": "concurrently -kill-others-on-fail \"npm run build\" \"nodemon src/server/index.js\"",
+    "start": "concurrently -kill-others-on-fail \"npm run watch\" \"npm run server\"",
+    "server": "nodemon src/server/index.js",
+    "watch": "rollup -c -w",
     "build": "rollup -c -w",
     "debug": "concurrently -kill-others-on-fail \"npm run build\" \"nodemon --inspect-brk src/server/index.js\"",
     "build-prod-server": "rollup -c",
     "heroku-postbuild": "npm run build-prod-server",
     "test": "mocha --recursive test",
     "test-debug": "mocha --recursive --inspect-brk test",
-    "deploy": "node deploy.js"
+    "deploy": "node deploy.js",
+    "webhook-forwarder": "smee --url https://smee.io/mSvxVBvbGGrdDxTS --path /auth/github/webhook --port 8228"
   },
   "repository": {
     "type": "git",
@@ -67,6 +69,7 @@
     "rollup-plugin-rollbar-sourcemaps": "^1.1.0",
     "rollup-plugin-terser": "^5.2.0",
     "sass-loader": "^7.3.1",
+    "smee-client": "^1.2.2",
     "standard": "^8.6.0",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2"
@@ -81,6 +84,7 @@
     "btoa": "^1.2.1",
     "clusterize.js": "^0.18.1",
     "compression": "^1.7.4",
+    "connect-mongo": "^4.4.1",
     "debug": "^2.6.6",
     "dotenv": "^4.0.0",
     "express": "^4.17.1",
@@ -97,7 +101,6 @@
     "mongoose-lean-virtuals": "^0.3.5",
     "nodemailer": "^4.7.0",
     "nosleep.js": "^0.5.1",
-    "page": "^1.11.6",
     "passport": "^0.4.1",
     "passport-github": "^1.1.0",
     "passport-github2": "^0.1.12",
@@ -106,6 +109,8 @@
     "request": "^2.88.2",
     "request-promise": "^4.2.5",
     "rollbar": "^2.16.2",
+    "rw-progress": "^1.0.4",
+    "rw-router": "^1.1.1",
     "serve-favicon": "^2.5.0"
   },
   "heroku-run-build-script": true

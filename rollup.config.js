@@ -15,7 +15,8 @@ import { version } from './package.json';
 
 const { rollbarServerToken } = require('./src/server/config.js');
 
-const SOURCE_VERSION = process.env.SOURCE_VERSION || execSync('git rev-parse --short HEAD').toString();
+const SOURCE_VERSION =
+  process.env.SOURCE_VERSION || execSync('git rev-parse --short HEAD').toString();
 const USER = execSync('whoami').toString();
 
 const distDir = 'dist';
@@ -42,7 +43,6 @@ function buildConfig({ watch } = {}) {
       // allows import *.css
       postcss(),
 
-
       // resolves in-built node packages like https / fs etc..
       nodeResolve({
         preferBuiltins: true,
@@ -56,27 +56,25 @@ function buildConfig({ watch } = {}) {
       !isDev && terser(), // uglify the code if not dev mode
       createHTMLPlugin({ isDev }), // create the index.html
       copy({
-        targets: [
-          { src: 'src/client/assets/**/*', dest: distDir },
-        ],
+        targets: [{ src: 'src/client/assets/**/*', dest: distDir }],
       }),
-      !isDev && rollbarSourcemaps({
-        accessToken: rollbarServerToken,
-        baseUrl: '//getset.ga/',
-        version,
-      }), // upload rollbar source maps if production build
-      !isDev && rollbarDeploy({
-        accessToken: rollbarServerToken,
-        revision: SOURCE_VERSION,
-        environment: 'production',
-        localUsername: USER,
-      }), // notify Rollbar of a deployment if production build
-    ].filter(item => item), // filter out unused plugins by filtering out false and null values
+      !isDev &&
+        rollbarSourcemaps({
+          accessToken: rollbarServerToken,
+          baseUrl: '//getset.ga/',
+          version,
+        }), // upload rollbar source maps if production build
+      !isDev &&
+        rollbarDeploy({
+          accessToken: rollbarServerToken,
+          revision: SOURCE_VERSION,
+          environment: 'production',
+          localUsername: USER,
+        }), // notify Rollbar of a deployment if production build
+    ].filter((item) => item), // filter out unused plugins by filtering out false and null values
   };
 }
 
 export default function ({ watch }) {
-  return [
-    buildConfig({ watch }),
-  ];
+  return [buildConfig({ watch })];
 }

@@ -1,11 +1,10 @@
 <!doctype html>
-<html class="no-js" lang="" style="width: 100%;height: 100%;margin: 0;padding: 0;">
-
+<html lang="en" style="width: 100%;height: 100%;margin: 0;padding: 0;">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>{{ title }}</title>
-  <meta name="description" content="">
+  <meta name="description" content="Search for sets of clinical codes. Also known as clinical codelists or code lists. Create clinical code sets. Icons adapted from icons by Madebyoliver (http://www.flaticon.com/authors/madebyoliver) and are licensed by CC 3.0 BY</p>">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#4DA5F4">
 
@@ -14,10 +13,6 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#006df0">
-
-  <noscript>
-    <link href="https://fonts.googleapis.com/css?family=PT+Mono|PT+Sans:400,700" rel="stylesheet">
-  </noscript>
 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
   
@@ -44,85 +39,399 @@
   </script>
   {{/isProduction}}
 
-<script>
-  (function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);
-</script>
-<noscript>
+  <noscript>
     <style>
-        noscript {
+      noscript {
         top: 0;
         left: 0;
         position: absolute;
         background-color: yellow;
         width: 100%;
-        }
-        noscript p {
+      }
+      noscript p {
         font-size: 20px;
         margin-left: auto;
         margin-right: auto;
         text-align: center;
-        }
+      }
     </style>
-    </noscript>
+  </noscript>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0px;
+    font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  }
+  
+  /*
+    Force full width & height.
+
+    If this block is removed, the layout height/length will be determined by
+    the amount of content in the page. That might result in a page which has
+    a footer only a few inches from the top of the viewport, or one which
+    scrolls beyond the viewport.
+
+    This forces the layout to always be full screen regardless of how much,
+    or how little, content is in place. Neither is "right" or "wrong", there
+    are valid cases for each. I just want to be clear what's controlling the
+    page/viewport height.
+  */
+  html,
+  body,
+  .viewport {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* encapsulate the various syntax in helper clases */
+  /* inspired by http://infrequently.org/2009/08/css-3-progress/ */
+
+  /* items flex/expand vertically */
+  .vbox {
+    /* previous syntax */
+    display: -webkit-box;
+    display: -moz-box;
+    display: box;
+
+    -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
+    -ms-box-orient: vertical;
+    box-orient: vertical;
+
+    /* current syntax */
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: flex;
+
+    -webkit-flex-direction: column;
+    -moz-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+
+  /* items flex/expand horizontally */
+  .hbox {
+    /* previous syntax */
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-box;
+    display: box;
+
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    -ms-box-orient: horizontal;
+    box-orient: horizontal;
+
+    /* current syntax */
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: flex;
+
+    -webkit-flex-direction: row;
+    -moz-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+  }
+
+  .space-between {
+    /* previous syntax */
+    -webkit-box-pack: justify;
+    -moz-box-pack: justify;
+    -ms-box-pack: justify;
+    box-pack: justify;
+
+    /* current syntax */
+    -webkit-justify-content: space-between;
+    -moz-justify-content: space-between;
+    -ms-justify-content: space-between;
+    justify-content: space-between;
+  }
+
+  .main {
+    /* previous syntax */
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -ms-box-flex: 1;
+    box-flex: 1;
+
+    /* current syntax */
+    -webkit-flex: 1;
+    -moz-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+
+    /* for mobile viewing */
+    overflow-y: auto;
+  }
+
+  footer {
+    width: 100%;
+    height: 25px;
+    line-height: 25px;
+    background-color: #e7e7e7;
+    z-index: 100;
+  }
+
+  nav {
+    height: 50px;
+    width: 100%;
+    background-color: #ededed;
+    color: #444;
+    position: relative;
+  }
+
+  nav > .nav-header {
+    display: inline;
+  }
+
+  nav > .nav-header > .nav-title {
+    display: inline-block;
+    font-size: 22px;
+    padding: 10px 10px 10px 10px;
+  }
+
+  nav > .nav-btn {
+    display: none;
+  }
+
+  nav > .nav-links {
+    display: inline;
+    font-size: 18px;
+    padding-right: 4px;
+  }
+
+  nav > .nav-links.right {
+    float: right;
+  }
+
+  nav > .nav-links > a {
+    display: inline-block;
+    padding: 13px 10px 13px 10px;
+    text-decoration: none;
+    color: #222;
+  }
+
+  nav > .nav-links > a:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  nav > #nav-check {
+    display: none;
+  }
+
+  @media (max-width:486px) {
+    nav > .nav-btn {
+      display: inline-block;
+      position: absolute;
+      right: 0px;
+      top: 0px;
+    }
+    nav > .nav-btn > label {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      padding: 13px;
+      cursor: pointer;
+    }
+    nav > .nav-btn > label:hover,nav  #nav-check:checked ~ .nav-btn > label {
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+    nav > .nav-btn > label > span {
+      display: block;
+      width: 25px;
+      height: 10px;
+      border-top: 2px solid #222;
+      transition: transform ease-in-out 0.3s;
+    }
+    .nav-btn > label > span {
+      transform-origin: 0 1px;
+    }
+    #nav-check:checked ~ .nav-btn > label > span:nth-child(1) {
+      transform: rotate(41deg) scale(1.334);
+    }
+    #nav-check:checked ~ .nav-btn > label > span:nth-child(2) {
+      transform: translateX(-200px) scale(0);
+    }
+    #nav-check:checked ~ .nav-btn > label > span:nth-child(3) {
+      transform: translateY(2px) rotate(-41deg) scale(1.334);
+    }
+    nav > .nav-links {
+      display: block;
+      width: 100%;
+      background-color: #333;
+      height: 0px;
+      transition: transform 0.3s ease-in;
+      overflow-y: hidden;
+      top: 50px;
+      left: 0px;
+      padding-right:0;
+    }
+    nav > .nav-links > a {
+      display: block;
+      width: 100%;
+      color: #fff;
+    }
+    nav > .nav-links > a:hover {
+      background-color: #f9f9f9;
+      color: #222;
+      border-radius: 0;
+    }
+    nav > .nav-links > a.github-button:hover {
+      background-color: #555;
+      color: #222;
+    }
+    nav > #nav-check:not(:checked) ~ .nav-links {
+      height: 0px;
+    }
+    nav > #nav-check:checked ~ .nav-links {
+      height: auto;
+      overflow-y: auto;
+    }
+  }
+
+  .button {
+    -webkit-appearance: none;
+    font-size: 1rem;
+    text-shadow: none;
+    line-height: 1.2;
+    display: inline-block;
+    padding: 10px 16px 12px 16px !important;
+    margin: 0 10px 0 0;
+    position: relative;
+    border-radius: 4px;
+    border: 3px solid transparent;
+    background: #444857;
+    color: white !important;
+    cursor: pointer;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: none !important;
+    text-align: center;
+    font-weight: normal !important;
+  }
+
+  .github-button {
+    background: #111;
+    color: white;
+    padding-left: 60px !important;
+    text-align: left;
+    margin: 1px 0 0 0;
+  }
+
+  .button > svg, .button > span > svg {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    pointer-events: none;
+    vertical-align: bottom;
+    fill: currentColor;
+  }
+
+  .github-button svg {
+    width: 26px;
+    height: 26px;
+    fill: #fff;
+    position: absolute;
+    left: 14px;
+    top: 6px;
+  }
+
+  .github-button:hover:not([disabled]), .github-button:focus:not([disabled]) {
+      background: #444;
+      text-shadow: none;
+  }
+
+  @media (max-width:580px) {
+    .if-large {
+      display:none;
+    }
+  }
+  @media (min-width:580px) {
+    .if-small {
+      display:none;
+    }
+  }
+
+  .lds-loader {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 50px;
+  }
+  .lds-loader div {
+    display: inline-block;
+    position: absolute;
+    left: 8px;
+    width: 16px;
+    background: #fff;
+    animation: lds-loader 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+    top: 50px;
+  }
+  .lds-loader div:nth-child(1) {
+    left: 8px;
+    animation-delay: 0.24s;
+  }
+  .lds-loader div:nth-child(2) {
+    left: 32px;
+    animation-delay: 0.36s;
+  }
+  .lds-loader div:nth-child(3) {
+    left: 56px;
+    animation-delay: 0.48s;
+  }
+  @keyframes lds-loader {
+    0% {
+      top: 8px;
+      height: 34px;
+    }
+    50%, 100% {
+      top: 20px;
+      height: 20px;
+    }
+  }
+
+  </style>
 </head>
 
 <body class="vbox viewport">
+  <!--[if lte IE 9]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+  <![endif]-->
+  <noscript>
+    <p>You seem to have JavaScript disabled. Unfortunately SMASH won't work without it. Check out <a href="https://www.enable-javascript.com/" target="_blank">these instructions</a> if you want to enable javascript.</p>
+  </noscript>
   <header>
-    <div class="navbar navbar-default">
-      <div class="navbar-header">
-        <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="/">
-          <img src="/images/icon.svg" role="presentation" style="height:100%;display:inline;margin-right:5px;" />
-          <span>GetSet</span>
-        </a>
-      </div>
-      <div class="collapse navbar-collapse">
-        <ul class="nav navbar-nav">
-          <li><a href="/">Home</a></li>
-        </ul>
-        <ul class="nav navbar-nav">
-          <li><a href="/create">Create</a></li>
-        </ul>
-        <ul class="nav navbar-nav">
-          <li><a href="/search">Search</a></li>
-        </ul>
-        <ul class="nav navbar-nav navbar-right">
-          <li>
-            <div style="padding:8px 0">
-              <a class="btn btn-block btn-github btn-social" href="/auth/github"><i class="fab fa-github"></i>Sign in with GitHub</a>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
+  {{{ headerHtml }}}
   </header>
   <section class="main hbox space-between" id="mainContent">
     <div id="messages"></div>
+    HOME PAGE
+    HOME PAGE
+    HOME PAGE
   </section>
-  <footer>
-    <div class="container text-center">
-      <p class="pull-left">
-        Icons adapted from icons by <a href="http://www.flaticon.com/authors/madebyoliver" title="Madebyoliver" target="_blank" rel="noopener">Madebyoliver </a>from <a href="http://www.flaticon.com" title="Flaticon" target="_blank" rel="noopener">www.flaticon.com </a>is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank" rel="noopener">CC 3.0 BY</a></p>
-      <ul class="pull-right list-inline">
-        <li><a href="https://github.com/rw251/getset" target="_blank" rel="noopener">GitHub Project</a></li>
-        <li><a href="https://github.com/rw251/getset/issues" target="_blank" rel="noopener">Issues</a></li>
-      </ul>
-    </div>
+  <footer style="padding: 0 10px;display:flex; justify-content:space-between;font-size:0.8rem">
+    <span>
+      v{{ version }}
+    </span>
+    <span>
+      <span class="if-large">
+        Checkout the source code here:
+      </span>
+      <a href="https://github.com/rw251/getset" target="_blank" rel="noopener">GitHub Project</a>
+      <span class="if-large">
+        &nbsp;Found a bug? Report it here:
+      </span>
+      <a href="https://github.com/rw251/getset/issues" target="_blank" rel="noopener">Issues</a>
+    </span>
   </footer>
   <div class="notification"></div>
-  <script>
-    // Add the google fonts as a deferred resource
-    var deferredFonts = document.createElement('link');
-    deferredFonts.rel = 'stylesheet';
-    deferredFonts.href = 'https://fonts.googleapis.com/css?family=PT+Mono|PT+Sans:400,700';
-    var godefer = document.getElementsByTagName('link')[0];
-    godefer.parentNode.insertBefore(deferredFonts, godefer);
-  </script>
   <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default,fetch,Array.prototype.includes"></script>
   <script src="{{ scriptFile }}"></script>
 </body>    
