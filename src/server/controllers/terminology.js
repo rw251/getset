@@ -31,7 +31,11 @@ const getTerminologies = async () => {
   return terminologies;
 };
 
-exports.getTerminologies = async (req, res) => {
-  await getTerminologies();
+exports.getTerminologies = async (req, res, next) => {
+  try {
+    await getTerminologies();
+  } catch (err) {
+    return next(err);
+  }
   return res.send(terminologies);
 };

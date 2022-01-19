@@ -33,7 +33,7 @@ if (CONFIG.MONGO_URL_EMIS) mongoose.createConnection(CONFIG.MONGO_URL_EMIS);
 mongoose.connection.on('error', (err) => {
   pino.error(err);
   pino.info('MongoDB connection error. Please make sure MongoDB is running.');
-  process.exit();
+  // process.exit(); // display sensible error messages instead of crashing
 });
 
 const port = CONFIG.server.port || '8228';
@@ -46,18 +46,19 @@ if (process.env.NODE_ENV === 'production') {
   app.use(forceSsl);
 }
 
-
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(expressPino({ logger: pino }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(expressValidator());
-app.use(expressSession({
-  resave: false,
-  saveUninitialized: false,
-  secret: CONFIG.passport.secret,
-}));
+app.use(
+  expressSession({
+    resave: false,
+    saveUninitialized: false,
+    secret: CONFIG.passport.secret,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
@@ -109,24 +110,26 @@ app.use((req, res) => {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use((err, req, res) => {
-    res.status(err.status || 500);
-    res.render('pages/error.jade', {
+  //DONT DELETE "next". Express uses the presence of 4 variables to determine that it is an error handler
+  app.use((err, req, res, next) => {
+    res.status(503); // service unavailable
+    res.send({
       message: err.message,
-      error: err,
+      stack: err.stack,
     });
+    // next(err); uncomment if you want dev errors to go to rollbar
+  });
+} else {
+  // production error handler
+  // no stacktraces leaked to user
+  app.use((err, req, res, next) => {
+    res.status(503); // service unavailable
+    res.send({
+      error: true,
+    });
+    next(err); // so rollbar can pick it up
   });
 }
-
-// production error handler
-// no stacktraces leaked to user
-app.use((err, req, res) => {
-  res.status(err.status || 500);
-  res.render('pages/error.jade', {
-    message: err.message,
-    error: {},
-  });
-});
 
 // Use the rollbar error handler to send exceptions to your rollbar account
 app.use(rollbar.errorHandler());

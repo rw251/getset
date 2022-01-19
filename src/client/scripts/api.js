@@ -1,4 +1,5 @@
 import page from 'page';
+import state from './state';
 
 // credentials: 'same-origin' is usually the default but not in some
 // older browsers
@@ -11,6 +12,13 @@ const doGet = (url) =>
     }
     if (response.status === 403) {
       return response.json();
+    }
+    if (response.status === 503) {
+      return response.json().then((error) => {
+        state.error = error;
+        page('/error');
+        return Promise.reject(new Error('Server error'));
+      });
     }
     return response.json();
   });

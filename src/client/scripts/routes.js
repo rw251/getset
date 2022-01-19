@@ -7,6 +7,7 @@ import search from '../controllers/search';
 import enhance from '../controllers/enhance';
 import account from '../controllers/account';
 import login from '../controllers/login';
+import error from '../controllers/error';
 
 const updateSelectedTab = (ctx, next) => {
   $('.navbar-nav li').removeClass('active');
@@ -26,6 +27,7 @@ page('/validate', updateSelectedTab, validate);
 page('/search', updateSelectedTab, search);
 page('/enhance', updateSelectedTab, enhance);
 page('/account', updateSelectedTab, account);
+page('/error', updateSelectedTab, error);
 // page('*', notFound);
 
 export { page as default };
