@@ -42,6 +42,7 @@ mongoose.connection.on('error', (err) => {
   mongoStatus = dbStatus.error;
 });
 mongoose.connection.on('connected', () => {
+  pino.info('MongoDB connection connected.');
   mongoStatus = dbStatus.connected;
 });
 
@@ -93,8 +94,10 @@ app.use((req, res, next) => {
     if (
       req.url.match(/(\.png|\.svg|\.jpg|\.jpeg|\.gif|\.css|\.js|\.woff|\.woff2|\.ttf|\.eot|\.map)$/)
     ) {
+      pino.info('MongoDB not connected, but request is for static file so passing through');
       return next();
     }
+    pino.info('MongoDB not connected, returning error.html');
     res.status(200).sendFile(path.join(__dirname, '..', '..', 'dist', 'error.html'));
   } else {
     next();
