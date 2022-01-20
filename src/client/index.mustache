@@ -83,6 +83,7 @@
         </a>
       </div>
       <div class="collapse navbar-collapse">
+        {{^isError}}
         <ul class="nav navbar-nav">
           <li><a href="/">Home</a></li>
         </ul>
@@ -99,12 +100,16 @@
             </div>
           </li>
         </ul>
+        {{/isError}}
       </div>
     </div>
   </header>
   <section class="main hbox space-between" id="mainContent">
     <div id="messages"></div>
   </section>
+  {{#isError}}
+  <div id="serverError" style="display:none"></div>
+  {{/isError}}
   <footer>
     <div class="container text-center">
       <p class="pull-left">

@@ -10,7 +10,7 @@ export default (data) => `
         <p>Please try again later.</p>
       </div>
       ${data && data.message ? `<p style="font-size: 1.2em">${data.message}</p>` : ''}
-      ${data && data.stack ? `<pre>${data.stack}</pre>` : ''}
+      ${data && data.stack ? `<pre style="height:500px">${data.stack}</pre>` : ''}
     </div>
   </div>
 </div>

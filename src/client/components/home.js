@@ -1,6 +1,6 @@
 import title from './partials/title';
 
-export default () => `
+export default ({ isError }) => `
 <div class="container">
   ${title()}
   <div class="row">
@@ -28,10 +28,35 @@ export default () => `
       <p style="font-size: 0.8em">This site was developed by <a href="https://www.research.manchester.ac.uk/portal/richard.williams.html" target="_blank" rel="noopener noreferrer">Richard Williams</a> as part of the <a href="http://www.patientsafety.manchester.ac.uk/"  target="_blank" rel="noopener noreferrer">NIHR Greater Manchester Patient Safety Translational Research Centre (GM PSTRC)</a>.</p>
       <p style="font-size: 0.7em">This work was funded by the National Institute for Health Research (NIHR) Greater Manchester Patient Safety Translational Research Centre (NIHR Greater Manchester PSTRC). The views expressed are those of the authors and not necessarily those of the NHS, the NIHR or the Department of Health and Social Care.</p>
     </div>
+
     <div class="col-sm-6">
+      ${
+        isError
+          ? `
+          <div style="color: #700;background: #fee;border: 1px solid #f00;padding: 10px;font-weight:bold">
+            GetSet isn't working at the moment. Please try again later.
+          </div>`
+          : ''
+      }
       <h3>I want to...</h3>
-      <p><a style="text-align: left" class="btn btn-success btn-lg btn-block" href="/create" role="button"><i class="fas fa-arrow-right fa-fw"></i> Create a new clinical code set</a></p>
-      <p><a style="text-align: left" class="btn btn-info btn-lg btn-block" href="/search" role="button"><i class="fas fa-search fa-fw"></i> Search for an existing code set</a></p>
+      <p>
+        <a  
+          style="text-align: left"
+          class="btn btn-success btn-lg btn-block"
+          href="/create"
+          role="button"
+          ${isError ? 'disabled' : ''}>
+        <i class="fas fa-arrow-right fa-fw"></i> Create a new clinical code set</a>
+      </p>
+      <p>
+        <a
+          style="text-align: left"
+          class="btn btn-info btn-lg btn-block"
+          href="/search"
+          role="button"
+          ${isError ? 'disabled' : ''}>
+        <i class="fas fa-search fa-fw"></i> Search for an existing code set</a>
+      </p>
       <h3>Coming Soon!</h3>
       <p><a style="text-align: left" class="btn btn-default btn-lg btn-block" href="/convert" role="button" disabled><i class="fas fa-exchange-alt fa-fw"></i> Translate a code set to a different terminology</a></p>
       <p><a style="text-align: left" class="btn btn-default btn-lg btn-block" href="/enhance" role="button" disabled><i class="fas fa-layer-group fa-fw"></i> Add metadata to an existing list of codes</a></p>

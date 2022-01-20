@@ -10,6 +10,11 @@ import login from '../controllers/login';
 import error from '../controllers/error';
 
 const updateSelectedTab = (ctx, next) => {
+  // check if server error
+  if (document.getElementById('serverError')) {
+    return home({ isError: true });
+  }
+
   $('.navbar-nav li').removeClass('active');
   $(`.navbar-nav li a[href="${ctx.pathname}"]`).parent().addClass('active');
   next();

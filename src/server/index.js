@@ -21,7 +21,12 @@ const rollbar = new Rollbar({
 });
 
 const DEBUG = true;
-
+const dbStatus = {
+  connected: 'connected',
+  error: 'error',
+  connecting: 'connecting',
+};
+let mongoStatus = dbStatus.connecting;
 const app = express();
 app.use(compression()); // enable gzip compression
 
@@ -34,6 +39,10 @@ mongoose.connection.on('error', (err) => {
   pino.error(err);
   pino.info('MongoDB connection error. Please make sure MongoDB is running.');
   // process.exit(); // display sensible error messages instead of crashing
+  mongoStatus = dbStatus.error;
+});
+mongoose.connection.on('connected', () => {
+  mongoStatus = dbStatus.connected;
 });
 
 const port = CONFIG.server.port || '8228';
@@ -76,6 +85,20 @@ app.use((req, res, next) => {
       : res.redirect(301, `https://getset.ga${req.originalUrl}`);
   }
   return next();
+});
+
+// middleware to detect if mongo has errored
+app.use((req, res, next) => {
+  if (mongoStatus === dbStatus.error) {
+    if (
+      req.url.match(/(\.png|\.svg|\.jpg|\.jpeg|\.gif|\.css|\.js|\.woff|\.woff2|\.ttf|\.eot|\.map)$/)
+    ) {
+      return next();
+    }
+    res.status(200).sendFile(path.join(__dirname, '..', '..', 'dist', 'error.html'));
+  } else {
+    next();
+  }
 });
 
 initializeRoutes(app);
