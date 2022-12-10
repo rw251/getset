@@ -83,7 +83,7 @@
     "compression": "^1.7.4",
     "debug": "^2.6.6",
     "dotenv": "^4.0.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-flash": "0.0.2",
     "express-force-ssl": "^0.3.2",
     "express-pino-logger": "^2.0.0",
